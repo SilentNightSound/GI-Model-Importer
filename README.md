@@ -46,7 +46,7 @@ In order to modify game models, you need to also setup your Blender plugins and 
 
 Full details and walkthrough with images can be found in the Wiki, this is a high-level summary of the instructions for each section. I have organized the content approximately in difficulty from easiest to hardest - I recommend reading through the instructions in order, since later sections rely on understanding how previous sections work. No specific knowledge is required as a prerequisite, but I recommend being at least familiar with Blender.
 
-Note that this project is still under development, so some features may be buggy or not fully implemented. Please let me know if any sections have errors or are unclear.
+Note that this project is still under development, so some features may be buggy or not fully implemented. Please let me know if any section has errors or is unclear.
 
 I highly recommend these videos as an introduction to modding with 3Dmigoto: https://www.youtube.com/watch?v=zWE0xP4MgR8 and https://www.youtube.com/watch?v=z2nvJzkwHHQ. While Genshin has several quirks to its structure that makes it more complicated to mod, a large amount of the information contained in those videos is still relevant and can supplement these explanations with more details and visuals.
 
@@ -67,7 +67,7 @@ I highly recommend these videos as an introduction to modding with 3Dmigoto: htt
 8. Move the generated folder into the Mods directory of the launcher you created during the installation
 9. Press F10 in game to load the model
 
-Ensure you only have one character folder at a time in the Mods directory.
+Each character can only have one corresponding folder at a time in the Mods directory - if you want to load a new model for a character, the old one needs to be removed from the Mods folder first.
 
 &nbsp;
 ### Hunting for Buffers
