@@ -4,7 +4,7 @@ Scripts and instructions on how to override models for Genshin Impact
 #### **DISCLAIMER: Using this on official Genshin servers is very likely to get you banned. I do not recommend or condone the use of these scripts and programs on official servers, and if you do use it on official servers I take no responsibility for any consequences as a result.**
 &nbsp;
 
-This repo explains various methods of modifying models and textures in Genshin Impact using 3Dmigoto. Unlike SpecialK which is limited to texture modifications, 3dMigoto allows you to override both model and texture data.
+This repo explains various methods of modifying meshes in Genshin Impact using 3Dmigoto. Unlike SpecialK which is limited to texture modifications, 3dMigoto allows you to override both model and texture data.
 
 ## Installation Instructions (3DMigoto)
 
@@ -55,17 +55,17 @@ I highly recommend these videos as an introduction to modding with 3Dmigoto: htt
 (AKA I don't want to read through everything to understand how it works and just want to perform basic model edits)
 
 1. In blender, go to File -> Import -> 3DMigoto Frame Analysis Dump (vb.txt + ib.txt)
-2. Select the four files from the Character Model folder of this repo for the character you want (CharHead-vb0=hash.txt, CharHead-ib=hash.txt, CharBody-vb0=hash.txt, CharBody-ib=hash.txt) which I have modified to be in correct format. Leave all options as default and press Import
-3. Perform any modifications you want to the model, with the following restrictions:
-   - Vertices cannot be deleted from the head model (usually consisting of the hair and portions of the head not including hats) - I am working on removing this restriction. You can bypass this partially by shrinking the portion you want to remove and setting its y location to -100 (keeps the vertex and edge count the same, but prevents that portion of the mesh from appearing)
-   - The total number of vertices and edges cannot exceed that of the original model
-   - Adding in new vertices or geometry is more complicated than deleting parts of the mesh (e.g. filling in the holes in a character model after removing clothing) - refer to Localized Model Overrides for more details
+2. Select the files from the Character Model folder of this repo for the character you want (CharX-vb0=hash.txt, CharX-ib=hash.txt; all characters have at least a head and body, but some also have additional bits like skirts) which I have modified to be in correct format. Leave all options as default and press Import
+3. Perform any modifications you want to the model, with the following restrictions/notes:
+   - The number of vertices and edges for each model part cannot exceed that of the original model (specifically, the IB buffer must remain the same size or smaller; the script in step 7 will warn you if you are over and the model should still work as long as the sum total of all the vertices and edges is below the original, but it will mess up the textures. I'm working on fixing this)
+   - Adding in new vertices or geometry is more complicated than deleting parts of the mesh (e.g. filling in the holes in a character model after removing clothing) - refer to Localized Model Overrides for more details.
    - Do not change the vertex groups, vertex colors, or custom properties of the objects
 5. Select the head object and go to File -> Export -> 3DMigoto Raw Buffers (.vb + .ib). Press export, leaving all options as default, and name the file CharHead.vb
-6. Repeat step 5 for the body object, naming it CharBody.vb
+6. Repeat step 5 for the body object, naming it CharBody.vb, and the extra object, naming it CharExtra.vb
 7. Place the genshin_3dmigoto_generate.py script wherever you exported the results from step 5 and 6 with the command `python genshin_3dmigoto_generate.py -i CharHead.vb`
-8. Move the generated folder into the Mods directory of the launcher you created during the installation
-9. Press F10 in game to load the model
+8. (optional) Perform any edits to the Character's diffuse and texture maps in the output folder (the .ini file expects the format to be CharHeadDiffuse.dds, CharHeadLightMap.dds, CharBodyDiffuse.dds and CharBodyLightMap.dds, but you can change that in the .ini file if you wish)
+9. Move the generated folder into the Mods directory of the launcher you created during the installation
+10. Press F10 in game to load the model
 
 Each character can only have one corresponding folder at a time in the Mods directory - if you want to load a new model for a character, the old one needs to be removed from the Mods folder first.
 
