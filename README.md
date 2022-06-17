@@ -8,7 +8,7 @@ This repo explains various methods of modifying models and textures in Genshin I
 
 ## Installation Instructions (3DMigoto)
 
-(Note: SpecialK and 3DMigoto both use the same .dll file and perform similar functions, so it is unlikely that they can run simultaneously. It might be possible by chaining the .dlls together, but 3Dmigoto can do everything SpecialK can so running both together is not required for any mods. Melon and 3DMigoto should be able to run together without issue, but I have not tested it.
+(Note: SpecialK and 3DMigoto both use the same .dll file and perform similar functions, so it is unlikely that they can run simultaneously. It might be possible by chaining the .dlls together, but 3Dmigoto can do everything SpecialK can so running both together is not required for any mods. Melon and 3DMigoto should be able to run together without issue, but I have not tested it.)
 
 1. Grab the latest version of 3dMigoto from https://github.com/bo3b/3Dmigoto/releases (3Dmigoto-1.3.16.zip as of the time of writing)
 2. Extract the zip file, and copy the contents of the "x64" directory into the "loader\x64" directory. 
@@ -44,11 +44,92 @@ In order to modify game models, you need to also setup your Blender plugins and 
 
 ## Usage Instructions (Summary)
 
-Full details and walkthrough can be found in the Wiki, this is just a high-level summary. Note that this project is still under development, so some features may be buggy or not fully implemented. Please let me know if any sections have errors or are unclear.
+Full details and walkthrough with images can be found in the Wiki, this is a high-level summary of the instructions for each section. I have organized the content approximately in difficulty from easiest to hardest - I recommend reading through the instructions in order, since later sections rely on understanding how previous sections work. No specific knowledge is required as a prerequisite, but I recommend being at least familiar with Blender.
 
-I highly recommend these videos as an introduction to modding with 3Dmigoto: https://www.youtube.com/watch?v=zWE0xP4MgR8 and https://www.youtube.com/watch?v=z2nvJzkwHHQ. While Genshin has several quirks to its structure that makes it more complicated to mod, a large amount of the information contained in those videos is still relevant and can supplement these explanations with more details.
+Note that this project is still under development, so some features may be buggy or not fully implemented. Please let me know if any sections have errors or are unclear.
 
+I highly recommend these videos as an introduction to modding with 3Dmigoto: https://www.youtube.com/watch?v=zWE0xP4MgR8 and https://www.youtube.com/watch?v=z2nvJzkwHHQ. While Genshin has several quirks to its structure that makes it more complicated to mod, a large amount of the information contained in those videos is still relevant and can supplement these explanations with more details and visuals.
+
+### TLDR 
+
+(AKA I don't want to read through everything to understand how it works and just want to perform basic model edits)
+
+1. In blender, go to File -> Import -> 3DMigoto Frame Analysis Dump (vb.txt + ib.txt)
+2. Select the four files from the Character Model folder of this repo for the character you want (CharHead-vb0=hash.txt, CharHead-ib=hash.txt, CharBody-vb0=hash.txt, CharBody-ib=hash.txt) which I have modified to be in correct format. Leave all options as default and press Import
+3. Perform any modifications you want to the model, with the following restrictions:
+   - Vertices cannot be deleted from the head model (usually consisting of the hair and portions of the head not including hats) - I am working on removing this restriction. You can bypass this partially by shrinking the portion you want to remove and setting its y location to -100 (keeps the vertex and edge count the same, but prevents that portion of the mesh from appearing)
+   - The total number of vertices and edges cannot exceed that of the original model
+   - Adding in new vertices or geometry is more complicated than deleting parts of the mesh (e.g. filling in the holes in a character model after removing clothing) - refer to Localized Model Overrides for more details)
+   - Do not change the vertex groups, vertex colors, or custom properties of the objects
+5. Select the head object and go to File -> Export -> 3DMigoto Raw Buffers (.vb + .ib). Press export, leaving all options as default, and name the file CharHead.vb
+6. Repeat step 5 for the body object, naming it CharBody.vb
+7. Place the genshin_3dmigoto_generate.py script wherever you exported the results from step 5 and 6 with the command `python genshin_3dmigoto_generate.py -i CharHead.vb`
+8. Move the generated folder into the Mods directory of the launcher you created during the installation
+9. Press F10 in game to load the model
+
+Ensure you only have one character folder at a time in the Mods directory.
+
+&nbsp;
 ### Hunting for Buffers
 
+Pressing 0 on the number pad turns hunting mode on (green text overlay, default) or off (no text overlay).
 
-### Removing
+With hunting mode turned on, you can cycle through the various buffers and shaders that Genshin is currently using to draw objects to the screen. Selected buffers/shaders will have their draw calls skipped, showing you what portions of the screen they are responsible for drawing. 
+
+Pressing the + button resets all the currently selected buffers back to zero, and it is a good habit to reset between searches or reloads since otherwise it can get confusing as to what is actually being selected.
+
+I recommend performing hunting in the character menu, since otherwise the number of objects quickly becomes overwhelming.
+
+- Pressing / and * on the numpad cycles through the Vertex Buffers (VB), which contain information on the vertices for the objects being drawn to the screen. You can copy the hash of the currently selected VB with numpad -
+- Pressing 7 and 8 on the numpad cycles through the Index Buffers (IB), which contain information on how vertices are connected to form the model. You can copy the hash with numpad 9
+- Pressing 4 and 5 on the numpad cycles through the Vertex Shaders (VS), which contain information on how vertices/faces are positioned on the screen. Use numpad 6 to copy the hash
+- Pressing 1 and 2 on the numpad cycles throught the Pixel Shaders (PS), which contain information on how textures and colors are applied to the objects. Use numpad 3 to copy the hash
+
+
+### Removing Buffers and Shaders
+
+Once you have found an buffer or shader that you want to have skipped, you can tell 3DMigoto to always skip the draw call for that object even when it is not selected.
+
+To do so, create a .ini file in the Mods folder (any name is fine for the .ini), and add the following to it for VB/IB skips:
+
+```
+[TextureOverrideX]
+hash = Y
+handling = skip
+```
+Where X is any name you want (e.g. KeqingSkirt) and the hash corresponds to the one found while hunting (Note: these are buffers not textures, but the naming convention refers to both as "textures").
+
+And the following for VS/PS skips:
+
+```
+[ShaderOverrideX]
+hash = Y
+handling = skip
+```
+
+Same logic applies for X/Y as for the one for buffer overrides.
+
+Note that some objects might have multiple buffers or shaders associated with them - if parts of the object remain after placing the above code in the .ini file (such as shadows, reflections, outlines), cycle through the buffers and shaders again to see if there are any other ones that are responsible for drawing that part.
+
+This functionality can be useful if the portion of the character model you are trying to remove is drawn by a specific VB/IB/VS/PS - SpecialK has a similar functionality in its shader section.
+
+
+### Removing Buffers for Multi-Index Objects
+
+Sometimes, multiple objects are drawn on a single buffer. One example is character models - the head and body are separate objects, but they are both drawn using the same VB/IB so if you skip that buffer you will end up skipping the draw call for the entire object.
+
+
+
+
+### Replacing Textures
+
+
+
+### Deletions and Modifications of Model Vertices
+
+
+### Localized Model Overrides
+
+
+### Complete Model Overrides
+
