@@ -59,7 +59,7 @@ I highly recommend these videos as an introduction to modding with 3Dmigoto: htt
 3. Perform any modifications you want to the model, with the following restrictions:
    - Vertices cannot be deleted from the head model (usually consisting of the hair and portions of the head not including hats) - I am working on removing this restriction. You can bypass this partially by shrinking the portion you want to remove and setting its y location to -100 (keeps the vertex and edge count the same, but prevents that portion of the mesh from appearing)
    - The total number of vertices and edges cannot exceed that of the original model
-   - Adding in new vertices or geometry is more complicated than deleting parts of the mesh (e.g. filling in the holes in a character model after removing clothing) - refer to Localized Model Overrides for more details)
+   - Adding in new vertices or geometry is more complicated than deleting parts of the mesh (e.g. filling in the holes in a character model after removing clothing) - refer to Localized Model Overrides for more details
    - Do not change the vertex groups, vertex colors, or custom properties of the objects
 5. Select the head object and go to File -> Export -> 3DMigoto Raw Buffers (.vb + .ib). Press export, leaving all options as default, and name the file CharHead.vb
 6. Repeat step 5 for the body object, naming it CharBody.vb
@@ -85,7 +85,7 @@ I recommend performing hunting in the character menu, since otherwise the number
 - Pressing 4 and 5 on the numpad cycles through the Vertex Shaders (VS), which contain information on how vertices/faces are positioned on the screen. Use numpad 6 to copy the hash
 - Pressing 1 and 2 on the numpad cycles throught the Pixel Shaders (PS), which contain information on how textures and colors are applied to the objects. Use numpad 3 to copy the hash
 
-
+&nbsp;
 ### Removing Buffers and Shaders
 
 Once you have found an buffer or shader that you want to have skipped, you can tell 3DMigoto to always skip the draw call for that object even when it is not selected.
@@ -113,23 +113,55 @@ Note that some objects might have multiple buffers or shaders associated with th
 
 This functionality can be useful if the portion of the character model you are trying to remove is drawn by a specific VB/IB/VS/PS - SpecialK has a similar functionality in its shader section.
 
-
-### Removing Buffers for Multi-Index Objects
-
-Sometimes, multiple objects are drawn on a single buffer. One example is character models - the head and body are separate objects, but they are both drawn using the same VB/IB so if you skip that buffer you will end up skipping the draw call for the entire object.
-
-
-
-
+&nbsp;
 ### Replacing Textures
 
+Replacing a texture for a model (similar to how Special k does) is simple:
+
+1. Hunt down the IB that corresponds to drawing the model. You know you have found the correct one when the model disappears.
+2. Create a texture override section similar to what was created in the Removing Buffers and Shaders section, but instead use the following to replace the textures:
+
+```
+[TextureOverrideX]
+hash = Y
+ps-t0 = TextureDiffuseMap.dds
+ps-t1 = TextureLightMap.dds
+```
+Note that we do not use handling=skip here since we do actually want the game to perform the draw call. Some objects do not have a corresponding lightmap, and some objects (like characters) have multiple texture maps on a single buffer (see next section).
+
+&nbsp;
+### Removing Buffers for Multi-Index Objects and Frame Analysis Dumps
+
+Sometimes, multiple objects are drawn on a single buffer. One example is character models - the head and body are separate objects, but they are both drawn using the same VB/IB so if you skip that buffer you will end up skipping the draw call for the entire object. Likewise, if you try and replace any aspect of the buffer you will only replace one and not the other.
+
+At this point, there is nothing more we can do from the hunting menu - we have to start digging deeper into the draw calls. By pressing F8, we can perform a frame analysis dump to get more information. This will dump all the buffers relating to drawing a single frame to a folder called FrameAnalysis-timestamp, as well as to a file called log.txt which explains what commands were executed.
+
+- Note1: Frame dumps can be quite large (several GB(, so be careful not to press F8 in an area with many objects. Doing it in a dense area like a city will probably just cause your game to crash. I recommend performing it from the character menu.
+- Note2: A frame dump may cause the game to pause for an extended period. Depending on your hardware, it can be from a few seconds to an upward of a minute
+- Note2: I have enabled both txt and buf dumps in the d3dx.ini file, as well as a few other options that give more information - the default .ini has the frame analysis turned off
+
+With the frame dump, we can perform a search for the hash corresponding to the IB we are interested in. This will result in several -ib .txt files, which you can open to see where the index for certain objects begin and end. You can then specify a overrides on a single object with:
+
+```
+[TextureOverrideX]
+hash = Y
+;match_first_index = Z
+handling = skip
+```
+Where Z is the index of the object in the buffer you are matching.
 
 
+&nbsp;
 ### Deletions and Modifications of Model Vertices
 
+Still under development
 
+&nbsp;
 ### Localized Model Overrides
 
+Still under development
 
+&nbsp;
 ### Complete Model Overrides
 
+Still under development
