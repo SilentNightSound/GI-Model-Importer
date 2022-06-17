@@ -29,7 +29,7 @@ This repo explains various methods of modifying models and textures in Genshin I
 
 7. Installation complete! You should now able to load custom resources and override textures and shaders with 3DMigoto.
 
-
+&nbsp;
 ## Installation Instructions (3DMigoto Blender Plugin)
 
 In order to modify game models, you need to also setup your Blender plugins and environment. The 3DMigoto plugin should work with Blender 2.80 and above, but I recommend version 2.93 for full compatibility with the mmd plugin. Blender 3.0 and higher not tested, so you may run into issues with those versions
@@ -145,7 +145,7 @@ With the frame dump, we can perform a search for the hash corresponding to the I
 ```
 [TextureOverrideX]
 hash = Y
-;match_first_index = Z
+match_first_index = Z
 handling = skip
 ```
 Where Z is the index of the object in the buffer you are matching.
