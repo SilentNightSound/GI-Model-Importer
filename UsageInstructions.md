@@ -19,7 +19,8 @@ I highly recommend these videos as an introduction to modding with 3Dmigoto: htt
 3. Perform modifications you want to the model, with the following restrictions/notes:
    - The number of vertices and edges for each model part cannot exceed that of the original model (Note: there is currently a bug in the program where the 3Dmigoto plugin will export around 10% more vertices than the original model has, so in reality you are limited to around 90% of the original. Going over will prevent portions from being drawn and break textures. I'm working on fixing this)
    - Adding in new vertices or geometry is much more complicated than deleting parts of the mesh (e.g. filling in the holes in a character model after removing clothing). If you are trying to patch holes, I recommend either re-arranging existing vertices to cover them (if the hole is small enough) or trying to copy from another Genshin model (see Localized Model Overrides for details)
-   - Do not change the vertex groups, vertex colors, or custom properties of the objects
+   - Character's faces are stored separately - these scripts and instructions do not yet support face modifications
+   - Do not change the vertex groups, vertex colors, or custom properties of the objects otherwise the export will fail
    - It is possible to connect the texture maps to the object in Blender, but you will likely have to convert the .dds to a .png in order for Blender to recognize it and then later convert back to .dds
 5. Select the head object and go to File -> Export -> 3DMigoto Raw Buffers (.vb + .ib). Press export, leaving all options as default, and name the file CharHead.vb
 6. Repeat step 5 for the body object, naming it CharBody.vb, and the extra object, naming it CharExtra.vb
