@@ -107,7 +107,7 @@ Sometimes, multiple objects are drawn on a single buffer. One example is charact
 
 At this point, there is nothing more we can do from the hunting menu - we have to start digging deeper into the draw calls. By pressing F8, we can perform a frame analysis dump to get more information. This will dump all the buffers relating to drawing a single frame to a folder called FrameAnalysis-timestamp, as well as to a file called log.txt which explains what commands were executed.
 
-- Note1: Frame dumps can be quite large (several GB(, so be careful not to press F8 in an area with many objects. Doing it in a dense area like a city will probably just cause your game to crash. I recommend performing it from the character menu.
+- Note1: Frame dumps can be quite large (several GB), so be careful not to press F8 in an area with many objects. Doing it in a dense area like a city will probably just cause your game to crash. I recommend performing it from the character menu.
 - Note2: A frame dump may cause the game to pause for an extended period. Depending on your hardware, it can be from a few seconds to an upward of a minute
 - Note3: I have enabled both txt and buf dumps in the d3dx.ini file, as well as a few other options that give more information - the default .ini has the frame analysis turned off
 
