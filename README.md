@@ -124,10 +124,19 @@ Replacing a texture for a model (similar to how Special k does) is simple:
 ```
 [TextureOverrideX]
 hash = Y
-ps-t0 = TextureDiffuseMap.dds
-ps-t1 = TextureLightMap.dds
+ps-t0 = ResourceDiffuse
+ps-t1 = ResourceLightMap
+
+[ResourceDiffuse]
+filename = TextureDiffuseMap.dds
+
+[ResourceLightMap]
+filename = TextureLightMap.dds
+
 ```
-Note that we do not use handling=skip here since we do actually want the game to perform the draw call. Some objects do not have a corresponding lightmap, and some objects (like characters) have multiple texture maps on a single buffer (see next section).
+Note that we do not use handling=skip here since we do actually want the game to perform the draw call. We also need to load our new texture maps into memory by creating a resource object. 
+
+Some objects do not have a corresponding lightmap, and some objects (like characters) have multiple texture maps on a single buffer (see next section).
 
 &nbsp;
 ### Removing Buffers for Multi-Index Objects and Frame Analysis Dumps
@@ -154,14 +163,69 @@ Where Z is the index of the object in the buffer you are matching.
 &nbsp;
 ### Deletions and Modifications of Model Vertices
 
-Still under development
+Section still under construction, see TLDR for walkthrough
+
+Once we have the frame dump, we can extract the character models from the buffer in order to make edits. Normally, this would involve finding the VB/IB hash that involves drawing the character, collecting the corresponding files from the frame dump, importing the corresponding buffer into Blender using the 3Dmigoto plugin, making edits, then exporting a modified version and overriding the model with:
+
+```
+[TextureOverrideX]
+hash = Y
+vb0 = ResourceVB
+ib = ResourceIB
+handling = skip
+drawindexed = auto
+
+[ResourceVB]
+type = Buffer
+stride = 40
+filename = File.vb
+
+[ResourceIB]
+type = Buffer
+format = DXGI_FORMAT_R16_UINT
+filename = File.ib
+
+```
+
+Where the stride represents the size in bytes of all the data corresponding to a single vertex (is listed in the dump headers) and format is the size of a single index value.
+
+In this case, we skip the game's draw call using handling = skip, then substitute our own draw call with the new resources with drawindexed = auto (which automatically calculates the parts of the object to draw from the ib file and buffer descriptions). These new VB and IB resources are then passed to the shaders which calculate their positions and apply textures.
+
+Genshin is not so simple, sadly. Genshin actually splits the properties of character objects across multiple different buffers - at least six, to be precise. One for positional/face data (position, normal, tangent), one for blend (blendweight, blendindices), one for textures (color, texcoord), one for drawing the object (contains the position data for the object for this specific frame, and is recalculated each frame), and at least two for specifying indices (some characters have two, some have three depending on the complexity of their model).
+
+Furthermore, most of those buffers actually have different hashes and are not just a single hash object split into different buffer slots. Which means if we override on one hash the model will break unless we override the correct data on every single related buffer at the same time.
+
+To add more difficulty, the headers that 3dmigoto exports are actually wrong as well. The headers that are exported contain information about all the vertex data, not just the ones that are currently in the buffer. This leads to a mismatch between the header numbering/byte offsets and the actual data, meaning you have to recalculate what the actual data is directly from the raw buffers.
+
+Having fun yet? There's more! In addition to placing multiple objects on a single buffer then splitting the properties of that buffer between several, it also uses the higher buffer slots (VB1+) and the pointlist topology, neither of which 3Dmigoto supports so you have to convert back to formats it does.
+
+And even if you do all the above and export it into Blender, 3Dmigoto will output the results in a format that cannot be ingested back in into the game. So you have to reverse the above process to split it back up into its parts.
+
+Anyway, I wrote scripts that handles most of this. You can just run the genshin_3dmigoto_collect.py script on a frame dump with just the main draw VB and it will find the and organize/format it correctly. Likewise, running genshin_3dmigoto_generate on a 3Dmigoto export from Blender will split it into the correct buffer files and format the .ini file so everything loads properly. Take a look in those files if you are interested in the specifics of how this works.
+
+
 
 &nbsp;
 ### Localized Model Overrides
 
-Still under development
+Still under development, see videos at the top of this page for more explanations and a walkthrough in a different game
+
+- New geometry/meshes from other models will not have the correct weights or vertex groups
+- Import the model, position it close to/overlapping where you want it to be, and transfer the vertex groups and colors to it. Also make sure it has texture uv values assigned
+- Works best on while patching small holes in the model after removing parts of the mesh, or replacing parts of the mesh with others (e.g. shoe -> foot)
+- Will work best if the model you are getting the patch from is also from the game and the same body type, or a model derived from a game model. Can use models from other sources, but may have to change the format to match
+- Larger holes or objects will not have the vertex weights transferred correctly since Blender will not be able to interpolate. In these cases, you will have to do it manually or find an object from another game model that already has the correct groups set
 
 &nbsp;
 ### Complete Model Overrides
 
-Still under development
+Still under development, see videos at the top of this page for more explanations. I do not yet have this working reliably, so try at your own peril. Some tips/observerations I have found during my experiments:
+
+- Basic concept is to overlap the model you are replacing with the new one as closely as possible, then transferring the vertex groups, weights and colors over
+- Model needs to be approximately the same complexity (vertex/edges) and shape otherwise the transfer will not work well. Even if the models are very similar, may still run into issues. 
+- Models that are too far removed from the original are not possible since there is no way to assign the blend indices and vertices in a way that makes sense (can still be doable if you give up on animations working correctly/at all)
+- Complicated hair structure is a nightmare. There is a reason almost every character in Genshin has simple hair. Unless you are amazing with blender, I recommend just assigning all the hair to the head vertex group and giving up on trying to get wavy hair movement working (or stick with the original hair)
+- Make sure that all the vertices in the model have weight/are assigned to a group, and that the groups are correct. Often, the weight transfer can end up transferring the hand and arm groups to incorrect areas since they are so close to the body (would be better to T-pose model, but I'm not sure if the game models have enough information to change their pose). Fingers are also problematic
+- Models only use 2 UV maps - one for the head, and one for the body. Some characters actually use a third for things like skirts, but that is just a duplicate copy of the body texture and I'm not sure if it can be modified (testing to come)
+- Which UV a specific vertex uses depends on which object the game assigns it to. As far as I can tell, the game hardcodes a certain index value for each character and separates based on that. Currently looking into ways to change this and increase flexibility 
+- May have to rotate the model relative to the original if is face down when loaded (not sure what causes this, shows up with mmd models)
