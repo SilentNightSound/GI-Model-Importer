@@ -163,7 +163,7 @@ Having fun yet? There's more! In addition to placing multiple objects on a singl
 
 And even if you do all the above and export it into Blender, 3Dmigoto will output the results in a format that cannot be ingested back in into the game. So you have to reverse the above process to split it back up into its parts.
 
-Anyway, I wrote scripts that handles most of this. You can just run the genshin_3dmigoto_collect.py script on a frame dump with just the main draw VB and it will find the and organize/format it correctly. Likewise, running genshin_3dmigoto_generate on a 3Dmigoto export from Blender will split it into the correct buffer files and format the .ini file so everything loads properly. Take a look in those files if you are interested in the specifics of how this works.
+Anyway, I wrote scripts that handles most of this. You can just run the genshin_3dmigoto_collect.py script on a frame dump with just the main draw VB and it will find the related buffer files and organize/format them correctly. Likewise, running genshin_3dmigoto_generate on a 3Dmigoto export from Blender will split it into the correct buffer files and format the .ini file so everything loads properly. Take a look in those files if you are interested in the specifics of how this works.
 
 
 
