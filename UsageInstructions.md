@@ -181,13 +181,13 @@ Still under development, see videos at the top of this page for more explanation
 &nbsp;
 ### Complete Model Overrides
 
-Still under development, see videos at the top of this page for more explanations. I do not yet have this working reliably, so try at your own peril. Some tips/observations  I have found during my experiments:
+Still under development, see videos at the top of this page for more explanations. I do not yet have this working reliably, so try at your own peril. Some tips/observations I have found during my experiments:
 
-- Basic concept is to overlap the model you are replacing with the new one as closely as possible, then transferring the vertex groups, weights and colors over
-- Model needs to be approximately the same complexity (vertex/edges) and shape otherwise the transfer will not work well. Even if the models are very similar, may still run into issues. 
+- Basic concept is to overlap the model you are replacing with the new one as closely as possible, then transferring the vertex groups, weights, colors and custom properties over
+- Model needs to be approximately the same complexity (vertex/edges) and shape otherwise the transfer will not work well. Even if the models are very similar, may still run into issues.
 - Models that are too far removed from the original are not possible since there is no way to assign the blend indices and vertices in a way that makes sense (can still be doable if you give up on animations working correctly/at all)
 - Complicated hair structure is a nightmare. There is a reason almost every character in Genshin has simple hair. Unless you are amazing with blender, I recommend just assigning all the hair to the head vertex group and giving up on trying to get wavy hair movement working (or stick with the original hair)
-- Make sure that all the vertices in the model have weight/are assigned to a group, and that the groups are correct. Often, the weight transfer can end up transferring the hand and arm groups to incorrect areas since they are so close to the body (would be better to T-pose model, but I'm not sure if the game models have enough information to change their pose). Fingers are also problematic
+- Make sure that all the vertices in the model have weight/are assigned to a group, and that the groups are correct. Often, the weight transfer can end up transferring the hand and arm groups to incorrect areas since they are so close to the body (would be better to T-pose model, but I'm not sure yet how to load pose information from the constant buffers). Fingers are also problematic
 - Models only use 2 UV maps - one for the head, and one for the body. Some characters actually use a third for things like skirts, but that is just a duplicate copy of the body texture and I'm not sure if it can be modified (testing to come)
 - Which UV a specific vertex uses depends on which object the game assigns it to. As far as I can tell, the game hardcodes a certain index value for each character and separates based on that. Currently looking into ways to change this and increase flexibility 
 - May have to rotate the model relative to the original if is face down when loaded (not sure what causes this, shows up with mmd models)
