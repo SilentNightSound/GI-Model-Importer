@@ -55,14 +55,16 @@ I highly recommend these videos as an introduction to modding with 3Dmigoto: htt
 (AKA I don't want to read through everything to understand how it works and just want to perform basic model edits)
 
 1. In blender, go to File -> Import -> 3DMigoto Frame Analysis Dump (vb.txt + ib.txt)
-2. Select the files from the Character Model folder of this repo for the character you want (CharX-vb0=hash.txt, CharX-ib=hash.txt; all characters have at least a head and body, but some also have additional bits like skirts) which I have modified to be in correct format. Leave all options as default and press Import
-3. Perform any modifications you want to the model, with the following restrictions/notes:
-   - The number of vertices and edges for each model part cannot exceed that of the original model (specifically, the IB buffer must remain the same size or smaller; the script in step 7 will warn you if you are over and the model should still work as long as the sum total of all the vertices and edges is below the original, but it will mess up the textures. I'm working on fixing this)
-   - Adding in new vertices or geometry is more complicated than deleting parts of the mesh (e.g. filling in the holes in a character model after removing clothing) - refer to Localized Model Overrides for more details.
+2. Select the files from the Character Model folder of this repo for the character you want (all characters have at least a head and body, but some also have additional bits like skirts which I have labelled as extra) which I have modified to be in correct format. Leave all options as default and press Import
+3. Perform modifications you want to the model, with the following restrictions/notes:
+   - The number of vertices and edges for each model part cannot exceed that of the original model (Note: there is currently a bug in the program where the 3Dmigoto plugin will export around 10% more vertices than the original model has, so in reality you are limited to around 90% of the original. Going over will prevent portions from being drawn. I'm working on fixing this)
+   - Some characters have a third component in addition to "Head" and "Body" - I've called this "Extra", and am still trying to figure out how it functions. For now, the only modifications you can make it it is deletion, and it will have messed up textures/geometry if you try and import it back in
+   - The location of the divide between Head, Body and 
+   - Adding in new vertices or geometry is much more complicated than deleting parts of the mesh (e.g. filling in the holes in a character model after removing clothing). If you are trying to patch holes, I recommend either re-arranging existing vertices to cover them (if the hole is small enough) or trying to copy from another Genshin model (see Localized Model Overrides for details)
    - Do not change the vertex groups, vertex colors, or custom properties of the objects
 5. Select the head object and go to File -> Export -> 3DMigoto Raw Buffers (.vb + .ib). Press export, leaving all options as default, and name the file CharHead.vb
 6. Repeat step 5 for the body object, naming it CharBody.vb, and the extra object, naming it CharExtra.vb
-7. Place the genshin_3dmigoto_generate.py script wherever you exported the results from step 5 and 6 with the command `python genshin_3dmigoto_generate.py -i CharHead.vb`
+7. Place the genshin_3dmigoto_generate.py script wherever you exported the results from step 5 and 6 with the command `python genshin_3dmigoto_generate.py -n Char`
 8. (optional) Perform any edits to the Character's diffuse and texture maps in the output folder (the .ini file expects the format to be CharHeadDiffuse.dds, CharHeadLightMap.dds, CharBodyDiffuse.dds and CharBodyLightMap.dds, but you can change that in the .ini file if you wish)
 9. Move the generated folder into the Mods directory of the launcher you created during the installation
 10. Press F10 in game to load the model
