@@ -23,7 +23,7 @@ I highly recommend these videos as an introduction to modding with 3Dmigoto: htt
    - Do not change the vertex groups, vertex colors, or custom properties of the objects otherwise the export will fail
    - It is possible to connect the texture maps to the object in Blender, but you will likely have to convert the .dds to a .png in order for Blender to recognize it and then later convert back to .dds
 4. Select the head object and go to File -> Export -> 3DMigoto Raw Buffers (.vb + .ib). Press export, leaving all options as default, and name the file CharHead.vb
-5. Repeat step 5 for the body object, naming it CharBody.vb, and the extra object, naming it CharExtra.vb
+5. Repeat step 4 for the body object, naming it CharBody.vb, and the extra object, naming it CharExtra.vb
 6. (optional) Perform any edits to the character's diffuse and lightmaps
 7. Run the genshin_3dmigoto_generate.py script one folder up from where the results from steps 5 and 6 were imported with the command `python genshin_3dmigoto_generate.py -n Char`. This generates the CharMod folder
 8. Move the generated CharMod folder into the Mods directory of the launcher you created during the installation step
