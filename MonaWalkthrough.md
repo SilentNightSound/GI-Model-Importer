@@ -69,7 +69,7 @@ We can do a bit more to improve this. Notices that Mona's hair is discolored whe
 
 <img src="https://user-images.githubusercontent.com/107697535/174458258-1c92a244-40e9-45c5-9a50-da3bfaa2bca4.png" width="800"/>
 
-15. Finally, we can replace the MonaHeadLightMap.dds that the mod is currently using either by directly overwriting it in the MonaMod folder or putting it back in the Mona character folder and running the genshin_3dmigoto_generate.py script again (the script will pull the texture .dds from the character folder every time it is ran)
+15. Finally, we can replace the MonaHeadLightMap.dds that the mod is currently using either by directly overwriting it in the MonaMod folder or putting it back in the Mona character folder and running the genshin_3dmigoto_generate.py script again (the script will pull the texture .dds from the character folder every time it runs)
 
 <img src="https://user-images.githubusercontent.com/107697535/174458283-1bec92ab-5008-4ae6-a6f8-110d7a0dee49.png" width="800"/>
 
