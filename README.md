@@ -8,7 +8,7 @@ This repo explains various methods of modifying meshes in Genshin Impact using 3
 
 ## Installation Instructions (3DMigoto)
 
-(Note: SpecialK and 3DMigoto both use the same .dll file and perform similar functions, so it is unlikely that they can run simultaneously. It might be possible by chaining the .dlls together, but 3Dmigoto can do everything SpecialK can so running both together is not required for any mods. Melon and 3DMigoto should be able to run together without issue, but I have not tested it.)
+(Note: SpecialK and 3DMigoto both use the same .dll file and perform similar functions, so it is unlikely that they can run simultaneously. It might be possible by chaining the .dlls together, but 3Dmigoto can do everything SpecialK can so running both together is not required for any mods. Melon and 3DMigoto are able to run together.)
 
 1. Grab the latest version of 3dMigoto from https://github.com/bo3b/3Dmigoto/releases (3Dmigoto-1.3.16.zip as of the time of writing)
 2. Extract the zip file, and copy the contents of the "x64" directory into the "loader\x64" directory. 
