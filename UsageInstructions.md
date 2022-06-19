@@ -10,7 +10,7 @@ I highly recommend these videos as an introduction to modding with 3Dmigoto: htt
 
 ### TLDR 
 
-(AKA I don't want to read through everything to understand how it works and just want to perform basic model edits)
+(AKA I don't want to read through everything right now and just want to perform basic model edits)
 
 (See https://github.com/SilentNightSound/Genshin-Model-Override/blob/main/MonaWalkthrough.md for a step-by-step walkthrough of this with removing Mona's hat)
 
