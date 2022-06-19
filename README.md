@@ -32,9 +32,10 @@ This repo explains various methods of modifying meshes in Genshin Impact using 3
 &nbsp;
 ## Installation Instructions (3DMigoto Blender Plugin)
 
-In order to modify game models, you need to also setup your Blender plugins and environment. The 3DMigoto plugin should work with Blender 2.80 and above, but I have only tested v2.92 (confirmed that plugin fails on v2.93). Blender 3.0 and higher not tested, so you may run into issues with those versions
+In order to modify game models, you need to also setup your Blender plugins and environment. The 3DMigoto plugin works with Blender 2.80-2.92 (confirmed that plugin fails on v2.93 and higher)
 
 1. Download and install Blender (https://download.blender.org/release/Blender2.92/)
+   - Version 2.93 and above will fail to import files with the message `TypeError: '_PropertyDeferred' object is not iterable`
 2. Download and install the 3DMigoto plugin from https://github.com/DarkStarSword/3d-fixes/blob/master/blender_3dmigoto.py. You can install an add-on in Blender by going to Edit -> Preferences -> Add-Ons -> Install, then selecting the .py file. 
 3. If done correctly, you should see 3DMigoto in the plugin list as well as new options in the import and export menus
 
