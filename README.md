@@ -27,7 +27,7 @@ This repo explains various methods of modifying meshes in Genshin Impact using 3
 
 <img src="https://user-images.githubusercontent.com/107697535/174325193-1f58ab2c-86f8-4ce9-8697-6e7d140b2014.png" width="800"/>
 
-7. Installation complete! You should now able to load custom resources and override textures and shaders with 3DMigoto.
+7. Installation complete! You should now be able to load custom resources and override textures and shaders with 3DMigoto.
 
 &nbsp;
 ## Installation Instructions (3DMigoto Blender Plugin)
