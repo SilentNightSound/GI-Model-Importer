@@ -26,6 +26,7 @@ I highly recommend these videos as an introduction to modding with 3Dmigoto: htt
 5. Repeat step 4 for the body object, naming it CharBody.vb, and the extra object (if it exists), naming it CharExtra.vb
 6. (optional) Perform any edits to the character's diffuse and lightmaps
 7. Run the genshin_3dmigoto_generate.py script one folder up from where the results from steps 4-6 were exported with the command `python genshin_3dmigoto_generate.py -n Char`. This generates the CharMod folder
+   - Make sure to use the most up-to-date hash_info.json, otherwise the script may not be able to find the required hashes to generate the .ini files
 8. Move the generated CharMod folder into the Mods directory of the launcher you created during the installation step
 9. Press F10 in game to load the mod
 
