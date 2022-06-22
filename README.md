@@ -1,4 +1,4 @@
-# Genshin-Model-Override
+# GI-Model-Importer
 Scripts and instructions on how to override models for Genshin Impact
 
 #### **DISCLAIMER: Using this on official Genshin servers is very likely to get you banned. I do not recommend or condone the use of these scripts and programs on official servers, and if you do use it on official servers I take no responsibility for any consequences as a result.**
@@ -16,7 +16,7 @@ This repo explains various methods of modifying meshes in Genshin Impact using 3
 
 <img src="https://user-images.githubusercontent.com/107697535/174320467-f5bd5969-86c7-45ae-ad07-d554aa6cc70e.png" width="800"/>
 
-4. Download the d3dx.ini from this repository, and override the one in "loader\x64"
+4. Download the d3dx.ini and d3d11.dll from this repository and override the oned in "loader\x64"
 5. Depending on the location of your Genshin Impact .exe file, you may need to change this line in the d3dx.ini file to point to your own installation (the game .exe, not the launcher.exe):
 
 <img src="https://user-images.githubusercontent.com/107697535/174322200-b1afea95-53f5-4add-be89-698f85503908.png" width="800"/>
@@ -36,7 +36,7 @@ In order to modify game models, you need to also setup your Blender plugins and 
 
 1. Download and install Blender (https://download.blender.org/release/Blender2.92/)
    - Version 2.93 and above will fail to import files with the message `TypeError: '_PropertyDeferred' object is not iterable`
-2. Download and install the 3DMigoto plugin from https://github.com/DarkStarSword/3d-fixes/blob/master/blender_3dmigoto.py. You can install an add-on in Blender by going to Edit -> Preferences -> Add-Ons -> Install, then selecting the .py file. 
+2. Download and install the 3DMigoto plugin from https://github.com/SilentNightSound/GI-Model-Importer/blob/main/blender_3dmigoto.py. You can install an add-on in Blender by going to Edit -> Preferences -> Add-Ons -> Install, then selecting the .py file. 
 3. If done correctly, you should see 3DMigoto in the plugin list as well as new options in the import and export menus
 
 <img src="https://user-images.githubusercontent.com/107697535/174328624-ccb14ded-57b2-4ac7-b0a0-0de118119174.png" width="800"/>
