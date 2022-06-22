@@ -46,4 +46,4 @@ In order to modify game models, you need to also setup your Blender plugins and 
 &nbsp;
 ## Usage Instructions
 
-See https://github.com/SilentNightSound/Genshin-Model-Override/blob/main/UsageInstructions.md
+See https://github.com/SilentNightSound/GI-Model-Importer/blob/main/UsageInstructions.md
