@@ -53,9 +53,7 @@ def main():
 
     print("Splitting VB by buffer type, merging body parts")
     position, blend, texcoord = collect_vb(args.name, "Head", extra_flag)
-    ib = collect_ib(args.name, "Head", 0)
-    while len(ib)/2 < char_hashes['object_indexes'][1]:
-        ib +=  struct.pack('1h', 0)
+    head_ib = collect_ib(args.name, "Head", 0)
 
     if len(position)%40 != 0:
         print("ERROR: VB buffer length does not match stride")
@@ -64,16 +62,14 @@ def main():
     position += x
     blend += y
     texcoord += z
-    ib += collect_ib(args.name, "Body", body_start_offset)
+    body_ib = collect_ib(args.name, "Body", body_start_offset)
     if extra_flag:
-        while len(ib) / 2 < char_hashes['object_indexes'][2]:
-            ib += struct.pack('1h', 0)
         extra_start_offset = len(position)//40
         x, y, z = collect_vb(args.name, "Extra", extra_flag)
         position += x
         blend += y
         texcoord += z
-        ib += collect_ib(args.name, "Extra", extra_start_offset)
+        extra_ib = collect_ib(args.name, "Extra", extra_start_offset)
 
 
 
@@ -85,8 +81,15 @@ def main():
         g.write(blend)
         h.write(texcoord)
 
-    with open(os.path.join(f"{args.name}Mod", f"{args.name}.ib"), "wb") as f:
-        f.write(ib)
+    with open(os.path.join(f"{args.name}Mod", f"{args.name}Head.ib"), "wb") as f, \
+            open(os.path.join(f"{args.name}Mod", f"{args.name}Body.ib"), "wb") as g:
+        f.write(head_ib)
+        g.write(body_ib)
+
+    if extra_flag:
+        with open(os.path.join(f"{args.name}Mod", f"{args.name}Extra.ib"), "wb") as h:
+            h.write(extra_ib)
+
 
     print("Copying texture files")
     shutil.copy(os.path.join(args.name, f"{args.name}HeadDiffuse.dds"), os.path.join(f"{args.name}Mod", f"{args.name}HeadDiffuse.dds"))
@@ -106,23 +109,26 @@ def main():
 
     ini_data += f"; Overrides -------------------------\n\n"
     ini_data += f"[TextureOverride{args.name}Position]\nhash = {char_hashes['position_vb']}\nvb0 = Resource{args.name}Position\n\n"
-    ini_data += f"[TextureOverride{args.name}Blend]\nhash = {char_hashes['blend_vb']}\nvb1 = Resource{args.name}Blend\n\n"
+    ini_data += f"[TextureOverride{args.name}Blend]\nhash = {char_hashes['blend_vb']}\nvb1 = Resource{args.name}Blend\nhandling = skip\ndraw = {len(position)//40},0 \n\n"
     ini_data += f"[TextureOverride{args.name}Texcoord]\nhash = {char_hashes['texcoord_vb']}\nvb1 = Resource{args.name}Texcoord\n\n"
-    ini_data += f"[TextureOverride{args.name}IB]\nhash = {char_hashes['ib']}\nib = Resource{args.name}IB\n\n"
-    ini_data += f"[TextureOverride{args.name}Head]\nhash = {char_hashes['ib']}\nmatch_first_index = {char_hashes['object_indexes'][0]}\nps-t0 = Resource{args.name}HeadDiffuse\nps-t1 = Resource{args.name}HeadLightMap\n\n"
-    ini_data += f"[TextureOverride{args.name}Body]\nhash = {char_hashes['ib']}\nmatch_first_index = {char_hashes['object_indexes'][1]}\nps-t0 = Resource{args.name}BodyDiffuse\nps-t1 = Resource{args.name}BodyLightMap\n\n"
+    ini_data += f"[TextureOverride{args.name}IB]\nhash = {char_hashes['ib']}\nhandling = skip\ndrawindexed = auto\n\n"
+    ini_data += f"[TextureOverride{args.name}Head]\nhash = {char_hashes['ib']}\nmatch_first_index = {char_hashes['object_indexes'][0]}\nib = Resource{args.name}HeadIB\nps-t0 = Resource{args.name}HeadDiffuse\nps-t1 = Resource{args.name}HeadLightMap\n\n"
+    ini_data += f"[TextureOverride{args.name}Body]\nhash = {char_hashes['ib']}\nmatch_first_index = {char_hashes['object_indexes'][1]}\nib = Resource{args.name}BodyIB\nps-t0 = Resource{args.name}BodyDiffuse\nps-t1 = Resource{args.name}BodyLightMap\n\n"
     if extra_flag:
-        ini_data += f"[TextureOverride{args.name}Extra]\nhash = {char_hashes['ib']}\nmatch_first_index = {char_hashes['object_indexes'][2]}\nps-t0 = Resource{args.name}ExtraDiffuse\nps-t1 = Resource{args.name}ExtraLightMap\n\n"
+        ini_data += f"[TextureOverride{args.name}Extra]\nhash = {char_hashes['ib']}\nmatch_first_index = {char_hashes['object_indexes'][2]}\nib = Resource{args.name}ExtraIB\nps-t0 = Resource{args.name}ExtraDiffuse\nps-t1 = Resource{args.name}ExtraLightMap\n\n"
 
     ini_data += f"; Resources -------------------------\n\n"
-    ini_data += f"[Resource{args.name}Position]\ntype = Buffer\nStride = 40\nfilename = {args.name}Position.buf\n\n"
-    ini_data += f"[Resource{args.name}Blend]\ntype = Buffer\nStride = 32\nfilename = {args.name}Blend.buf\n\n"
+    ini_data += f"[Resource{args.name}Position]\ntype = Buffer\nstride = 40\nfilename = {args.name}Position.buf\n\n"
+    ini_data += f"[Resource{args.name}Blend]\ntype = Buffer\nstride = 32\nfilename = {args.name}Blend.buf\n\n"
     if extra_flag:
-        ini_data += f"[Resource{args.name}Texcoord]\ntype = Buffer\nStride = 20\nfilename = {args.name}Texcoord.buf\n\n"
+        ini_data += f"[Resource{args.name}Texcoord]\ntype = Buffer\nstride = 20\nfilename = {args.name}Texcoord.buf\n\n"
     else:
-        ini_data += f"[Resource{args.name}Texcoord]\ntype = Buffer\nStride = 12\nfilename = {args.name}Texcoord.buf\n\n"
+        ini_data += f"[Resource{args.name}Texcoord]\ntype = Buffer\nstride = 12\nfilename = {args.name}Texcoord.buf\n\n"
 
-    ini_data += f"[Resource{args.name}IB]\ntype = Buffer\nFormat = DXGI_FORMAT_R16_UINT\nfilename = {args.name}.ib\n\n"
+    ini_data += f"[Resource{args.name}HeadIB]\ntype = Buffer\nformat = DXGI_FORMAT_R16_UINT\nfilename = {args.name}Head.ib\n\n"
+    ini_data += f"[Resource{args.name}BodyIB]\ntype = Buffer\nformat = DXGI_FORMAT_R16_UINT\nfilename = {args.name}Body.ib\n\n"
+    if extra_flag:
+        ini_data += f"[Resource{args.name}ExtraIB]\ntype = Buffer\nformat = DXGI_FORMAT_R16_UINT\nfilename = {args.name}Extra.ib\n\n"
     ini_data += f"[Resource{args.name}HeadDiffuse]\nfilename = {args.name}HeadDiffuse.dds\n\n"
     ini_data += f"[Resource{args.name}HeadLightMap]\nfilename = {args.name}HeadLightMap.dds\n\n"
     ini_data += f"[Resource{args.name}BodyDiffuse]\nfilename = {args.name}BodyDiffuse.dds\n\n"
@@ -166,7 +172,7 @@ def collect_ib(name, classification, offset):
         data = bytearray(data)
         i = 0
         while i < len(data):
-            ib += struct.pack('1h', struct.unpack('1h', data[i:i+2])[0]+offset)
+            ib += struct.pack('1H', struct.unpack('1H', data[i:i+2])[0]+offset)
             i += 2
     return ib
 

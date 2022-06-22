@@ -17,6 +17,7 @@ def main():
     parser.add_argument("-f", "--framedump", type=str, help="Name of framedump folder")
     parser.add_argument("-vs", type=str, default="653c63ba4a73ca8b", help="Root VS for character model")
     parser.add_argument("--force", nargs="+", help="Force parser to use specified ids")
+    parser.add_argument("--ignore", action='store_true', help="Ignores duplicate objects")
     args = parser.parse_args()
 
 
@@ -48,14 +49,14 @@ def main():
     for filename in frame_dump_files:
         if root_vs_hash in filename and "-vb0=" in filename and os.path.splitext(filename)[1] == ".txt":
             print(f"Found position VB: {filename}")
-            if position_vb:
+            if position_vb and not args.ignore:
                 print("ERROR: found two character objects in frame dump. Exiting")
                 print(position_vb, filename)
                 return
             position_vb = filename
         if root_vs_hash in filename and "-vb1=" in filename and os.path.splitext(filename)[1] == ".txt":
             print(f"Found blend VB: {filename}")
-            if blend_vb:
+            if blend_vb and not args.ignore:
                 print("ERROR: found two character objects in frame dump. Exiting")
                 print(blend_vb, filename)
                 return
