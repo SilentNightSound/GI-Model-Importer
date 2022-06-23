@@ -21,7 +21,7 @@ This repo explains various methods of modifying meshes in Genshin Impact using 3
 
 <img src="https://user-images.githubusercontent.com/107697535/174322200-b1afea95-53f5-4add-be89-698f85503908.png" width="800"/>
 
-6. Double click "3DMigoto Loader.exe" to start the loader, then start up Genshin through the GenshinImpact.exe (again, through the game .exe not the launcher.exe). If everything is correct so far, 3Dmigoto should be injected into the game and you should see a green text overlay:
+6. Double click "3DMigoto Loader.exe" to start the loader, then start up Genshin through the GenshinImpact.exe (again, through the game .exe not the launcher.exe). If everything is correct so far, 3DMigoto should be injected into the game and you should see a green text overlay:
 
 ![image](https://user-images.githubusercontent.com/107697535/174324967-049b9879-c537-4bd0-b190-4ad7444fb8f1.png)
 
