@@ -15,6 +15,7 @@ def main():
     parser.add_argument("-vb", type=str, help="Main VB character is drawn on")
     parser.add_argument("-n", "--name", type=str, help="Name of character to use in folders and output files")
     parser.add_argument("-f", "--framedump", type=str, help="Name of framedump folder")
+    parser.add_argument("-r", "--recent", action='store_true', help="Use the most recent framedump folder instead of specifying")
     parser.add_argument("-vs", type=str, default="653c63ba4a73ca8b", help="Root VS for character model")
     parser.add_argument("--force", nargs="+", help="Force parser to use specified ids")
     parser.add_argument("--ignore", action='store_true', help="Ignores duplicate objects")
@@ -23,7 +24,16 @@ def main():
 
     root_vs_hash = args.vs
     draw_vb_hash = args.vb
-    frame_dump = args.framedump
+    if args.recent:
+        print("Looking for most recent frame dump folder")
+        frame_dump = [x for x in os.listdir(".") if "FrameAnalysis" in x][-1]
+        if frame_dump:
+            print(f"Found! Folder: {frame_dump}")
+        else:
+            print("Not found. Trying to load folder from script input")
+            frame_dump = args.framedump
+    else:
+        frame_dump = args.framedump
     character = args.name
 
     object_classifications = {0: "Head", 1: "Body", 2: "Extra"}
@@ -52,14 +62,14 @@ def main():
             if position_vb and not args.ignore:
                 print("ERROR: found two character objects in frame dump. Exiting")
                 print(position_vb, filename)
-                return
+                continue
             position_vb = filename
         if root_vs_hash in filename and "-vb1=" in filename and os.path.splitext(filename)[1] == ".txt":
             print(f"Found blend VB: {filename}")
             if blend_vb and not args.ignore:
                 print("ERROR: found two character objects in frame dump. Exiting")
                 print(blend_vb, filename)
-                return
+                continue
             blend_vb = filename
 
         if draw_vb_hash in filename:
