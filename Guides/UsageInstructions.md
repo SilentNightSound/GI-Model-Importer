@@ -12,7 +12,7 @@ I highly recommend these videos as an introduction to modding with 3Dmigoto: htt
 
 (AKA I don't want to read through everything right now and just want to perform basic model edits)
 
-(See https://github.com/SilentNightSound/Genshin-Model-Override/blob/main/MonaWalkthrough.md for a step-by-step walkthrough of this with removing Mona's hat)
+(See https://github.com/SilentNightSound/GI-Model-Importer/blob/main/Guides/MonaWalkthrough.md for a step-by-step walkthrough of this with removing Mona's hat)
 
 1. In blender, go to File -> Import -> 3DMigoto Frame Analysis Dump (vb.txt + ib.txt)
 2. Select the files from the CharacterData folder of this repo for the character you want (all characters have at least a head and body, but some also have additional bits like skirts which I have labelled as extra). Leave all options as default and press Import
