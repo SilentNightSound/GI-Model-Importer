@@ -13,21 +13,21 @@ Feel free to use or modify the scripts as you wish, though please give credit if
    - "3dmigoto (for development).zip" is a development version intended for creating mods which has all features turned on but is slower
    - "3dmigoto (for playing mods).zip" is a version of the program with most development features turned off and is faster, intended for releasing and playing mods
 
-2. Depending on the location of your Genshin Impact .exe file, you may need to change this line in the d3dx.ini file to point to your own installation (the game .exe, not the launcher.exe):
+2. Depending on the location of your Genshin Impact .exe file, you may need to change this line in the d3dx.ini file to point to your own installation (the Genshin game .exe, not the Genshin launcher.exe):
 
 <img src="https://user-images.githubusercontent.com/107697535/174322200-b1afea95-53f5-4add-be89-698f85503908.png" width="800"/>
 
-3. Double click "3DMigoto Loader.exe" to start the loader, then start up Genshin through the GenshinImpact.exe (again, through the game .exe not the launcher.exe). If everything is correct so far, 3DMigoto should be injected into the game and you should see a green text overlay (only if using the dev version, the release version does not show the green text):
+3. Double click "3DMigoto Loader.exe" to start the loader, then start up Genshin through the GenshinImpact.exe (again, through the Genshin game .exe not the launcher.exe). If everything is correct so far, 3DMigoto should be injected into the game and you should see a green text overlay (only if using the development version, the "for playing" version does not show the green text):
 
 ![image](https://user-images.githubusercontent.com/107697535/174324967-049b9879-c537-4bd0-b190-4ad7444fb8f1.png)
 
 <img src="https://user-images.githubusercontent.com/107697535/174325193-1f58ab2c-86f8-4ce9-8697-6e7d140b2014.png" width="800"/>
 
-   - Note: some people have reported an issue where the loader lists that it was unable to verify if 3dmigoto was loaded. This does not mean that 3dmigoto failed to inject - if the green text/mods show up, there are no issues
+   - Note: some people have reported an issue where the loader lists that it was unable to verify if 3dmigoto was loaded. This does not mean that 3dmigoto failed to inject - if the green text and mods show up, there are no issues
 
 ![image](https://user-images.githubusercontent.com/107697535/175563985-1e7d1298-08d0-4334-b6e8-c69769e3877a.png)
 
-4. Installation complete! You should now be able to load custom resources and override textures and shaders with 3DMigoto. To add mods, place them in the Mods folder (one mod per character at a time):
+4. Installation complete! You should now be able to load custom resources and override textures and shaders with 3DMigoto. To add mods, place them in the Mods folder (one mod per character at a time) and press F10 to load them in game:
 
 ![image](https://user-images.githubusercontent.com/107697535/175611402-c3f600ca-4136-4561-b33a-f4edf6153d1a.png)
 
