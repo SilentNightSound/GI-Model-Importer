@@ -39,7 +39,7 @@ In order to modify game models, you need to also setup your Blender plugins and 
 1. Download and install [Blender](https://download.blender.org/release/Blender2.92/)
    - Version 2.93 and above will fail to import files with the message `TypeError: '_PropertyDeferred' object is not iterable`
 
-2. Download and install the modified [3DMigoto plugin](https://github.com/SilentNightSound/GI-Model-Importer/blob/main/Tools/blender_3dmigoto.py). You can install an add-on in Blender by going to Edit -> Preferences -> Add-Ons -> Install, then selecting the .py file. 
+2. Download and install the modified [3DMigoto plugin](Tools/blender_3dmigoto.py). You can install an add-on in Blender by going to Edit -> Preferences -> Add-Ons -> Install, then selecting the .py file. 
 
 3. If done correctly, you should see 3DMigoto in the plugin list as well as new options in the import and export menus
 
