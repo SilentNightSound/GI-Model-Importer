@@ -27,7 +27,11 @@ Feel free to use or modify the scripts as you wish, though please give credit if
 
 ![image](https://user-images.githubusercontent.com/107697535/175563985-1e7d1298-08d0-4334-b6e8-c69769e3877a.png)
 
-4. Installation complete! You should now be able to load custom resources and override textures and shaders with 3DMigoto.
+4. Installation complete! You should now be able to load custom resources and override textures and shaders with 3DMigoto. To add mods, place them in the Mods folder (one mod per character at a time):
+
+![image](https://user-images.githubusercontent.com/107697535/175611402-c3f600ca-4136-4561-b33a-f4edf6153d1a.png)
+
+
 
 &nbsp;
 ## Installation Instructions (3DMigoto Blender Plugin)
