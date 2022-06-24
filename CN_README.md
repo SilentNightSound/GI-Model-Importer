@@ -25,7 +25,7 @@
 
 <img src="https://user-images.githubusercontent.com/107697535/174325193-1f58ab2c-86f8-4ce9-8697-6e7d140b2014.png" width="800"/>
 
-    - 注意：加载器显示 “unable to verify if 3dmigoto was loaded” 并不意味着 3dmigoto 未能注入 - 如果绿色文本/MODS有显示，就没有问题。
+   - 注意：加载器显示 “unable to verify if 3dmigoto was loaded” 并不意味着 3dmigoto 未能注入 - 如果绿色文本/MODS有显示，就没有问题。
 
 ![image](https://user-images.githubusercontent.com/107697535/175563985-1e7d1298-08d0-4334-b6e8-c69769e3877a.png)
 
