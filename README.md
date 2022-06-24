@@ -11,7 +11,7 @@ Feel free to use or modify the scripts as you wish, though please give credit if
 
 1. Download 3dmigoto.zip from this repository and extract it. I have provided two versions:
    - "3dmigoto (for development).zip" is a development version intended for creating mods which has all features turned on but is slower
-   - "3dmigoto (for releasing mods).zip" is a version of the program with most development features turned off and is faster, intended for releasing and playing mods
+   - "3dmigoto (for playing mods).zip" is a version of the program with most development features turned off and is faster, intended for releasing and playing mods
 
 2. Depending on the location of your Genshin Impact .exe file, you may need to change this line in the d3dx.ini file to point to your own installation (the game .exe, not the launcher.exe):
 
