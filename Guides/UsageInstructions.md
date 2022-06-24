@@ -17,18 +17,15 @@ I highly recommend these videos as an introduction to modding with 3Dmigoto: htt
 1. In blender, go to File -> Import -> 3DMigoto Frame Analysis Dump (vb.txt + ib.txt)
 2. Select the files from the CharacterData folder of this repo for the character you want (all characters have at least a head and body, but some also have additional bits like skirts which I have labelled as extra). Leave all options as default and press Import
 3. Perform modifications you want to the model, with the following restrictions/notes:
-   - The number of vertices and edges for each model part cannot exceed that of the original model (Note: there is currently a bug in the program where the 3Dmigoto plugin will export around 10% more vertices than the original model has, so in reality you are limited to around 90% of the original. Going over will prevent portions from being drawn and break textures. I'm working on fixing this)
-   - Adding in new vertices or geometry is much more complicated than deleting parts of the mesh (e.g. filling in the holes in a character model after removing clothing). If you are trying to patch holes, I recommend either re-arranging existing vertices to cover them (if the hole is small enough) or trying to copy from another Genshin model (see Localized Model Overrides for details)
+   - Vertices are limited to around 64k
    - Character's faces are stored separately - these scripts and instructions do not yet support face modifications
-   - Do not change the vertex groups, vertex colors, or custom properties of the objects otherwise the export will fail
+   - Models must contain all the original vertex groups, colors and custom properties - if using a custom model, make sure it matches up with the original and that there are no gaps.
    - It is possible to connect the texture maps to the object in Blender, but you will likely have to convert the .dds to a .png in order for Blender to recognize it and then later convert back to .dds
-4. Select the head object and go to File -> Export -> 3DMigoto Raw Buffers (.vb + .ib). Press export, leaving all options as default, and name the file CharHead.vb
-5. Repeat step 4 for the body object, naming it CharBody.vb, and the extra object (if it exists), naming it CharExtra.vb
-6. (optional) Perform any edits to the character's diffuse and lightmaps
-7. Run the genshin_3dmigoto_generate.py script one folder up from where the results from steps 4-6 were exported with the command `python genshin_3dmigoto_generate.py -n Char`. This generates the CharMod folder
+4. (optional) Perform any edits to the character's diffuse and lightmaps
+5. Make sure there is a single object named CharHead, one named CharBody and (optionally depending if model originally had it) CharExtra. Export the model using the Exports Genshin Mod Folder option, saving the object as Char.vb in the original character folder
    - Make sure to use the most up-to-date hash_info.json, otherwise the script may not be able to find the required hashes to generate the .ini files
-8. Move the generated CharMod folder into the Mods directory of the launcher you created during the installation step
-9. Press F10 in game to load the mod
+7. Move the generated CharMod folder into the Mods directory of the launcher you created during the installation step
+8. Press F10 in game to load the mod
 
 Each character can only have one corresponding folder at a time in the Mods directory - if you want to load a new model for a character, the old one needs to be removed from the Mods folder first.
 
