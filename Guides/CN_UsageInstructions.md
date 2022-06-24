@@ -16,7 +16,7 @@
 
 (又称我现在不想通读所有内容，只想进行基本的模型修改)
 
-(去除莫娜帽子的步骤请看[这里](Guides/MonaWalkthrough.md))
+(去除莫娜帽子的步骤请看[这里](MonaWalkthrough.md))
 
 1. 在 blender 中，去到 File -> Import -> 3DMigoto Frame Analysis Dump（vb.txt + ib.txt）。
 
