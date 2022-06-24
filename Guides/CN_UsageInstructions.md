@@ -8,7 +8,9 @@
 
 注意这个项目仍在开发中，所以会有错误和功能缺失。如有任何部分有错误或不清楚，请让我知道。
 
-我强烈推荐这些视频作为用 3Dmigoto 做MOD的介绍：https://www.youtube.com/watch?v=zWE0xP4MgR8 和 https://www.youtube.com/watch?v=z2nvJzkwHHQ。虽然原神的结构使修改它变得更加复杂，但这些视频中包含的大量信息仍然是相关的，可以提供更多的细节和视觉效果来帮助你解释。
+我强烈推荐这些视频作为用 3Dmigoto 做MOD的介绍：https://www.youtube.com/watch?v=zWE0xP4MgR8 和 https://www.youtube.com/watch?v=z2nvJzkwHHQ 
+
+虽然原神的结构使修改它变得更加复杂，但这些视频中包含的大量信息仍然是相关的，可以提供更多的细节和视觉效果来帮助你解释。
 
 ### TLDR
 
@@ -40,7 +42,7 @@
 &nbsp;
 ### 寻找 Buffers
 
-当 3Dmigoto 开启时，在数字键盘上按下 0 可以开启狩猎模式（显示绿色文本，默认）或关闭（无文本）。
+当 3Dmigoto 开启时，在数字键盘上按 0 可以开启狩猎模式（显示绿色文本，默认）或关闭（无文本）。
 
 在狩猎模式下，你可以循环查看原神当前用于将物体绘制到屏幕上的各种 Buffers 和着色器。选中的 Buffers或着色器将会跳过它们的绘制，以向你显示它们负责绘制屏幕的部分。
 
