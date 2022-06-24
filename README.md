@@ -1,4 +1,4 @@
-[EN] | [CN](CN_README.md)
+EN | [CN](CN_README.md)
 
 # GI-Model-Importer
 Tools and instructions on how to import custom models into Genshin Impact

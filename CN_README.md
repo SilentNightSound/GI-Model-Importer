@@ -1,4 +1,4 @@
-[EN](README.md) | [CN]
+[EN](README.md) | CN
 
 # GI-Model-Importer
 原神导入自定义模型的工具和说明
