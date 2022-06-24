@@ -1,6 +1,6 @@
 ## Usage Instructions
 
-Below is a summary of how to use 3Dmigoto's various features, as well as how to mod Genshin meshes and textures. For now it is just text descriptions, but I will be adding more screenshots and walkthroughs in the future. I have organized the content approximately in difficulty from easiest to hardest - I recommend reading through the instructions in order, since later sections rely on understanding how previous sections work. 
+Below is a summary of how to use 3Dmigoto's various features, as well as how to mod Genshin meshes and textures. I have organized the content approximately in difficulty from easiest to hardest - I recommend reading through the instructions in order, since later sections rely on understanding how previous sections work. 
 
 No specific knowledge is required as a prerequisite, but I recommend being familiar with Blender.
 
