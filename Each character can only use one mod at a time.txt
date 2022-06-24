@@ -1,0 +1,1 @@
+If you are already using a mod like MonaMod, adding a second one will cause both to break. Either remove the first before adding the second, or move it to a folder called DISABLED
