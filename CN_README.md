@@ -50,4 +50,4 @@
 &nbsp;
 ## 使用指南
 
-看[这里](Guides/CN_UseageInstructions.md)
+看[这里](Guides/CN_UsageInstructions.md)
