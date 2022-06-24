@@ -30,7 +30,7 @@
 
 4.（非必要）对角色的 Diffuse 和 Lightmap 进行编辑。
 
-5. 确保有一个名为 CharHead 的对象，一个名为 CharBod y的对象，以及 CharExtra（非必要，取决于模型最初是否有。使用 Exports Genshin Mod Folder选项导出模型，将该对象保存为原始角色文件夹中的 Char.vb。
+5. 确保有一个名为 CharHead 的对象，一个名为 CharBody的对象，以及 CharExtra（非必要，取决于模型最初是否有。使用 Exports Genshin Mod Folder选项导出模型，将该对象保存为原始角色文件夹中的 Char.vb。
    - 确保你使用的是最新的 hash_info.json，否则脚本可能无法找到所需的 Hash 值生成 .ini 文件。
 
 7. 将生成的 CharMod 文件夹移到你在安装步骤中创建的 3DMigoto 的 Mods 文件夹中。
