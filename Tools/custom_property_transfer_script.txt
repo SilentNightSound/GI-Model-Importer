@@ -15,4 +15,4 @@ bpy.data.objects["new_object"]["3DMigoto:VBStride"] =  bpy.data.objects["origina
 
 
 // Some models have a second TEXCOORD, might require this line as well depending on the model:
-
+bpy.data.objects["new_object"]["3DMigoto:TEXCOORD1.xy"] =  bpy.data.objects["original_object"]["3DMigoto:TEXCOORD1.xy"]
