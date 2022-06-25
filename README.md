@@ -1,9 +1,11 @@
+EN | [CN](CN_README.md)
+
 # GI-Model-Importer
 Tools and instructions on how to import custom models into Genshin Impact
 
 #### **DISCLAIMER: Using this on official Genshin servers is very likely to get you banned. I do not recommend or condone the use of these scripts and programs on official servers, and if you do use it on official servers I take no responsibility for any consequences as a result.**
 
-Feel free to use or modify the scripts as you wish, though please give credit if you use these programs in your projects. I am continuing to update this program/page with new features and fixes, so check back often. I will list any changes made in the https://github.com/SilentNightSound/GI-Model-Importer/blob/main/Changelog.md
+Feel free to use or modify the scripts as you wish, though please give credit if you use these programs in your projects. I am continuing to update this program/page with new features and fixes, so check back often. I will list any changes made in the [Changelog](Changelog.md)
 
 ## Installation Instructions (3DMigoto)
 
@@ -38,9 +40,11 @@ Feel free to use or modify the scripts as you wish, though please give credit if
 
 In order to modify game models, you need to also setup your Blender plugins and environment. The 3DMigoto plugin works with Blender 2.80-2.92
 
-1. Download and install Blender (https://download.blender.org/release/Blender2.92/)
+1. Download and install [Blender](https://download.blender.org/release/Blender2.92/)
    - Version 2.93 and above will fail to import files with the message `TypeError: '_PropertyDeferred' object is not iterable`
-2. Download and install the modified 3DMigoto plugin from https://github.com/SilentNightSound/GI-Model-Importer/blob/main/Tools/blender_3dmigoto.py. You can install an add-on in Blender by going to Edit -> Preferences -> Add-Ons -> Install, then selecting the .py file. 
+
+2. Download and install the modified [3DMigoto plugin](Tools/blender_3dmigoto.py). You can install an add-on in Blender by going to Edit -> Preferences -> Add-Ons -> Install, then selecting the .py file. 
+
 3. If done correctly, you should see 3DMigoto in the plugin list as well as new options in the import and export menus
 
 <img src="https://user-images.githubusercontent.com/107697535/174328624-ccb14ded-57b2-4ac7-b0a0-0de118119174.png" width="800"/>
@@ -50,4 +54,4 @@ In order to modify game models, you need to also setup your Blender plugins and 
 &nbsp;
 ## Usage Instructions
 
-See https://github.com/SilentNightSound/GI-Model-Importer/blob/main/Guides/UsageInstructions.md
+See [Usage Instructions](Guides/UsageInstructions.md)

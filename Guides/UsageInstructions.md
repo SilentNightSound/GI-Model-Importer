@@ -1,3 +1,5 @@
+EN | [CN](CN_UsageInstructions.md)
+
 ## Usage Instructions
 
 Below is a summary of how to use 3Dmigoto's various features, as well as how to mod Genshin meshes and textures. I have organized the content approximately in difficulty from easiest to hardest - I recommend reading through the instructions in order, since later sections rely on understanding how previous sections work. 
@@ -12,19 +14,25 @@ I highly recommend these videos as an introduction to modding with 3Dmigoto: htt
 
 (AKA I don't want to read through everything right now and just want to perform basic model edits)
 
-(See https://github.com/SilentNightSound/GI-Model-Importer/blob/main/Guides/MonaWalkthrough.md for a step-by-step walkthrough of this with removing Mona's hat)
+(See [Mona Walkthrough](MonaWalkthrough.md) for a step-by-step walkthrough of this with removing Mona's hat)
 
 1. In blender, go to File -> Import -> 3DMigoto Frame Analysis Dump (vb.txt + ib.txt)
+
 2. Select the files from the CharacterData folder of this repo for the character you want (all characters have at least a head and body, but some also have additional bits like skirts which I have labelled as extra). Leave all options as default and press Import
+
 3. Perform modifications you want to the model, with the following restrictions/notes:
    - Vertices are limited to around 64k
    - Character's faces are stored separately - these scripts and instructions do not yet support face modifications
    - Models must contain all the original vertex groups, colors and custom properties - if using a custom model, make sure it matches up with the original and that there are no gaps.
    - It is possible to connect the texture maps to the object in Blender, but you will likely have to convert the .dds to a .png in order for Blender to recognize it and then later convert back to .dds
+
 4. (optional) Perform any edits to the character's diffuse and lightmaps
+
 5. Make sure there is a single object named CharHead, one named CharBody and (optionally depending if model originally had it) CharExtra. Export the model using the Exports Genshin Mod Folder option, saving the object as Char.vb in the original character folder
    - Make sure to use the most up-to-date hash_info.json, otherwise the script may not be able to find the required hashes to generate the .ini files
+
 7. Move the generated CharMod folder into the Mods directory of the launcher you created during the installation step
+
 8. Press F10 in game to load the mod
 
 Each character can only have one corresponding folder at a time in the Mods directory - if you want to load a new model for a character, the old one needs to be removed from the Mods folder first.
