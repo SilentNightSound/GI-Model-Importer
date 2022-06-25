@@ -7,6 +7,8 @@ Tools and instructions on how to import custom models into Genshin Impact
 
 Feel free to use or modify the scripts as you wish, though please give credit if you use these programs in your projects. I am continuing to update this program/page with new features and fixes, so check back often. I will list any changes made in the [Changelog](Changelog.md)
 
+For a simple walkthrough of removing a portion of a character mesh using these tools, see [Mona Walkthrough](MonaWalkthrough.md). For a more advanced example of importing a custom model, see Cybertron's great video walkthrough: https://www.youtube.com/watch?v=7ijMOjhEvBw
+
 ## Installation Instructions (3DMigoto)
 
 (Note: SpecialK and 3DMigoto both use the same .dll file and perform similar functions, so it they cannot be run together. Melon and 3DMigoto are able to run together.)
