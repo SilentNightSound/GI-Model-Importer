@@ -57,15 +57,31 @@ These instructions can be generally applied to remove any part of the mesh, thou
 
 We can do a bit more to improve this. Notices that Mona's hair is discolored where the hat used to be - this is controlled by her head's lightmap texture. The character folder includes this file as MonaHeadLightMap.dds, and we can modify it to improve the result further.
 
-11. Opening MonaHeadLightMap.dds in Paint.net with the dds plugin installed and removing the alpha layer, we can see that portions of Mona's hair texture are covered in shadow
+11. In order to edit the dds textures, we use Paint.net with the DDS extension (https://forums.getpaint.net/topic/111731-dds-filetype-plus-04-11-2022/) and any extension that allows us to edit the alpha layer (https://forums.getpaint.net/topic/1854-alpha-mask-import-plugin-20/ or https://forums.getpaint.net/topic/110805-modify-channels-v111-2022-03-07/ - I will use the former in this walkthrough, and for an example with the latter see https://github.com/zeroruka/GI_Assets/wiki/Creating-Skins)
+
+12. Opening MonaHeadLightMap.dds, we can remove the alpha layer by clicking on Effects->Alpha Mask and making sure all options are unselected and pressing OK:
+
+<img src="https://user-images.githubusercontent.com/107697535/175790813-24c1e522-41d1-42f5-a661-f25f7787dd4a.png" width="800"/>
+
+<img src="https://user-images.githubusercontent.com/107697535/175790898-f26b3f1d-6ed2-4f71-b186-c94ddf44174b.png" width="800"/>
+
+13. We can now see that portions of Mona's hair texture are darker. We can smooth these out in order to remove the shadows from Mona's hair:
 
 <img src="https://user-images.githubusercontent.com/107697535/174458242-75283d3c-72d5-4043-b75d-6273dce32671.png" width="800"/>
 
-12. We can smooth out and standardize the colors and re-apply the alpha layer:
-
 <img src="https://user-images.githubusercontent.com/107697535/174458258-1c92a244-40e9-45c5-9a50-da3bfaa2bca4.png" width="800"/>
 
-13. Finally, we can replace the MonaHeadLightMap.dds that the mod is currently using either by directly overwriting it in the MonaMod folder or putting it back in the Mona character folder and recreating the mod folder again (the plugin will pull the texture .dds from the character folder every time it runs)
+14. We can then re-apply the alpha layer by clicking on Effects->Alpha Mask with the entire image selected and checking the "Invert Mask" option:
+
+<img src="https://user-images.githubusercontent.com/107697535/175790958-5530e001-655b-4966-9e03-23be7dd93c7d.png" width="800"/>
+
+   - Note: A small amount of information related to emissions and blush has been lost compared to the original because we are inverting the alpha channel of the entire image - if you want to keep emission effects when re-applying, see https://www.youtube.com/watch?v=1y8oZ1TFZtg for an example of using masks to selectively apply the inversion to only parts of the image (tutorial is for Special K, but 3dmigoto functions the same)
+
+15. Export the image by saving as a .dds, making sure to use "BC7 (Linear, DX 11+)" and setting Generate Mip Maps (Note: Lightmaps use BC7 Linear when exporting, Diffuse maps use BC7 SRGB)
+
+<img src="https://user-images.githubusercontent.com/107697535/175790979-3f20d159-0eec-4fc0-947d-0cd6b02c95c9.png" width="800"/>
+
+16. Finally, we can replace the MonaHeadLightMap.dds that the mod is currently using either by directly overwriting it in the MonaMod folder or putting it back in the Mona character folder and recreating the mod folder again (the plugin will pull the texture .dds from the character folder every time it runs)
 
 <img src="https://user-images.githubusercontent.com/107697535/174458283-1bec92ab-5008-4ae6-a6f8-110d7a0dee49.png" width="800"/>
 
