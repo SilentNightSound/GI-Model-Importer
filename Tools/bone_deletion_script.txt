@@ -1,0 +1,46 @@
+'''
+Adapted from https://blender.stackexchange.com/a/226914/132453
+Script written by: https://github.com/ssbucarlos
+
+Use this Blender script to simplify bone structure for complicated models
+Required in order to import complicated models like MMD into Genshin
+
+'''
+import bpy
+
+def transfer_weights(source, target, obj):
+    source_group = obj.vertex_groups.get(source.name)
+    if source_group is None:
+        return
+    source_i = source_group.index
+    target_group = obj.vertex_groups.get(target.name)
+    if target_group is None:
+        target_group = obj.vertex_groups.new(name=target.name)
+        
+    for v in obj.data.vertices:
+        for g in v.groups:
+            if g.group == source_i:
+                target_group.add((v.index,), g.weight, 'ADD')
+    obj.vertex_groups.remove(source_group)
+    
+
+def remove_bone(source, target):
+    for o in bpy.data.objects:
+        transfer_weights(source, target, o)
+    edit_bone = bpy.context.object.data.edit_bones.get(source.name)
+    bpy.context.object.data.edit_bones.remove(edit_bone)
+
+
+def find_parent_not_in_collection(bone, collection):
+    if bone.parent in collection:
+        return find_parent_not_in_collection(bone.parent, collection)
+    else:
+        return bone.parent
+
+def main():
+    selected_bones = [bone for bone in bpy.context.object.data.edit_bones if bone.select is True]
+    for selected_bone in selected_bones:
+        target = find_parent_not_in_collection(selected_bone, selected_bones)
+        remove_bone(selected_bone, target)
+        
+main()
