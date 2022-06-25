@@ -1,4 +1,4 @@
-EN | [CN](CN_MonaWalkthrough.md)
+EN | [中文](CN_MonaWalkthrough.md)
 
 ## Mona Hat Removal Walkthrough
 

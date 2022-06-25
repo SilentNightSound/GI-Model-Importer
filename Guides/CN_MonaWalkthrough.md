@@ -1,4 +1,4 @@
-[EN](MonaWalkthrough.md) | CN
+[EN](MonaWalkthrough.md) | 中文
 
 ## 莫娜帽子移除教程
 

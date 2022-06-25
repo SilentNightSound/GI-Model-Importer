@@ -1,4 +1,4 @@
-[EN](UsageInstructions.md) | CN
+[EN](UsageInstructions.md) | 中文
 
 ## 使用指南
 
