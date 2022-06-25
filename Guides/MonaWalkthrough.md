@@ -6,7 +6,7 @@ Prior to 3Dmigoto, there was no way to cleanly remove her hat - it does not have
 
 These instructions can be generally applied to remove any part of the mesh, though in some cases there will be a hole in the model underneath (especially for larger objects) - a walkthrough on how to patch mesh holes will come later.
 
-1. Ensure 3DMigoto and the 3DMigoto Blender plugin are installed (see README on main github page)
+1. Ensure 3DMigoto and the 3DMigoto Blender plugin are installed (see [README](../README.md) on main github page)
 2. Download the Mona character files from the CharacterData folder of this repo. Your folder structure should look like this:
 
 <img src="https://user-images.githubusercontent.com/107697535/174457855-299ecb18-70d8-4ade-ae06-c178ab0b8779.png" width="800"/>
