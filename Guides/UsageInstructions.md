@@ -14,7 +14,7 @@ I highly recommend these videos as an introduction to modding with 3Dmigoto: htt
 
 (AKA I don't want to read through everything right now and just want to perform basic model edits)
 
-(See https://github.com/SilentNightSound/GI-Model-Importer/blob/main/Guides/MonaWalkthrough.md for a step-by-step walkthrough of this with removing Mona's hat)
+(See [Mona Walkthrough](MonaWalkthrough.md) for a step-by-step walkthrough of this with removing Mona's hat)
 
 1. In blender, go to File -> Import -> 3DMigoto Frame Analysis Dump (vb.txt + ib.txt)
 

@@ -51,7 +51,7 @@
 
 <img src="https://user-images.githubusercontent.com/107697535/174458178-e09637de-7149-463e-bd7a-499e986cba1d.png" width="800"/>
 
-10. 原神里按 F10 重新加载所有 .ini 文件和应用 MOD。如果一切都按计划进行，你的莫娜现在就没有帽子了!
+10. 原神里按 F10 重新加载所有 .ini 文件并应用 MOD。如果一切都按计划进行，你的莫娜现在就没有帽子了!
 
 <img src="https://user-images.githubusercontent.com/107697535/174458194-426f8602-31d5-416a-96ed-d58ecdcee39d.png" width="800"/>
 
