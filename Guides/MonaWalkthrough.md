@@ -9,9 +9,9 @@ Prior to 3Dmigoto, there was no way to cleanly remove her hat - it does not have
 These instructions can be generally applied to remove any part of the mesh, though in some cases there will be a hole in the model underneath (especially for larger objects) - a walkthrough on how to patch mesh holes will come later.
 
 1. Ensure 3DMigoto and the 3DMigoto Blender plugin are installed (see [README](../README.md) on main github page)
-2. Download the Mona character files from the CharacterData folder of this repo. Your folder structure should look like this:
+2. Download the Mona character files and hash_info.json from the CharacterData folder of this repo. Your folder should look like this:
 
-<img src="https://user-images.githubusercontent.com/107697535/174457855-299ecb18-70d8-4ade-ae06-c178ab0b8779.png" width="800"/>
+<img src="https://user-images.githubusercontent.com/107697535/175789338-b187f6c6-2d6d-4a97-beb2-6cccdd556e2d.png" width="800"/>
 
 <img src="https://user-images.githubusercontent.com/107697535/174457572-77532f14-02ab-4bfb-904d-fe2ad251d84a.png" width="800"/>
 
@@ -39,7 +39,7 @@ These instructions can be generally applied to remove any part of the mesh, thou
 
 <img src="https://user-images.githubusercontent.com/107697535/175570101-9717b9eb-7ef9-4e1c-82e2-f6871497f5f6.png" width="800"/>
 
-8. A MonaMod folder should now be generated right next to the original character folder that looks like this:
+8. A MonaMod folder should now be generated right next to the original character folder that looks like this (if the mod folder does not generate, double check you have hash_info.json):
 
 <img src="https://user-images.githubusercontent.com/107697535/174458059-363b1c56-ea76-4a01-9e1f-6e22f3b0949f.png" width="800"/>
 
