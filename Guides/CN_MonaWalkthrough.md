@@ -57,7 +57,7 @@
 
 我们可以再做一些改进。注意到莫娜的头发在帽子的位置有阴影 - 这是由她头部的 lightmap 控制的。角色文件夹中包括这个文件 MonaHeadLightMap.dds，我们可以修改它来进一步改善效果。
 
-11. 为了编辑 dds 纹理，我们使用 Paint.net 的[DDS插件](https://forums.getpaint.net/topic/111731-dds-filetype-plus-04-11-2022/)和任何允许我们编辑 alpha 层的插件[Alpha Mask Import](https://forums.getpaint.net/topic/1854-alpha-mask-import-plugin-20/) 或 [Modify Channels](https://forums.getpaint.net/topic/110805-modify-channels-v111-2022-03-07/) - 我将在本教程中使用前者，关于后者的例子，请参见 [GI_Assets](https://github.com/zeroruka/GI_Assets/wiki/Creating-Skins)。
+11. 为了编辑 dds 纹理，我们使用 Paint.net 的[DDS插件](https://forums.getpaint.net/topic/111731-dds-filetype-plus-04-11-2022/)和任何允许我们编辑 alpha 层的插件 [Alpha Mask Import](https://forums.getpaint.net/topic/1854-alpha-mask-import-plugin-20/) 或 [Modify Channels](https://forums.getpaint.net/topic/110805-modify-channels-v111-2022-03-07/) - 我将在本教程中使用前者，关于后者的例子，请参见 [GI_Assets](https://github.com/zeroruka/GI_Assets/wiki/Creating-Skins)。
 
 12. 打开 MonaHeadLightMap.dds，我们可以通过点击 Effects->Alpha Mask 并确保所有选项都未被选中，然后按 OK 键来移除透明层：
 
@@ -75,7 +75,7 @@
 
 <img src="https://user-images.githubusercontent.com/107697535/175790958-5530e001-655b-4966-9e03-23be7dd93c7d.png" width="800"/>
 
-   - 注意：此步骤会导致部分材质效果消失（比如神之眼的亮光），因为我们正在反转整个图像的透明通道 - 如果你想在重新应用时保留原始效果，请参阅https://www.youtube.com/watch?v=1y8oZ1TFZtg，了解使用蒙版选择性地将反转应用于图像的一部分的例子（教程是针对Special K，但3dmigoto功能相同），或者你可用 [Modify Channels](https://forums.getpaint.net/topic/110805-modify-channels-v111-2022-03-07/) 插件。
+   - 注意：此步骤会导致部分材质效果消失（比如神之眼的亮光），因为我们正在反转整个图像的透明通道 - 如果你想在重新应用时保留原始效果，请参阅 https://www.youtube.com/watch?v=1y8oZ1TFZtg ，了解使用蒙版选择性地将反转应用于图像的一部分的例子（教程是针对Special K，但3dmigoto功能相同），或者你可用 [Modify Channels](https://forums.getpaint.net/topic/110805-modify-channels-v111-2022-03-07/) 插件。
 
 15. 将图保存为 .dds，确保使用 "BC7（Linear，DX 11+）"并设置 Generate Mip Maps（注意：导出时 lightmap 需要使用 BC7 Linear，Diffuse 使用BC7 SRGB）
 
