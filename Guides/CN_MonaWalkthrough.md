@@ -9,9 +9,9 @@
 以下的说明通常可以应用于移除网格的任何部分，不过在某些情况下，模型下面会有一个洞（特别是对于较大的物体） - 关于如何修补网格洞的教程以后会加。
 
 1. 确保你已安装了 3DMigoto 和 3DMigoto Blender 插件 （请看 [README](../CN_README.md)）
-2. 从此库中的 CharacterData 文件夹中下载莫娜角色文件。文件结构应该像下图：
+2. 从此库中的 CharacterData 文件夹中下载莫娜角色文件和 hash_info.json。文件夹应该像下图：
 
-<img src="https://user-images.githubusercontent.com/107697535/174457855-299ecb18-70d8-4ade-ae06-c178ab0b8779.png" width="800"/>
+<img src="https://user-images.githubusercontent.com/107697535/175789338-b187f6c6-2d6d-4a97-beb2-6cccdd556e2d.png" width="800"/>
 
 <img src="https://user-images.githubusercontent.com/107697535/174457572-77532f14-02ab-4bfb-904d-fe2ad251d84a.png" width="800"/>
 
@@ -39,7 +39,7 @@
 
 <img src="https://user-images.githubusercontent.com/107697535/175570101-9717b9eb-7ef9-4e1c-82e2-f6871497f5f6.png" width="800"/>
 
-8. 这会在原始文件夹旁生成一个 MonaMod 文件夹
+8. 这会在原始文件夹旁生成一个 MonaMod 文件夹 (如果 mod 文件夹没有生成，请检查你有没有 hash_info.json）：
 
 <img src="https://user-images.githubusercontent.com/107697535/174458059-363b1c56-ea76-4a01-9e1f-6e22f3b0949f.png" width="800"/>
 
@@ -57,14 +57,30 @@
 
 我们可以再做一些改进。注意到莫娜的头发在帽子的位置有阴影 - 这是由她头部的 lightmap 控制的。角色文件夹中包括这个文件 MonaHeadLightMap.dds，我们可以修改它来进一步改善效果。
 
-11. 在安装了 dds 插件的 Paint.net 中打开 MonaHeadLightMap.dds，并去除透明层，我们可以看到莫娜的部分头发贴图被阴影所覆盖。
+11. 为了编辑 dds 纹理，我们使用 Paint.net 的[DDS插件](https://forums.getpaint.net/topic/111731-dds-filetype-plus-04-11-2022/)和任何允许我们编辑 alpha 层的插件[Alpha Mask Import](https://forums.getpaint.net/topic/1854-alpha-mask-import-plugin-20/) 或 [Modify Channels](https://forums.getpaint.net/topic/110805-modify-channels-v111-2022-03-07/) - 我将在本教程中使用前者，关于后者的例子，请参见 [GI_Assets](https://github.com/zeroruka/GI_Assets/wiki/Creating-Skins)。
+
+12. 打开 MonaHeadLightMap.dds，我们可以通过点击 Effects->Alpha Mask 并确保所有选项都未被选中，然后按 OK 键来移除透明层：
+
+<img src="https://user-images.githubusercontent.com/107697535/175790813-24c1e522-41d1-42f5-a661-f25f7787dd4a.png" width="800"/>
+
+<img src="https://user-images.githubusercontent.com/107697535/175790898-f26b3f1d-6ed2-4f71-b186-c94ddf44174b.png" width="800"/>
+
+13. 我们现在可以看到，莫娜的头发纹理的部分是比较暗的。我们可以把这些抹平，以消除莫娜头发上的阴影：
 
 <img src="https://user-images.githubusercontent.com/107697535/174458242-75283d3c-72d5-4043-b75d-6273dce32671.png" width="800"/>
 
-12. 我们可以将颜色平滑化、标准化，并重新应用透明层。
-
 <img src="https://user-images.githubusercontent.com/107697535/174458258-1c92a244-40e9-45c5-9a50-da3bfaa2bca4.png" width="800"/>
 
-13. 最后，我们可以通过直接覆盖 MonaMod 文件夹中的 MonaHeadLightMap.dds 或将其放回 Mona 角色文件夹中并重新创建 MOD 文件夹（插件每次运行时都会从角色文件夹中提取贴图 .dds）来替换 MOD 当前使用的 MonaHeadLightMap.dds。
+14. 然后，我们可以先选择整个图像，然后点击 Effects->Alpha Mask，勾选 "Invert Mask" 选项，重新应用透明层：
+
+<img src="https://user-images.githubusercontent.com/107697535/175790958-5530e001-655b-4966-9e03-23be7dd93c7d.png" width="800"/>
+
+   - 注意：此步骤会导致部分材质效果消失（比如神之眼的亮光），因为我们正在反转整个图像的透明通道 - 如果你想在重新应用时保留原始效果，请参阅https://www.youtube.com/watch?v=1y8oZ1TFZtg，了解使用蒙版选择性地将反转应用于图像的一部分的例子（教程是针对Special K，但3dmigoto功能相同），或者你可用 [Modify Channels](https://forums.getpaint.net/topic/110805-modify-channels-v111-2022-03-07/) 插件。
+
+15. 将图保存为 .dds，确保使用 "BC7（Linear，DX 11+）"并设置 Generate Mip Maps（注意：导出时 lightmap 需要使用 BC7 Linear，Diffuse 使用BC7 SRGB）
+
+<img src="https://user-images.githubusercontent.com/107697535/175790979-3f20d159-0eec-4fc0-947d-0cd6b02c95c9.png" width="800"/>
+
+16. 最后，我们可以通过直接覆盖 MonaMod 文件夹中的 MonaHeadLightMap.dds 或将其放回 Mona 角色文件夹中并重新创建 mod 文件夹（插件每次运行时都会从角色文件夹中提取最新的纹理.dds）来替换 mod 当前使用的 MonaHeadLightMap.dds
 
 <img src="https://user-images.githubusercontent.com/107697535/174458283-1bec92ab-5008-4ae6-a6f8-110d7a0dee49.png" width="800"/>

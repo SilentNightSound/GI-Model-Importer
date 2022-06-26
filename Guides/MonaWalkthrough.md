@@ -57,7 +57,7 @@ These instructions can be generally applied to remove any part of the mesh, thou
 
 We can do a bit more to improve this. Notices that Mona's hair is discolored where the hat used to be - this is controlled by her head's lightmap texture. The character folder includes this file as MonaHeadLightMap.dds, and we can modify it to improve the result further.
 
-11. In order to edit the dds textures, we use Paint.net with the DDS extension (https://forums.getpaint.net/topic/111731-dds-filetype-plus-04-11-2022/) and any extension that allows us to edit the alpha layer (https://forums.getpaint.net/topic/1854-alpha-mask-import-plugin-20/ or https://forums.getpaint.net/topic/110805-modify-channels-v111-2022-03-07/ - I will use the former in this walkthrough, and for an example with the latter see https://github.com/zeroruka/GI_Assets/wiki/Creating-Skins)
+11. In order to edit the dds textures, we use Paint.net with the [DDS extension](https://forums.getpaint.net/topic/111731-dds-filetype-plus-04-11-2022/) and any extension that allows us to edit the alpha layer [Alpha Mask Import](https://forums.getpaint.net/topic/1854-alpha-mask-import-plugin-20/) or [Modify Channels](https://forums.getpaint.net/topic/110805-modify-channels-v111-2022-03-07/) - I will use the former in this walkthrough, and for an example with the latter see [GI_Assets](https://github.com/zeroruka/GI_Assets/wiki/Creating-Skins)
 
 12. Opening MonaHeadLightMap.dds, we can remove the alpha layer by clicking on Effects->Alpha Mask and making sure all options are unselected and pressing OK:
 
@@ -75,7 +75,7 @@ We can do a bit more to improve this. Notices that Mona's hair is discolored whe
 
 <img src="https://user-images.githubusercontent.com/107697535/175790958-5530e001-655b-4966-9e03-23be7dd93c7d.png" width="800"/>
 
-   - Note: A small amount of information related to emissions and blush has been lost compared to the original because we are inverting the alpha channel of the entire image - if you want to keep emission effects when re-applying, see https://www.youtube.com/watch?v=1y8oZ1TFZtg for an example of using masks to selectively apply the inversion to only parts of the image (tutorial is for Special K, but 3dmigoto functions the same)
+   - Note: A small amount of information related to emissions and blush has been lost compared to the original because we are inverting the alpha channel of the entire image - if you want to keep emission effects when re-applying, see https://www.youtube.com/watch?v=1y8oZ1TFZtg for an example of using masks to selectively apply the inversion to only parts of the image (tutorial is for Special K, but 3dmigoto functions the same) . Alternatively, you could also use [Modify Channels](https://forums.getpaint.net/topic/110805-modify-channels-v111-2022-03-07/) plugin to avoid losing any emissions and blush data.
 
 15. Export the image by saving as a .dds, making sure to use "BC7 (Linear, DX 11+)" and setting Generate Mip Maps (Note: Lightmaps use BC7 Linear when exporting, Diffuse maps use BC7 SRGB)
 

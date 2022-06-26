@@ -7,8 +7,10 @@
 
 你可以随意使用或修改本库内的脚本，但如果你在你的项目中使用这里提供的程序，请注明出处。我将持续更新并修复这个程序/网页，所以请常回来看看。所做的任何改动都在 [Changelog](Changelog.md) 里。
 
-## 安装指南 (3DMigoto)
+关于如何使用这些工具移除角色建模的简单指南，请参见[Mona Walkthrough](Guides/CN_MonaWalkthrough.md)。关于导入自定义模型的更高级的例子，请看 Cybertron 的视频指南：https://www.youtube.com/watch?v=7ijMOjhEvBw
 
+## 安装指南 (3DMigoto)
+    
 (注意：SpecialK和3DMigoto都使用相同的.dll文件，执行类似的功能，所以不能同时运行，而Melon和3DMigoto可以。）
 
 1. 从此库中下载并解压 3dmigoto.zip。我提供了两个版本：
