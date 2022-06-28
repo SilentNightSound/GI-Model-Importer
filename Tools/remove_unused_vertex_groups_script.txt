@@ -2,7 +2,7 @@
 import bpy
 from bpy.types import Operator
 
-ob = bpy.context.object
+ob = bpy.context.active_object
 ob.update_from_editmode()
    
 vgroup_used = {i: False for i, k in enumerate(ob.vertex_groups)}
