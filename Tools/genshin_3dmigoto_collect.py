@@ -15,31 +15,28 @@ def main():
     parser.add_argument("-vb", type=str, help="Main VB character is drawn on")
     parser.add_argument("-n", "--name", type=str, help="Name of character to use in folders and output files")
     parser.add_argument("-f", "--framedump", type=str, help="Name of framedump folder")
-    parser.add_argument("-r", "--recent", action='store_true', help="Use the most recent framedump folder instead of specifying")
+    parser.add_argument("-r", "--recent", action='store_true', help="(Deprecated) Use the most recent framedump folder instead of specifying")
+    parser.add_argument("--ignore", action='store_true', help="(Deprecated) Ignore duplicate objects")
     parser.add_argument("-vs", type=str, default="653c63ba4a73ca8b", help="Root VS for character model")
-    parser.add_argument("--force", nargs="+", help="Force parser to use specified ids")
-    parser.add_argument("--ignore", action='store_true', help="Ignores duplicate objects")
+    parser.add_argument("--force", "--force_draw", nargs="+", help="Force parser to collect from certain draw ids")
+    parser.add_argument("--force_object", help="Force parser to collect from certain root object")
     args = parser.parse_args()
-
 
     root_vs_hash = args.vs
     draw_vb_hash = args.vb
-    if args.recent:
+    if args.framedump:
+        frame_dump = args.framedump
+    else:
         print("Looking for most recent frame dump folder")
         frame_dump = [x for x in os.listdir(".") if "FrameAnalysis" in x][-1]
-        if frame_dump:
-            print(f"Found! Folder: {frame_dump}")
-        else:
-            print("Not found. Trying to load folder from script input")
-            frame_dump = args.framedump
-    else:
-        frame_dump = args.framedump
+        print(f"Found! Folder: {frame_dump}")
+
     character = args.name
 
     object_classifications = {0: "Head", 1: "Body", 2: "Extra", 3: "Extra2"}
 
-    position_vb = ""
-    blend_vb = ""
+    point_vbs = {}
+
     texcoord_vb = ""
     first_vs = ""
 
@@ -55,22 +52,19 @@ def main():
     frame_dump_files = os.listdir(frame_dump)
 
     # First pass to give us the VB for the position and blend data, as well as identify the relevant draw ids
+    # Now, instead of just collecting one object corresponding to the root vs we collect all of them and double check
+    #   later that the one we collected matches the vertex size of the texcoord
     print("Searching for VB corresponding with root VS")
     for filename in frame_dump_files:
+        draw_id = filename.split("-")[0]
         if root_vs_hash in filename and "-vb0=" in filename and os.path.splitext(filename)[1] == ".txt":
+            with open(os.path.join(frame_dump, filename), "r") as f:
+                vertex_count = int([x for x in f.readlines() if "vertex count:" in x][0].split(": ")[1])
             print(f"Found position VB: {filename}")
-            if position_vb and not args.ignore:
-                print("ERROR: found two character objects in frame dump.")
-                print(position_vb, filename)
-                continue
-            position_vb = filename
+            point_vbs[draw_id] = {"vertex_count": vertex_count, "position_vb": filename}
         if root_vs_hash in filename and "-vb1=" in filename and os.path.splitext(filename)[1] == ".txt":
             print(f"Found blend VB: {filename}")
-            if blend_vb and not args.ignore:
-                print("ERROR: found two character objects in frame dump.")
-                print(blend_vb, filename)
-                continue
-            blend_vb = filename
+            point_vbs[draw_id]["blend_vb"] = filename
 
         if draw_vb_hash in filename:
             draw_id = filename.split("-")[0]
@@ -82,7 +76,7 @@ def main():
             if draw_id not in relevant_ids and int(draw_id)>10:
                 relevant_ids.append(draw_id)
 
-    if not position_vb or not blend_vb:
+    if not point_vbs:
         print("ERROR: Unable to find root position and blend VB. Exiting")
         return
 
@@ -97,12 +91,12 @@ def main():
     if args.force:
         print(f"Ignoring found IDs and forcing analysis on IDs {args.force}")
         relevant_ids = args.force
-    for current_id in relevant_ids:
 
-        # Draw calls for characters either come in pairs or triples
-        if not args.force and int(current_id) - int(previous_id) > 1:
-            print("Finished collecting information")
-            break
+    # Updating this. The previous method used calls that came in pair/triples to find the objects from the scene,
+    #   but there are several characters that have their object draw calls split up and which fail as a result
+    # Now, we continue to collect until we find a duplicate object (I'm pretty sure there are no characters which
+    #   draw one of their components twice before drawing all of their components at least once)
+    for current_id in relevant_ids:
 
         # Collecting IB file for portion of model being drawn on the current id
         current_id_files = [name for name in frame_dump_files if f"{current_id}-" in name]
@@ -122,6 +116,11 @@ def main():
                 print("ERROR: Unrecognized IB format. Exiting")
                 return
         print(f"ID: {current_id}, found object at index {first_index}")
+
+        if first_index in model_data and not args.force:
+            print("Reached duplicate object. Found all relevant data files, continuing")
+            break
+
         model_data[first_index] = [draw_ib]
 
         # Even though each object technically has its own texcoord, they are all just portions of a single vb
@@ -148,49 +147,13 @@ def main():
         model_data[first_index].append(texture_maps[0])
         model_data[first_index].append(texture_maps[1])
 
-        previous_id = current_id
 
-    if len(model_data.keys()) < 2:
-        print(f"ERROR: Unable to find all model components. Only found: {model_data.keys()}. Exiting")
+    if not model_data.keys():
+        print(f"ERROR: Unable to find any model components. Exiting")
         return
 
-    # Collecting this information from the .buf is simpler, but we lose out on the header information
-    # Order is POSITION (R32G32B32_FLOAT), NORMAL (R32G32B32_FLOAT), TANGENT (R32G32B32A32_FLOAT)
-    # Sizes are 12, 12, 16 for a total stride of 40
-    # All other values ignored
-    print("Collecting position data")
-    position = []
-    with open(os.path.join(frame_dump, position_vb), "r") as f:
-        headers, data = f.read().split("vertex-data:\n")
-        data = data.strip().split("\n")
-        # These are not the colors and texcoord we want
-        data = [line for line in data if "COLOR:" not in line and "TEXCOORD" not in line and line]
-        vertex_group = []
-        for i in range(len(data)):
-            vertex = data[i].split(":")[1].strip().split(", ")
-            vertex_group.append(vertex)
-            i += 1
-            if i%3 == 0:
-                position.append(vertex_group)
-                vertex_group = []
-
-    # Order is BLENDWEIGHT (R32G32B32A32_FLOAT), BLENDINDICES (R32G32B32A32_SINT)
-    # Sizes are 16,16 for a total stride of 32
-    print("Collecting blend data")
-    blend = []
-    with open(os.path.join(frame_dump, blend_vb), "r") as f:
-        headers, data = f.read().split("vertex-data:\n")
-        data = data.strip().split("\n")
-        data = [line for line in data if line]
-        vertex_group = []
-        for i in range(len(data)):
-            vertex = data[i].split(":")[1].strip().split(", ")
-            vertex_group.append(vertex)
-            i += 1
-            if i%2 == 0:
-                blend.append(vertex_group)
-                vertex_group = []
-
+    # Re-arranging collection order. By collecting texcoord first, we can use its length to figure out which of the
+    #   position/blend vbs are correct
     # Some characters have one texcoord, others have two, varies from character to character
     # Order is COLOR (R8G8B8A8_UNORM), TEXCOORD (R32G32_FLOAT), *TEXCOORD1 (R32G32_FLOAT) if it exists
     # Sizes are 4, 8, *8 for a total of either 12 or 20
@@ -212,6 +175,61 @@ def main():
             i += 1
             if i % tex_group_count == 0:
                 texcoord.append(vertex_group)
+                vertex_group = []
+
+
+    point_vb_candidates = [x for x in point_vbs if point_vbs[x]["vertex_count"] == len(texcoord)]
+    if not point_vb_candidates:
+        print(f"ERROR: Unable to find any point vbs with length that matches texcoord ({len(texcoord)}). Exiting")
+        return
+    elif len(point_vb_candidates) > 1:
+        selection = input(f"ERROR: Found too many candidates with vertex count {len(texcoord)}. Please type id number of correct object from: {point_vb_candidates}")
+        point_vb_candidates =  [x for x in point_vbs if point_vbs[x]["draw_id"] == selection]
+
+    if args.force_object:
+        correct_vb_id = args.force_object
+    else:
+        correct_vb_id = point_vb_candidates[0]
+    print(f"Using object with ID {correct_vb_id}")
+    position_vb = point_vbs[correct_vb_id]["position_vb"]
+    blend_vb = point_vbs[correct_vb_id]["blend_vb"]
+
+
+    # Collecting this information from the .buf is simpler, but we lose out on the header information
+    # Order is POSITION (R32G32B32_FLOAT), NORMAL (R32G32B32_FLOAT), TANGENT (R32G32B32A32_FLOAT)
+    # Sizes are 12, 12, 16 for a total stride of 40
+    # All other values ignored
+    print("Collecting position data")
+    position = []
+    with open(os.path.join(frame_dump, position_vb), "r") as f:
+        headers, data = f.read().split("vertex-data:\n")
+        data = data.strip().split("\n")
+        # These are not the colors and texcoord we want
+        data = [line for line in data if "COLOR:" not in line and "TEXCOORD" not in line and line]
+        vertex_group = []
+        for i in range(len(data)):
+            vertex = data[i].split(":")[1].strip().split(", ")
+            vertex_group.append(vertex)
+            i += 1
+            if i % 3 == 0:
+                position.append(vertex_group)
+                vertex_group = []
+
+    # Order is BLENDWEIGHT (R32G32B32A32_FLOAT), BLENDINDICES (R32G32B32A32_SINT)
+    # Sizes are 16,16 for a total stride of 32
+    print("Collecting blend data")
+    blend = []
+    with open(os.path.join(frame_dump, blend_vb), "r") as f:
+        headers, data = f.read().split("vertex-data:\n")
+        data = data.strip().split("\n")
+        data = [line for line in data if line]
+        vertex_group = []
+        for i in range(len(data)):
+            vertex = data[i].split(":")[1].strip().split(", ")
+            vertex_group.append(vertex)
+            i += 1
+            if i % 2 == 0:
+                blend.append(vertex_group)
                 vertex_group = []
 
     if len(position) != len(blend) or len(blend) != len(texcoord):
