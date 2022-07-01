@@ -36,7 +36,7 @@ def main():
         frame_dump = args.framedump
     character = args.name
 
-    object_classifications = {0: "Head", 1: "Body", 2: "Extra"}
+    object_classifications = {0: "Head", 1: "Body", 2: "Extra", 3: "Extra2"}
 
     position_vb = ""
     blend_vb = ""
@@ -60,14 +60,14 @@ def main():
         if root_vs_hash in filename and "-vb0=" in filename and os.path.splitext(filename)[1] == ".txt":
             print(f"Found position VB: {filename}")
             if position_vb and not args.ignore:
-                print("ERROR: found two character objects in frame dump. Exiting")
+                print("ERROR: found two character objects in frame dump.")
                 print(position_vb, filename)
                 continue
             position_vb = filename
         if root_vs_hash in filename and "-vb1=" in filename and os.path.splitext(filename)[1] == ".txt":
             print(f"Found blend VB: {filename}")
             if blend_vb and not args.ignore:
-                print("ERROR: found two character objects in frame dump. Exiting")
+                print("ERROR: found two character objects in frame dump.")
                 print(blend_vb, filename)
                 continue
             blend_vb = filename
