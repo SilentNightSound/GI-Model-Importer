@@ -50,15 +50,20 @@ def main():
     #   I will generalize this code to work with N objects
     with open(os.path.join(args.name, f"{args.name}Head.fmt"), "r") as f:
         headers = f.read()
-        if "stride: 84" in headers:
-            extra_flag = False
-        else:
+        if len([x for x in os.listdir(args.name) if "Extra" in x]) > 0:
             extra_flag = True
+        else:
+            extra_flag = False
         if len([x for x in os.listdir(args.name) if "Extra2" in x]) > 0:
             print("Found second extra object")
             extra2_flag = True
         else:
             extra2_flag = False
+
+        if "stride: 84" in headers:
+            stride = 84
+        else:
+            stride = 92
 
     print("Splitting VB by buffer type, merging body parts")
     position, blend, texcoord = collect_vb(args.name, "Head", extra_flag)
@@ -176,7 +181,7 @@ def main():
     ini_data += f"; Resources -------------------------\n\n"
     ini_data += f"[Resource{args.name}Position]\ntype = Buffer\nstride = 40\nfilename = {args.name}Position.buf\n\n"
     ini_data += f"[Resource{args.name}Blend]\ntype = Buffer\nstride = 32\nfilename = {args.name}Blend.buf\n\n"
-    if extra_flag:
+    if stride == 92:
         ini_data += f"[Resource{args.name}Texcoord]\ntype = Buffer\nstride = 20\nfilename = {args.name}Texcoord.buf\n\n"
     else:
         ini_data += f"[Resource{args.name}Texcoord]\ntype = Buffer\nstride = 12\nfilename = {args.name}Texcoord.buf\n\n"
