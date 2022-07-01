@@ -2,6 +2,10 @@ Current TODO/open issues:
 
 Weapon/face replacement  
 
+Version 4.1 (July 1, 2022)
+	- Improved the collect script to now try and identify the correct objects and corresponding draw calls without needing to be explicitely told
+	- Fixed a bug for models with a stride of 92 but no extra component
+
 Version 4 (June 30, 2022)  
 	- Added a method of using the original model tangents when exporting to partially fix outline issues. I was unable to figure out how genshin calculate the tangents, but if the new model is similar enough to the old one we can just re-use the tangents and the result looks much closer to the original. Can use either by adding the flag `--original_tangents` on the generate.py or by clicking the "Use original tangents" button when exporting in the genshin plugin  
 	- Added a script that lets you forcibly set the vertex COLOR values to specific values. This helps fix the black outline issue that some models can end up. Use with `python genshin_set_color.py -n CharTexcoord.buf --stride X -r R -g G -b B -a A` where X is the stride for the texcoord (found in the .ini, probably either 12 or 20) and RGBA are the values you want to set (values between 0 and 255, do not need to specify all values - if only one value is specified, sets that one only and leaves the rest the same. Most of the time you will want to only modify the A value and set it lower/to 0 to fix border issues). This will generate a new file called   CharTexcoordModified.buf which you can rename to replace the original (or change the name in the .ini)  
