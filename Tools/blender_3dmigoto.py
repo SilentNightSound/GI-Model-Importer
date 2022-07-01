@@ -1332,15 +1332,20 @@ def generate_mod_folder(path, character_name, use_original_tangents):
     # Need to check the format to see if there are two texcoord or just one
     with open(os.path.join(path, f"{character_name}Head.fmt"), "r") as f:
         headers = f.read()
-        if "stride: 84" in headers:
-            extra_flag = False
-        else:
+        if len([x for x in os.listdir(path)  if "Extra" in x]) > 0:
             extra_flag = True
+        else:
+            extra_flag = False
         if len([x for x in os.listdir(path) if "Extra2" in x]) > 0:
             print("Found second extra object")
             extra2_flag = True
         else:
             extra2_flag = False
+
+        if "stride: 84" in headers:
+            stride = 84
+        else:
+            stride = 92
 
     print("Splitting VB by buffer type, merging body parts")
     position, blend, texcoord = collect_vb(path, character_name, "Head", extra_flag)
@@ -1460,7 +1465,7 @@ def generate_mod_folder(path, character_name, use_original_tangents):
     ini_data += f"; Resources -------------------------\n\n"
     ini_data += f"[Resource{character_name}Position]\ntype = Buffer\nstride = 40\nfilename = {character_name}Position.buf\n\n"
     ini_data += f"[Resource{character_name}Blend]\ntype = Buffer\nstride = 32\nfilename = {character_name}Blend.buf\n\n"
-    if extra_flag:
+    if stride == 92:
         ini_data += f"[Resource{character_name}Texcoord]\ntype = Buffer\nstride = 20\nfilename = {character_name}Texcoord.buf\n\n"
     else:
         ini_data += f"[Resource{character_name}Texcoord]\ntype = Buffer\nstride = 12\nfilename = {character_name}Texcoord.buf\n\n"
