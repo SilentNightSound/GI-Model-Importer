@@ -2,9 +2,9 @@ Current TODO/open issues:
 
 Weapon/face replacement  
 
-Version 4.1 (July 1, 2022)
-	- Improved the collect script to now try and identify the correct objects and corresponding draw calls without needing to be explicitely told
-	- Fixed a bug for models with a stride of 92 but no extra component
+Version 4.1 (July 1, 2022)  
+	- Improved the collect script to now try and identify the correct objects and corresponding draw calls without needing to be explicitely told  
+	- Fixed a bug for models with a stride of 92 but no extra component  
 
 Version 4 (June 30, 2022)  
 	- Added a method of using the original model tangents when exporting to partially fix outline issues. I was unable to figure out how genshin calculate the tangents, but if the new model is similar enough to the old one we can just re-use the tangents and the result looks much closer to the original. Can use either by adding the flag `--original_tangents` on the generate.py or by clicking the "Use original tangents" button when exporting in the genshin plugin  
