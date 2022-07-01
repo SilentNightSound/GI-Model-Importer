@@ -1348,20 +1348,20 @@ def generate_mod_folder(path, character_name, use_original_tangents):
             stride = 92
 
     print("Splitting VB by buffer type, merging body parts")
-    position, blend, texcoord = collect_vb(path, character_name, "Head", extra_flag)
+    position, blend, texcoord = collect_vb(path, character_name, "Head", stride)
     head_ib = collect_ib(path, character_name, "Head", 0)
 
     if len(position) % 40 != 0:
         raise Fatal("ERROR: VB buffer length does not match stride")
     body_start_offset = len(position) // 40
-    x, y, z = collect_vb(path, character_name, "Body", extra_flag)
+    x, y, z = collect_vb(path, character_name, "Body", stride)
     position += x
     blend += y
     texcoord += z
     body_ib = collect_ib(path, character_name, "Body", body_start_offset)
     if extra_flag:
         extra_start_offset = len(position) // 40
-        x, y, z = collect_vb(path, character_name, "Extra", extra_flag)
+        x, y, z = collect_vb(path, character_name, "Extra", stride)
         position += x
         blend += y
         texcoord += z
@@ -1369,7 +1369,7 @@ def generate_mod_folder(path, character_name, use_original_tangents):
 
         if extra2_flag:
             extra2_start_offset = len(position) // 40
-            x, y, z = collect_vb(path, character_name, "Extra2", extra2_flag)
+            x, y, z = collect_vb(path, character_name, "Extra2", stride)
             position += x
             blend += y
             texcoord += z
@@ -1632,7 +1632,7 @@ class KDTree(object):
         l = self._get_knn(self._root, point, 1, return_dist_sq, [])
         return l[0] if len(l) else None
 
-def collect_vb(path, name, classification, extra_flag):
+def collect_vb(path, name, classification, stride):
     position = bytearray()
     blend = bytearray()
     texcoord = bytearray()
@@ -1643,12 +1643,8 @@ def collect_vb(path, name, classification, extra_flag):
         while i < len(data):
             position += data[i:i + 40]
             blend += data[i + 40:i + 72]
-            if extra_flag:
-                texcoord += data[i + 72:i + 92]
-                i += 92
-            else:
-                texcoord += data[i + 72:i + 84]
-                i += 84
+            texcoord += data[i + 72:i + stride]
+            i += stride
     return position, blend, texcoord
 
 
