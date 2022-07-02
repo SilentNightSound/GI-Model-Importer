@@ -261,7 +261,7 @@ def main():
         vb_merged += f"vb0[{i}]+012 NORMAL: " + ", ".join(position[i][1]) + "\n"
         vb_merged += f"vb0[{i}]+024 TANGENT: " + ", ".join(position[i][2]) + "\n"
         vb_merged += f"vb0[{i}]+040 BLENDWEIGHT: " + ", ".join(blend[i][0]) + "\n"
-        vb_merged += f"vb0[{i}]+040 BLENDINDICES: " + ", ".join(blend[i][1]) + "\n"
+        vb_merged += f"vb0[{i}]+056 BLENDINDICES: " + ", ".join(blend[i][1]) + "\n"
         vb_merged += f"vb0[{i}]+072 COLOR: " + ", ".join(texcoord[i][0]) + "\n"
         vb_merged += f"vb0[{i}]+076 TEXCOORD: " + ", ".join(texcoord[i][1]) + "\n"
         if len(texcoord[i]) == 3:
