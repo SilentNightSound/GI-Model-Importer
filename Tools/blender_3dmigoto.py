@@ -1189,303 +1189,348 @@ def export_3dmigoto(operator, context, vb_path, ib_path, fmt_path):
 
 def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fmt_path, use_original_tangents):
     scene = bpy.context.scene
-    relevant_objects = [obj for obj in scene.objects if f"{object_name}Head".lower() in obj.name.lower()]
-    if len(relevant_objects) == 0:
-        raise Fatal(f'Unable to find {object_name}Head object')
-    if len(relevant_objects) > 1:
-        raise Fatal(f'Too many matches for {object_name}Head object: {relevant_objects}. Only one object can have that name')
-    relevant_objects.extend([obj for obj in scene.objects if f"{object_name}Body".lower() in obj.name.lower()])
-    if len(relevant_objects) < 2:
-        raise Fatal(f'Unable to find {object_name}Body object')
-    if len(relevant_objects) > 2:
-        raise Fatal(f'Too many matches for {object_name}Body object: {relevant_objects}. Only one object can have that name')
-    relevant_objects.extend([obj for obj in scene.objects if f"{object_name}Extra".lower() in obj.name.lower()])
-    if len(relevant_objects) > 4:
-        raise Fatal(f'Too many matches for {object_name}Extra objects: {relevant_objects}.')
 
-    for obj in relevant_objects:
+    if "hash.json" in os.listdir(os.path.dirname(vb_path)):
+        print("Hash data found in character folder")
+        with open(os.path.join(os.path.dirname(vb_path), "hash.json"), "r") as f:
+            hash_data = json.load(f)
+            all_base_classifications = [x["object_classifications"] for x in hash_data]
+            component_names = [x["component_name"] for x in hash_data]
+            extended_classifications = [[f"{base_classifications[-1]}{i}" for i in range(2, 10)] for base_classifications in all_base_classifications]
 
-        classification = ""
-        if f"{object_name}Head".lower() in obj.name.lower():
-            classification = "Head"
-        if f"{object_name}Body".lower() in obj.name.lower():
-            classification = "Body"
-        if f"{object_name}Extra".lower() in obj.name.lower() and f"{object_name}Extra2".lower() not in obj.name.lower():
-            classification = "Extra"
-        if f"{object_name}Extra2".lower() in obj.name.lower():
-            classification = "Extra2"
+    else:
+        print("Hash data not found in character folder, falling back to old behaviour")
+        all_base_classifications = [["Head", "Body", "Extra"]]
+        component_names = [""]
 
-        if obj is None:
-            raise Fatal('No object selected')
+        extended_classifications = [[f"{base_classifications[-1]}{i}" for i in range(2, 10)]]
 
-        vb_path  = os.path.join(os.path.dirname(vb_path), object_name + classification + ".vb")
-        ib_path  = os.path.join(os.path.dirname(ib_path), object_name + classification + ".ib")
-        fmt_path = os.path.join(os.path.dirname(fmt_path), object_name + classification + ".fmt")
+    for k in range(len(all_base_classifications)):
+        base_classifications = all_base_classifications[k]
+        current_name = f"{object_name}{component_names[k]}"
 
-        stride = obj['3DMigoto:VBStride']
-        layout = InputLayout(obj['3DMigoto:VBLayout'], stride=stride)
-        if hasattr(context, "evaluated_depsgraph_get"): # 2.80
-            mesh = obj.evaluated_get(context.evaluated_depsgraph_get()).to_mesh()
-        else: # 2.79
-            mesh = obj.to_mesh(context.scene, True, 'PREVIEW', calc_tessface=False)
-        mesh_triangulate(mesh)
+        # Doing it this way has the benefit of sorting the objects into the correct ordering by default
+        relevant_objects = ["" for i in range(len(base_classifications) + 8)]
+        # Surprisingly annoying to extend this to n objects thanks to the choice of using Extra2, Extra3, etc.
+        # Iterate through scene objects, looking for ones that match the specified character name and object type
+        for obj in scene.objects:
+            print(obj.name.lower())
+            for i, c in enumerate(base_classifications):
+                if f"{current_name}{c}".lower() in obj.name.lower():
+                    # Even though we have found an object, since the final classification can be extended need to check
+                    found_extended = False
+                    for j,d in enumerate(extended_classifications):
+                        if f"{current_name}{d}".lower() in obj.name.lower():
+                            location = j + len(base_classifications)
+                            if relevant_objects[location] != "":
+                                raise Fatal(f"Too many matches for {current_name}{d}".lower())
+                            else:
+                                relevant_objects[location] = obj
+                                found_extended = True
+                                break
+                    if not found_extended:
+                        if relevant_objects[i] != "":
+                            raise Fatal(f"Too many matches for {current_name}{c}".lower())
+                        else:
+                            relevant_objects[i] = obj
+                            break
 
-        indices = [ l.vertex_index for l in mesh.loops ]
-        faces = [ indices[i:i+3] for i in range(0, len(indices), 3) ]
-        try:
-            ib_format = obj['3DMigoto:IBFormat']
-        except KeyError:
-            ib = None
-            raise Fatal('FIXME: Add capability to export without an index buffer')
-        else:
-            ib = IndexBuffer(ib_format)
+        # Delete empty spots
+        relevant_objects = [x for x in relevant_objects if x]
+        print(relevant_objects)
 
-        # Calculates tangents and makes loop normals valid (still with our
-        # custom normal data from import time):
-        mesh.calc_tangents()
+        for i, obj in enumerate(relevant_objects):
+            if i < len(base_classifications):
+                classification = base_classifications[i]
+            else:
+                classification = extended_classifications[i-len(base_classifications)]
 
-        texcoord_layers = {}
-        for uv_layer in mesh.uv_layers:
-            texcoords = {}
+            if obj is None:
+                raise Fatal('No object selected')
 
+            vb_path  = os.path.join(os.path.dirname(vb_path), current_name + classification + ".vb")
+            ib_path  = os.path.join(os.path.dirname(ib_path), current_name + classification + ".ib")
+            fmt_path = os.path.join(os.path.dirname(fmt_path), current_name + classification + ".fmt")
+
+            stride = obj['3DMigoto:VBStride']
+            layout = InputLayout(obj['3DMigoto:VBLayout'], stride=stride)
+            if hasattr(context, "evaluated_depsgraph_get"): # 2.80
+                mesh = obj.evaluated_get(context.evaluated_depsgraph_get()).to_mesh()
+            else: # 2.79
+                mesh = obj.to_mesh(context.scene, True, 'PREVIEW', calc_tessface=False)
+            mesh_triangulate(mesh)
+
+            indices = [ l.vertex_index for l in mesh.loops ]
+            faces = [ indices[i:i+3] for i in range(0, len(indices), 3) ]
             try:
-                flip_texcoord_v = obj['3DMigoto:' + uv_layer.name]['flip_v']
-                if flip_texcoord_v:
-                    flip_uv = lambda uv: (uv[0], 1.0 - uv[1])
-                else:
-                    flip_uv = lambda uv: uv
+                ib_format = obj['3DMigoto:IBFormat']
             except KeyError:
-                flip_uv = lambda uv: uv
+                ib = None
+                raise Fatal('FIXME: Add capability to export without an index buffer')
+            else:
+                ib = IndexBuffer(ib_format)
 
-            for l in mesh.loops:
-                uv = flip_uv(uv_layer.data[l.index].uv)
-                texcoords[l.index] = uv
-            texcoord_layers[uv_layer.name] = texcoords
+            # Calculates tangents and makes loop normals valid (still with our
+            # custom normal data from import time):
+            mesh.calc_tangents()
 
-        # Blender's vertices have unique positions, but may have multiple
-        # normals, tangents, UV coordinates, etc - these are stored in the
-        # loops. To export back to DX we need these combined together such that
-        # a vertex is a unique set of all attributes, but we don't want to
-        # completely blow this out - we still want to reuse identical vertices
-        # via the index buffer. There might be a convenience function in
-        # Blender to do this, but it's easy enough to do this ourselves
-        indexed_vertices = collections.OrderedDict()
-        for poly in mesh.polygons:
-            face = []
-            for blender_lvertex in mesh.loops[poly.loop_start:poly.loop_start + poly.loop_total]:
-                vertex = blender_vertex_to_3dmigoto_vertex(mesh, obj, blender_lvertex, layout, texcoord_layers)
-                face.append(indexed_vertices.setdefault(HashableVertex(vertex), len(indexed_vertices)))
+            texcoord_layers = {}
+            for uv_layer in mesh.uv_layers:
+                texcoords = {}
+
+                try:
+                    flip_texcoord_v = obj['3DMigoto:' + uv_layer.name]['flip_v']
+                    if flip_texcoord_v:
+                        flip_uv = lambda uv: (uv[0], 1.0 - uv[1])
+                    else:
+                        flip_uv = lambda uv: uv
+                except KeyError:
+                    flip_uv = lambda uv: uv
+
+                for l in mesh.loops:
+                    uv = flip_uv(uv_layer.data[l.index].uv)
+                    texcoords[l.index] = uv
+                texcoord_layers[uv_layer.name] = texcoords
+
+            # Blender's vertices have unique positions, but may have multiple
+            # normals, tangents, UV coordinates, etc - these are stored in the
+            # loops. To export back to DX we need these combined together such that
+            # a vertex is a unique set of all attributes, but we don't want to
+            # completely blow this out - we still want to reuse identical vertices
+            # via the index buffer. There might be a convenience function in
+            # Blender to do this, but it's easy enough to do this ourselves
+            indexed_vertices = collections.OrderedDict()
+            for poly in mesh.polygons:
+                face = []
+                for blender_lvertex in mesh.loops[poly.loop_start:poly.loop_start + poly.loop_total]:
+                    vertex = blender_vertex_to_3dmigoto_vertex(mesh, obj, blender_lvertex, layout, texcoord_layers)
+                    face.append(indexed_vertices.setdefault(HashableVertex(vertex), len(indexed_vertices)))
+                if ib is not None:
+                    ib.append(face)
+
+            vb = VertexBuffer(layout=layout)
+            for vertex in indexed_vertices:
+                vb.append(vertex)
+
+            vgmaps = {k[15:]:keys_to_ints(v) for k,v in obj.items() if k.startswith('3DMigoto:VGMap:')}
+
+            if '' not in vgmaps:
+                vb.write(open(vb_path, 'wb'), operator=operator)
+
+            base, ext = os.path.splitext(vb_path)
+            for (suffix, vgmap) in vgmaps.items():
+                path = vb_path
+                if suffix:
+                    path = '%s-%s%s' % (base, suffix, ext)
+                vgmap_path = os.path.splitext(path)[0] + '.vgmap'
+                print('Exporting %s...' % path)
+                vb.remap_blendindices(obj, vgmap)
+                vb.write(open(path, 'wb'), operator=operator)
+                vb.revert_blendindices_remap()
+                sorted_vgmap = collections.OrderedDict(sorted(vgmap.items(), key=lambda x:x[1]))
+                json.dump(sorted_vgmap, open(vgmap_path, 'w'), indent=2)
+
             if ib is not None:
-                ib.append(face)
+                ib.write(open(ib_path, 'wb'), operator=operator)
 
-        vb = VertexBuffer(layout=layout)
-        for vertex in indexed_vertices:
-            vb.append(vertex)
-
-        vgmaps = {k[15:]:keys_to_ints(v) for k,v in obj.items() if k.startswith('3DMigoto:VGMap:')}
-
-        if '' not in vgmaps:
-            vb.write(open(vb_path, 'wb'), operator=operator)
-
-        base, ext = os.path.splitext(vb_path)
-        for (suffix, vgmap) in vgmaps.items():
-            path = vb_path
-            if suffix:
-                path = '%s-%s%s' % (base, suffix, ext)
-            vgmap_path = os.path.splitext(path)[0] + '.vgmap'
-            print('Exporting %s...' % path)
-            vb.remap_blendindices(obj, vgmap)
-            vb.write(open(path, 'wb'), operator=operator)
-            vb.revert_blendindices_remap()
-            sorted_vgmap = collections.OrderedDict(sorted(vgmap.items(), key=lambda x:x[1]))
-            json.dump(sorted_vgmap, open(vgmap_path, 'w'), indent=2)
-
-        if ib is not None:
-            ib.write(open(ib_path, 'wb'), operator=operator)
-
-        # Write format reference file
-        write_fmt_file(open(fmt_path, 'w'), vb, ib)
+            # Write format reference file
+            write_fmt_file(open(fmt_path, 'w'), vb, ib)
 
     generate_mod_folder(os.path.dirname(vb_path), object_name, use_original_tangents)
 
 
 def generate_mod_folder(path, character_name, use_original_tangents):
 
-    hashfile = "hash_info.json"
     parent_folder = os.path.join(path, "../")
 
-    if hashfile not in os.listdir(parent_folder):
-        raise Fatal(f"ERROR: Cannot find {hashfile}. Ensure it is one folder up from the location you are exporting to")
+    char_hash = load_hashes(path, character_name, "hash.json")
+    create_mod_folder(parent_folder, character_name)
 
-    with open(os.path.join(parent_folder, hashfile), "r") as f:
-        hash_data = json.load(f)
-        if character_name not in hash_data:
-            raise Fatal(f"ERROR: Character hash information not found in {hashfile}. Please either manually add hash information or use genshin_3dmigoto_collect.py to generate it from a frame dump. Exiting")
+    # Previous version had all these hardcoded at the end; now, we dynamically assemble the ini file as we add components
+    vb_override_ini = ""
+    ib_override_ini = ""
+    vb_res_ini = ""
+    ib_res_ini = ""
+    tex_res_ini = ""
 
-        char_hashes = hash_data[character_name]
+    for component in char_hash:
 
-    if not os.path.isdir(os.path.join(parent_folder, f"{character_name}Mod")):
-        print(f"Creating {character_name}Mod")
-        os.mkdir(os.path.join(parent_folder, f"{character_name}Mod"))
-
-    # TODO: actually use these headers instead of just hardcoding values
-    # Need to check the format to see if there are two texcoord or just one
-    with open(os.path.join(path, f"{character_name}Head.fmt"), "r") as f:
-        headers = f.read()
-        if len([x for x in os.listdir(path)  if "Extra" in x]) > 0:
-            extra_flag = True
+        # Support for custom names was added so we need this to retain backwards compatibility
+        if "component_name" in component:
+            component_name = component["component_name"]
         else:
-            extra_flag = False
-        if len([x for x in os.listdir(path) if "Extra2" in x]) > 0:
-            print("Found second extra object")
-            extra2_flag = True
+            component_name = ""
+
+        # Old version used "Extra" as the third object, but I've replaced it with dress - need this for backwards compatibility
+        if "object_classifications" in component:
+            object_classifications = component["object_classifications"]
         else:
-            extra2_flag = False
+            object_classifications = ["Head", "Body", "Extra"]
 
-        if "stride: 84" in headers:
-            stride = 84
+        current_name = f"{character_name}{component_name}"
+
+        print(f"\nWorking on {current_name}")
+
+        # Components without draw vbs are texture overrides only
+        if component["draw_vb"]:
+
+            with open(os.path.join(path, f"{current_name}{object_classifications[0]}.fmt"), "r") as f:
+                stride = int([x.split(": ")[1] for x in f.readlines() if "stride:" in x][0])
+
+            offset = 0
+            position, blend, texcoord = bytearray(), bytearray(), bytearray()
+            ib_override_ini += f"[TextureOverride{current_name}IB]\nhash = {component['ib']}\nhandling = skip\ndrawindexed = auto\n\n"
+            for i in range(len(component["object_indexes"])):
+                if i + 1 > len(object_classifications):current_object = f"{object_classifications[-1]}{i + 2 - len(object_classifications)}"
+                else:
+                    current_object = object_classifications[i]
+
+                print(f"\nCollecting {current_object}")
+
+                # This is the path for components which have blend data (characters, complex weapons, etc.)
+                if component["blend_vb"]:
+                    print("Splitting VB by buffer type, merging body parts")
+                    x, y, z = collect_vb(path, current_name, current_object, stride)
+                    position += x
+                    blend += y
+                    texcoord += z
+                    position_stride = 40
+
+                # This is the path for components without blend data (simple weapons, objects, etc.)
+                # Simplest route since we do not need to split up the buffer into multiple components
+                else:
+                    position += collect_vb_single(path, current_name, current_object, stride)
+                    position_stride = stride
+
+                print("Collecting IB")
+                print(current_name, current_object, offset)
+                ib = collect_ib(path, current_name, current_object, offset)
+                with open(os.path.join(parent_folder, f"{character_name}Mod", f"{current_name}{current_object}.ib"), "wb") as f:
+                    f.write(ib)
+                ib_override_ini += f"[TextureOverride{current_name}{current_object}]\nhash = {component['ib']}\nmatch_first_index = {component['object_indexes'][i]}\nib = Resource{current_name}{current_object}IB\n"
+                ib_res_ini += f"[Resource{current_name}{current_object}IB]\ntype = Buffer\nformat = DXGI_FORMAT_R16_UINT\nfilename = {current_name}{current_object}.ib\n\n"
+
+                if len(position) % position_stride != 0:
+                    print("ERROR: VB buffer length does not match stride")
+
+                offset = len(position) // position_stride
+
+                # Older versions can only manage diffuse and lightmaps
+                if "texture_hashes" in component:
+                    texture_hashes = component["texture_hashes"][i]
+                else:
+                    texture_hashes = [["Diffuse", ".dds", "_"], ["LightMap", ".dds", "_"]]
+
+                print("Copying texture files")
+
+                for j, texture in enumerate(texture_hashes):
+                    shutil.copy(os.path.join(path, f"{current_name}{current_object}{texture[0]}{texture[1]}"),
+                                os.path.join(parent_folder, f"{character_name}Mod",f"{current_name}{current_object}{texture[0]}{texture[1]}"))
+                    ib_override_ini += f"ps-t{j} = Resource{current_name}{current_object}{texture[0]}\n"
+                    tex_res_ini += f"[Resource{current_name}{current_object}{texture[0]}]\nfilename = {current_name}{current_object}{texture[0]}{texture[1]}\n\n"
+                ib_override_ini += "\n"
+
+            if use_original_tangents:
+                print("Replacing tangents with closest originals")
+                head_file = [x for x in os.listdir(path) if f"{current_name}{current_object}-vb0" in x]
+                if not head_file:
+                    raise Fatal("ERROR: unable to find original file for tangent data. Exiting")
+                head_file = head_file[0]
+                with open(os.path.join(path, head_file), "r") as f:
+                    data = f.readlines()
+                    raw_points = [x.split(":")[1].strip().split(", ") for x in data if "+000 POSITION:" in x]
+                    tangents = [x.split(":")[1].strip().split(", ") for x in data if "+024 TANGENT:" in x]
+                    if len(raw_points[0]) == 3:
+                        points = [(float(x), float(y), float(z)) for x, y, z in raw_points]
+                    else:
+                        points = [(float(x), float(y), float(z)) for x, y, z, _ in raw_points]
+                    tangents = [(float(x), float(y), float(z), float(a)) for x, y, z, a in tangents]
+                    lookup = {}
+                    for x, y in zip(points, tangents):
+                        lookup[x] = y
+
+                    tree = KDTree(points, 3)
+
+                    i = 0
+                    while i < len(position):
+                        if len(raw_points[0]) == 3:
+                            x, y, z = struct.unpack("f", position[i:i + 4])[0], \
+                                      struct.unpack("f", position[i + 4:i + 8])[0], \
+                                      struct.unpack("f", position[i + 8:i + 12])[0]
+                            result = tree.get_nearest((x, y, z))[1]
+                            tx, ty, tz, ta = [struct.pack("f", a) for a in lookup[result]]
+                            position[i + 24:i + 28] = tx
+                            position[i + 28:i + 32] = ty
+                            position[i + 32:i + 36] = tz
+                            position[i + 36:i + 40] = ta
+                            i += 40
+                        else:
+                            x, y, z = struct.unpack("e", position[i:i + 2])[0], \
+                                      struct.unpack("e", position[i + 2:i + 4])[0], \
+                                      struct.unpack("e", position[i + 4:i + 6])[0]
+                            result = tree.get_nearest((x, y, z))[1]
+                            tx, ty, tz, ta = [(int(a * 255)).to_bytes(1, byteorder="big") for a in lookup[result]]
+
+                            position[i + 24:i + 25] = tx
+                            position[i + 25:i + 26] = ty
+                            position[i + 26:i + 27] = tz
+                            position[i + 27:i + 28] = ta
+                            i += 28
+
+            if component["blend_vb"]:
+                print("Writing merged buffer files")
+                with open(os.path.join(parent_folder, f"{character_name}Mod", f"{current_name}Position.buf"), "wb") as f, \
+                        open(os.path.join(parent_folder, f"{character_name}Mod", f"{current_name}Blend.buf"), "wb") as g, \
+                        open(os.path.join(parent_folder, f"{character_name}Mod", f"{current_name}Texcoord.buf"), "wb") as h:
+                    f.write(position)
+                    g.write(blend)
+                    h.write(texcoord)
+
+                vb_override_ini += f"[TextureOverride{current_name}Position]\nhash = {component['position_vb']}\nvb0 = Resource{current_name}Position\n\n"
+                vb_override_ini += f"[TextureOverride{current_name}Blend]\nhash = {component['blend_vb']}\nvb1 = Resource{current_name}Blend\nhandling = skip\ndraw = {len(position) // 40},0 \n\n"
+                vb_override_ini += f"[TextureOverride{current_name}Texcoord]\nhash = {component['texcoord_vb']}\nvb1 = Resource{current_name}Texcoord\n\n"
+
+                vb_res_ini += f"[Resource{current_name}Position]\ntype = Buffer\nstride = 40\nfilename = {current_name}Position.buf\n\n"
+                vb_res_ini += f"[Resource{current_name}Blend]\ntype = Buffer\nstride = 32\nfilename = {current_name}Blend.buf\n\n"
+                vb_res_ini += f"[Resource{current_name}Texcoord]\ntype = Buffer\nstride = {stride - 72}\nfilename = {current_name}Texcoord.buf\n\n"
+            else:
+                with open(os.path.join(parent_folder, f"{character_name}Mod", f"{current_name}.buf"), "wb") as f:
+                    f.write(position)
+                vb_override_ini += f"[TextureOverride{current_name}]\nhash = {component['draw_vb']}\nvb0 = Resource{current_name}\n\n"
+                vb_res_ini += f"[Resource{current_name}]\ntype = Buffer\nstride = 28\nfilename = {current_name}.buf\n\n"
+
+
+        # This is the path for components with only texture overrides (faces, wings, etc.)
+        # Theoretically possible to combine with the above to cut down on code, but results in lots of messy if statements
         else:
-            stride = 92
+            for i in range(len(component["object_indexes"])):
+                if i > 2:
+                    current_object = f"{object_classifications[2]}{i - 1}"
+                else:
+                    current_object = object_classifications[i]
 
-    print("Splitting VB by buffer type, merging body parts")
-    position, blend, texcoord = collect_vb(path, character_name, "Head", stride)
-    head_ib = collect_ib(path, character_name, "Head", 0)
+                print(f"\nTexture override only on {current_object}")
 
-    if len(position) % 40 != 0:
-        raise Fatal("ERROR: VB buffer length does not match stride")
-    body_start_offset = len(position) // 40
-    x, y, z = collect_vb(path, character_name, "Body", stride)
-    position += x
-    blend += y
-    texcoord += z
-    body_ib = collect_ib(path, character_name, "Body", body_start_offset)
-    if extra_flag:
-        extra_start_offset = len(position) // 40
-        x, y, z = collect_vb(path, character_name, "Extra", stride)
-        position += x
-        blend += y
-        texcoord += z
-        extra_ib = collect_ib(path, character_name, "Extra", extra_start_offset)
+                if component["texture_hashes"]:
+                    texture_hashes = component["texture_hashes"][i]
+                else:
+                    texture_hashes = [{"Diffuse": "_"}, {"LightMap": "_"}]
 
-        if extra2_flag:
-            extra2_start_offset = len(position) // 40
-            x, y, z = collect_vb(path, character_name, "Extra2", stride)
-            position += x
-            blend += y
-            texcoord += z
-            extra2_ib = collect_ib(path, character_name, "Extra2", extra2_start_offset)
+                print("Copying texture files")
+                for j, texture in enumerate(texture_hashes):
+                    ib_override_ini += f"[TextureOverride{current_name}{current_object}{texture[0]}]\nhash = {texture[2]}\n"
+                    shutil.copy(os.path.join(path, f"{current_name}{current_object}{texture[0]}{texture[1]}"),
+                                os.path.join(parent_folder, f"{character_name}Mod",f"{current_name}{current_object}{texture[0]}{texture[1]}"))
+                    ib_override_ini += f"ps-t{j} = Resource{current_name}{current_object}{texture[0]}\n\n"
+                    tex_res_ini += f"[Resource{current_name}{current_object}{texture[0]}]\nfilename = {current_name}{current_object}{texture[0]}{texture[1]}\n\n"
+                ib_override_ini += "\n"
 
-    if use_original_tangents:
-        print("Replacing tangents with closest originals")
-        head_file = [x for x in os.listdir(path) if f"{character_name}Head-vb0" in x]
-        if not head_file:
-            raise Fatal("ERROR: unable to find original file for tangent data. Exiting")
-        head_file = head_file[0]
-        with open(os.path.join(path, head_file), "r") as f:
-            data = f.readlines()
-            points = [x.split(":")[1].strip().split(", ") for x in data if "+000 POSITION:" in x]
-            tangents = [x.split(":")[1].strip().split(", ") for x in data if "+024 TANGENT:"in x]
-            points = [(float(x), float(y), float(z)) for x,y,z in points]
-            tangents = [(float(x), float(y), float(z), float(a)) for x, y, z, a in tangents]
-            lookup = {}
-            for x,y in zip(points, tangents):
-                lookup[x] = y
-
-            tree = KDTree(points, 3)
-
-            i = 0
-            while i < len(position):
-                x,y,z = struct.unpack("f", position[i:i+4])[0],  struct.unpack("f", position[i+4:i+8])[0],  struct.unpack("f", position[i+8:i+12])[0]
-                result = tree.get_nearest((x,y,z))[1]
-                tx,ty,tz,ta = [struct.pack("f", a) for a in lookup[result]]
-                position[i+24:i+28] = tx
-                position[i+28:i+32] = ty
-                position[i+32:i+36] = tz
-                position[i+36:i+40] = ta
-                i+=40
-
-    print("Writing merged buffer files")
-    with open(os.path.join(parent_folder, f"{character_name}Mod", f"{character_name}Position.buf"), "wb") as f, \
-            open(os.path.join(parent_folder, f"{character_name}Mod", f"{character_name}Blend.buf"), "wb") as g, \
-            open(os.path.join(parent_folder, f"{character_name}Mod", f"{character_name}Texcoord.buf"), "wb") as h:
-        f.write(position)
-        g.write(blend)
-        h.write(texcoord)
-
-    with open(os.path.join(parent_folder, f"{character_name}Mod", f"{character_name}Head.ib"), "wb") as f, \
-            open(os.path.join(parent_folder, f"{character_name}Mod", f"{character_name}Body.ib"), "wb") as g:
-        f.write(head_ib)
-        g.write(body_ib)
-
-    if extra_flag:
-        with open(os.path.join(parent_folder, f"{character_name}Mod", f"{character_name}Extra.ib"), "wb") as h:
-            h.write(extra_ib)
-        if extra2_flag:
-            with open(os.path.join(parent_folder, f"{character_name}Mod", f"{character_name}Extra2.ib"), "wb") as h:
-                h.write(extra2_ib)
-
-    print("Copying texture files")
-    shutil.copy(os.path.join(path, f"{character_name}HeadDiffuse.dds"),
-                os.path.join(parent_folder, f"{character_name}Mod", f"{character_name}HeadDiffuse.dds"))
-    shutil.copy(os.path.join(path, f"{character_name}HeadLightMap.dds"),
-                os.path.join(parent_folder, f"{character_name}Mod", f"{character_name}HeadLightMap.dds"))
-    shutil.copy(os.path.join(path, f"{character_name}BodyDiffuse.dds"),
-                os.path.join(parent_folder, f"{character_name}Mod", f"{character_name}BodyDiffuse.dds"))
-    shutil.copy(os.path.join(path, f"{character_name}BodyLightmap.dds"),
-                os.path.join(parent_folder, f"{character_name}Mod", f"{character_name}BodyLightMap.dds"))
-    if extra_flag:
-        shutil.copy(os.path.join(path, f"{character_name}ExtraDiffuse.dds"),
-                    os.path.join(parent_folder, f"{character_name}Mod", f"{character_name}ExtraDiffuse.dds"))
-        shutil.copy(os.path.join(path, f"{character_name}ExtraLightMap.dds"),
-                    os.path.join(parent_folder, f"{character_name}Mod", f"{character_name}ExtraLightMap.dds"))
-
-        if extra2_flag:
-            shutil.copy(os.path.join(path, f"{character_name}Extra2Diffuse.dds"),
-                        os.path.join(parent_folder, f"{character_name}Mod", f"{character_name}Extra2Diffuse.dds"))
-            shutil.copy(os.path.join(path, f"{character_name}Extra2LightMap.dds"),
-                        os.path.join(parent_folder, f"{character_name}Mod", f"{character_name}Extra2LightMap.dds"))
-
-    # TODO: Populate template file instead of hardcoded
     print("Generating .ini file")
     ini_data = f"; {character_name}\n\n"
-
-    ini_data += f"; Overrides -------------------------\n\n"
-    ini_data += f"[TextureOverride{character_name}Position]\nhash = {char_hashes['position_vb']}\nvb0 = Resource{character_name}Position\n\n"
-    ini_data += f"[TextureOverride{character_name}Blend]\nhash = {char_hashes['blend_vb']}\nvb1 = Resource{character_name}Blend\nhandling = skip\ndraw = {len(position) // 40},0 \n\n"
-    ini_data += f"[TextureOverride{character_name}Texcoord]\nhash = {char_hashes['texcoord_vb']}\nvb1 = Resource{character_name}Texcoord\n\n"
-    ini_data += f"[TextureOverride{character_name}IB]\nhash = {char_hashes['ib']}\nhandling = skip\ndrawindexed = auto\n\n"
-    ini_data += f"[TextureOverride{character_name}Head]\nhash = {char_hashes['ib']}\nmatch_first_index = {char_hashes['object_indexes'][0]}\nib = Resource{character_name}HeadIB\nps-t0 = Resource{character_name}HeadDiffuse\nps-t1 = Resource{character_name}HeadLightMap\n\n"
-    ini_data += f"[TextureOverride{character_name}Body]\nhash = {char_hashes['ib']}\nmatch_first_index = {char_hashes['object_indexes'][1]}\nib = Resource{character_name}BodyIB\nps-t0 = Resource{character_name}BodyDiffuse\nps-t1 = Resource{character_name}BodyLightMap\n\n"
-    if extra_flag:
-        ini_data += f"[TextureOverride{character_name}Extra]\nhash = {char_hashes['ib']}\nmatch_first_index = {char_hashes['object_indexes'][2]}\nib = Resource{character_name}ExtraIB\nps-t0 = Resource{character_name}ExtraDiffuse\nps-t1 = Resource{character_name}ExtraLightMap\n\n"
-        if extra2_flag:
-            ini_data += f"[TextureOverride{character_name}Extra2]\nhash = {char_hashes['ib']}\nmatch_first_index = {char_hashes['object_indexes'][3]}\nib = Resource{character_name}Extra2IB\nps-t0 = Resource{character_name}Extra2Diffuse\nps-t1 = Resource{character_name}Extra2LightMap\n\n"
-
-
-    ini_data += f"; Resources -------------------------\n\n"
-    ini_data += f"[Resource{character_name}Position]\ntype = Buffer\nstride = 40\nfilename = {character_name}Position.buf\n\n"
-    ini_data += f"[Resource{character_name}Blend]\ntype = Buffer\nstride = 32\nfilename = {character_name}Blend.buf\n\n"
-    if stride == 92:
-        ini_data += f"[Resource{character_name}Texcoord]\ntype = Buffer\nstride = 20\nfilename = {character_name}Texcoord.buf\n\n"
-    else:
-        ini_data += f"[Resource{character_name}Texcoord]\ntype = Buffer\nstride = 12\nfilename = {character_name}Texcoord.buf\n\n"
-
-    ini_data += f"[Resource{character_name}HeadIB]\ntype = Buffer\nformat = DXGI_FORMAT_R16_UINT\nfilename = {character_name}Head.ib\n\n"
-    ini_data += f"[Resource{character_name}BodyIB]\ntype = Buffer\nformat = DXGI_FORMAT_R16_UINT\nfilename = {character_name}Body.ib\n\n"
-    if extra_flag:
-        ini_data += f"[Resource{character_name}ExtraIB]\ntype = Buffer\nformat = DXGI_FORMAT_R16_UINT\nfilename = {character_name}Extra.ib\n\n"
-        if extra2_flag:
-            ini_data += f"[Resource{character_name}Extra2IB]\ntype = Buffer\nformat = DXGI_FORMAT_R16_UINT\nfilename = {character_name}Extra2.ib\n\n"
-    ini_data += f"[Resource{character_name}HeadDiffuse]\nfilename = {character_name}HeadDiffuse.dds\n\n"
-    ini_data += f"[Resource{character_name}HeadLightMap]\nfilename = {character_name}HeadLightMap.dds\n\n"
-    ini_data += f"[Resource{character_name}BodyDiffuse]\nfilename = {character_name}BodyDiffuse.dds\n\n"
-    ini_data += f"[Resource{character_name}BodyLightMap]\nfilename = {character_name}BodyLightMap.dds\n\n"
-    if extra_flag:
-        ini_data += f"[Resource{character_name}ExtraDiffuse]\nfilename = {character_name}ExtraDiffuse.dds\n\n"
-        ini_data += f"[Resource{character_name}ExtraLightMap]\nfilename = {character_name}ExtraLightMap.dds\n\n"
-        if extra2_flag:
-            ini_data += f"[Resource{character_name}Extra2Diffuse]\nfilename = {character_name}Extra2Diffuse.dds\n\n"
-            ini_data += f"[Resource{character_name}Extra2LightMap]\nfilename = {character_name}Extra2LightMap.dds\n\n"
+    ini_data += f"; Overrides -------------------------\n\n" + vb_override_ini + ib_override_ini
+    ini_data += f"; Resources -------------------------\n\n" + vb_res_ini + ib_res_ini + tex_res_ini
+    ini_data += f"\n; .ini generated by GI-Model-Importer\n" \
+        f"; If you have any issues or find any bugs, please open a ticket at https://github.com/SilentNightSound/GI-Model-Importer/issues or contact SilentNightSound#7430 on discord"
 
     with open(os.path.join(parent_folder, f"{character_name}Mod", f"{character_name}.ini"), "w") as f:
         print("Writing ini file")
@@ -1632,44 +1677,107 @@ class KDTree(object):
         l = self._get_knn(self._root, point, 1, return_dist_sq, [])
         return l[0] if len(l) else None
 
-def collect_vb(path, name, classification, stride):
+
+def load_hashes(path, name, hashfile):
+    parent_folder = os.path.join(path, "../")
+    if hashfile not in os.listdir(path):
+        print("WARNING: Could not find hash.info in character directory. Falling back to hash_info.json")
+        if "hash_info.json" not in os.listdir(parent_folder):
+            print(f"ERROR: Cannot find hash.json or hash_info.json. Exiting")
+            sys.exit()
+        # Backwards compatibility with the old hash_info.json
+        with open(os.path.join(parent_folder, "hash_info.json"), "r") as f:
+            hash_data = json.load(f)
+            char_hashes = [hash_data[name]]
+    else:
+        with open(os.path.join(path, hashfile), "r") as f:
+            char_hashes = json.load(f)
+
+    return char_hashes
+
+
+def create_mod_folder(parent_folder, name):
+    if not os.path.isdir(os.path.join(parent_folder, f"{name}Mod")):
+        print(f"Creating {name}Mod")
+        os.mkdir(os.path.join(parent_folder, f"{name}Mod"))
+    else:
+        print(f"WARNING: Everything currently in the {name}Mod folder will be overwritten - make sure any important files are backed up. Press any button to continue")
+
+def collect_vb(folder, name, classification, stride, ignore_tangent=True):
     position = bytearray()
     blend = bytearray()
     texcoord = bytearray()
-    with open(os.path.join(path, f"{name}{classification}.vb"), "rb") as f:
+    with open(os.path.join(folder, f"{name}{classification}.vb"), "rb") as f:
         data = f.read()
         data = bytearray(data)
         i = 0
         while i < len(data):
-            position += data[i:i + 40]
-            blend += data[i + 40:i + 72]
-            texcoord += data[i + 72:i + stride]
+            # This gave me a lot of trouble - the "tangent" the game uses doesn't seem to be any sort of tangent I'm
+            #   familiar with. In fact, it has a lot more in common with the normal
+            # Setting this equal to the normal gives significantly better results in most cases than using the tangent
+            #   calculated by blender
+            import binascii
+            if ignore_tangent:
+                position += data[i:i + 24]
+                position += data[i+12:i+24] + bytearray(struct.pack("f", 1))
+            else:
+                position += data[i:i+40]
+            blend += data[i+40:i+72]
+            texcoord += data[i+72:i+stride]
             i += stride
     return position, blend, texcoord
 
 
-def collect_ib(path, name, classification, offset):
+def collect_ib(folder, name, classification, offset):
     ib = bytearray()
-    with open(os.path.join(path, f"{name}{classification}.ib"), "rb") as f:
+    with open(os.path.join(folder, f"{name}{classification}.ib"), "rb") as f:
         data = f.read()
         data = bytearray(data)
         i = 0
         while i < len(data):
-            ib += struct.pack('1H', struct.unpack('1H', data[i:i + 2])[0] + offset)
+            ib += struct.pack('1H', struct.unpack('1H', data[i:i+2])[0]+offset)
             i += 2
     return ib
 
-def find_closest(lines, x,y,z):
-    i = 0
-    closest_distance = math.inf
-    closest_tangent = []
-    while i<len(lines)-1:
-        distance = abs(x-lines[i][0]) + abs(y-lines[i][1]) + abs(z-lines[i][2])
-        if distance < closest_distance:
-            closest_distance = distance
-            closest_tangent = lines[i+1]
-        i+=2
-    return closest_tangent
+
+def collect_vb_single(folder, name, classification, stride, ignore_tangent=True):
+    result = bytearray()
+    with open(os.path.join(folder, f"{name}{classification}.vb"), "rb") as f:
+        data = f.read()
+        data = bytearray(data)
+        i = 0
+        while i < len(data):
+            if ignore_tangent:
+                result += data[i:i + stride - 4] + data[i+8:i+12]
+            else:
+                result += data[i:i+stride]
+            i += stride
+    return result
+
+
+# Parsing the headers for vb0 txt files
+# This has been constructed by the collect script, so its headers are much more accurate than the originals
+def parse_buffer_headers(headers, filters):
+    results = []
+    # https://docs.microsoft.com/en-us/windows/win32/api/dxgiformat/ne-dxgiformat-dxgi_format
+    for element in headers.split("]:")[1:]:
+        lines = element.strip().splitlines()
+        name = lines[0].split(": ")[1]
+        index = lines[1].split(": ")[1]
+        data_format = lines[2].split(": ")[1]
+        bytewidth = sum([int(x) for x in re.findall("([0-9]*)[^0-9]", data_format.split("_")[0]+"_") if x])//8
+
+        # A bit annoying, but names can be very similar so need to match filter format exactly
+        element_name = name
+        if index != "0":
+            element_name += index
+        if element_name+":" not in filters:
+            continue
+
+        results.append({"semantic_name": name, "element_name": element_name, "index": index, "format": data_format, "bytewidth": bytewidth})
+
+    return results
+
 
 @orientation_helper(axis_forward='-Z', axis_up='Y')
 class Import3DMigotoFrameAnalysis(bpy.types.Operator, ImportHelper, IOOBJOrientationHelper):

@@ -9,11 +9,9 @@ Prior to 3Dmigoto, there was no way to cleanly remove her hat - it does not have
 These instructions can be generally applied to remove any part of the mesh, though in some cases there will be a hole in the model underneath (especially for larger objects) - a walkthrough on how to patch mesh holes will come later.
 
 1. Ensure 3DMigoto and the 3DMigoto Blender plugin are installed (see [README](../README.md) on main github page)
-2. Download the Mona character files and hash_info.json from the CharacterData folder of this repo. Your folder should look like this:
+2. Download the Mona character files from the CharacterData folder of https://github.com/SilentNightSound/GI-Model-Importer-Assets. Your folder should look like this:
 
-<img src="https://user-images.githubusercontent.com/107697535/175789338-b187f6c6-2d6d-4a97-beb2-6cccdd556e2d.png" width="800"/>
-
-<img src="https://user-images.githubusercontent.com/107697535/174457572-77532f14-02ab-4bfb-904d-fe2ad251d84a.png" width="800"/>
+<img src="https://user-images.githubusercontent.com/107697535/178895141-ba8572ba-091c-4c49-85e6-841634747211.png" width="600"/>
 
 3. We are now going to load the model into Blender. Under File->Import there is an option to import 3DMigoto Frame Analysis Dumps. If you do not see this option, ensure the 3DMigoto plugin is installed and activated
 
@@ -33,15 +31,15 @@ These instructions can be generally applied to remove any part of the mesh, thou
 
 <img src="https://user-images.githubusercontent.com/107697535/174457765-c59e3e10-0187-4578-9b0b-21dd47d316e7.png" width="800"/>
 
-7. Now that Mona is hatless, we want to export the models. Ensure that there is a single object named "MonaHead" and one that named "MonaBody" (and optionally one named "CharExtra" for characters that have a third part - Mona only has two). The option to export is under File->Export->Exports Genshin Mod folder. Navigate to the character folder you loaded the original data from, and export the model as "Mona.vb"
+7. Now that Mona is hatless, we want to export the models. Ensure that there is a single object named "MonaHead" and one named "MonaBody" (and optionally one named "CharDress"/"CharExtra" for characters that have a third/fourth part - Mona only has two). The option to export is under File->Export->Exports Genshin Mod folder. Navigate to the character folder you loaded the original data from, and export the model as "Mona.vb"
 
 <img src="https://user-images.githubusercontent.com/107697535/175569818-4d150043-555c-41a7-90ca-3d0e05c1c3f5.png" width="800"/>
 
 <img src="https://user-images.githubusercontent.com/107697535/175570101-9717b9eb-7ef9-4e1c-82e2-f6871497f5f6.png" width="800"/>
 
-8. A MonaMod folder should now be generated right next to the original character folder that looks like this (if the mod folder does not generate, double check you have hash_info.json):
+8. A MonaMod folder should now be generated right next to the original character folder that looks like this (if the mod folder does not generate, double check the folder you are exporting to has hash.json):
 
-<img src="https://user-images.githubusercontent.com/107697535/174458059-363b1c56-ea76-4a01-9e1f-6e22f3b0949f.png" width="800"/>
+<img src="https://user-images.githubusercontent.com/107697535/178895073-201685fb-d4a0-40e2-9e74-5d80b8d16938.png" width="800"/>
 
    - (Note: another way to generate the Mod folder is to export each component separately as MonaHead and MonaBody with the 3DMigoto raw buffers option, then use the genshin_3dmigoto_generate.py script with `python .\genshin_3dmigoto_generate.py -n "Mona"`)
 
