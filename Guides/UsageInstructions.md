@@ -18,18 +18,16 @@ I highly recommend these videos as an introduction to modding with 3Dmigoto: htt
 
 1. In blender, go to File -> Import -> 3DMigoto Frame Analysis Dump (vb.txt + ib.txt)
 
-2. Select the files from the CharacterData folder of this repo for the character you want (all characters have at least a head and body, but some also have additional bits like skirts which I have labelled as extra). Leave all options as default and press Import
+2. Select the files from the Data folder of the https://github.com/SilentNightSound/GI-Model-Importer-Assets repo for the model you want (all models have at least a head, but some also have a body, dress and extra component). Leave all options as default and press Import
 
 3. Perform modifications you want to the model, with the following restrictions/notes:
    - Vertices are limited to around 64k
-   - Character's faces are stored separately - these scripts and instructions do not yet support face modifications
-   - Models must contain all the original vertex groups, colors and custom properties - if using a custom model, make sure it matches up with the original and that there are no gaps.
+   - Models must contain all the original vertex groups, colors and custom properties - if using a custom model, make sure it matches up with the original and that there are no gaps in the vertex groups.
    - It is possible to connect the texture maps to the object in Blender, but you will likely have to convert the .dds to a .png in order for Blender to recognize it and then later convert back to .dds
 
-4. (optional) Perform any edits to the character's diffuse and lightmaps
+4. (optional) Perform any edits to the character's textures
 
-5. Make sure there is a single object named CharHead, one named CharBody and (optionally depending if model originally had it) CharExtra. Export the model using the Exports Genshin Mod Folder option, saving the object as Char.vb in the original character folder
-   - Make sure to use the most up-to-date hash_info.json, otherwise the script may not be able to find the required hashes to generate the .ini files
+5. Make sure the objects are named like CharHead, CharBody, CharDress and CharExtra (depending on how many components the original had) and that only one object in the scene has each name. Export the model using the Exports Genshin Mod Folder option and saving the object as Char.vb in the original character folder
 
 7. Move the generated CharMod folder into the Mods directory of the launcher you created during the installation step
 
@@ -195,5 +193,4 @@ Still under development, see videos at the top of this page for more explanation
 - Complicated hair structure is a nightmare. There is a reason almost every character in Genshin has simple hair. Unless you are amazing with blender, I recommend just assigning all the hair to the head vertex group and giving up on trying to get wavy hair movement working (or stick with the original hair)
 - Make sure that all the vertices in the model have weight/are assigned to a group, and that the groups are correct. Often, the weight transfer can end up transferring the hand and arm groups to incorrect areas since they are so close to the body (would be better to T-pose model, but I'm not sure yet how to load pose information from the constant buffers). Fingers are also problematic
 - Models only use 2 UV maps - one for the head, and one for the body. Some characters actually use a third for things like skirts, but that is just a duplicate copy of the body texture and I'm not sure if it can be modified (testing to come)
-- Which UV a specific vertex uses depends on which object the game assigns it to. As far as I can tell, the game hardcodes a certain index value for each character and separates based on that. Currently looking into ways to change this and increase flexibility 
 - May have to rotate the model relative to the original if is face down when loaded (not sure what causes this, shows up with mmd models)

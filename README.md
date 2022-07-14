@@ -9,6 +9,8 @@ Feel free to use or modify the scripts as you wish, though please give credit if
 
 For a simple walkthrough of removing a portion of a character mesh using these tools, see [Mona Walkthrough](Guides/MonaWalkthrough.md). For a more advanced example of importing a custom model, see Cybertron's great video walkthrough: https://www.youtube.com/watch?v=7ijMOjhEvBw
 
+Model files for the importer are located at https://github.com/SilentNightSound/GI-Model-Importer-Assets
+
 ## Installation Instructions (3DMigoto)
 
 (Note: SpecialK and 3DMigoto both use the same .dll file and perform similar functions, so it they cannot be run together. Melon and 3DMigoto are able to run together.)
@@ -27,7 +29,7 @@ For a simple walkthrough of removing a portion of a character mesh using these t
 
 <img src="https://user-images.githubusercontent.com/107697535/174325193-1f58ab2c-86f8-4ce9-8697-6e7d140b2014.png" width="800"/>
 
-   - Note: some people have reported an issue where the loader lists that it was unable to verify if 3dmigoto was loaded. This does not mean that 3dmigoto failed to inject - if the green text and mods show up, there are no issues
+   - Note: some people have reported an issue where the loader lists that it was unable to verify if 3dmigoto was loaded. This does not mean that 3dmigoto failed to inject - if the green text and mods show up, there are no issues and you can close the command prompt
 
 ![image](https://user-images.githubusercontent.com/107697535/175563985-1e7d1298-08d0-4334-b6e8-c69769e3877a.png)
 

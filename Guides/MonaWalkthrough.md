@@ -9,7 +9,7 @@ Prior to 3Dmigoto, there was no way to cleanly remove her hat - it does not have
 These instructions can be generally applied to remove any part of the mesh, though in some cases there will be a hole in the model underneath (especially for larger objects) - a walkthrough on how to patch mesh holes will come later.
 
 1. Ensure 3DMigoto and the 3DMigoto Blender plugin are installed (see [README](../README.md) on main github page)
-2. Download the Mona character files and hash_info.json from the CharacterData folder of this repo. Your folder should look like this:
+2. Download the Mona character files from the CharacterData folder of https://github.com/SilentNightSound/GI-Model-Importer-Assets. Your folder should look like this:
 
 <img src="https://user-images.githubusercontent.com/107697535/175789338-b187f6c6-2d6d-4a97-beb2-6cccdd556e2d.png" width="800"/>
 
@@ -33,7 +33,7 @@ These instructions can be generally applied to remove any part of the mesh, thou
 
 <img src="https://user-images.githubusercontent.com/107697535/174457765-c59e3e10-0187-4578-9b0b-21dd47d316e7.png" width="800"/>
 
-7. Now that Mona is hatless, we want to export the models. Ensure that there is a single object named "MonaHead" and one that named "MonaBody" (and optionally one named "CharExtra" for characters that have a third part - Mona only has two). The option to export is under File->Export->Exports Genshin Mod folder. Navigate to the character folder you loaded the original data from, and export the model as "Mona.vb"
+7. Now that Mona is hatless, we want to export the models. Ensure that there is a single object named "MonaHead" and one that named "MonaBody" (and optionally one named "CharDress"/"CharExtra" for characters that have a third/fourth part - Mona only has two). The option to export is under File->Export->Exports Genshin Mod folder. Navigate to the character folder you loaded the original data from, and export the model as "Mona.vb"
 
 <img src="https://user-images.githubusercontent.com/107697535/175569818-4d150043-555c-41a7-90ca-3d0e05c1c3f5.png" width="800"/>
 
