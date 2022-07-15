@@ -1,0 +1,237 @@
+# Author: SilentNightSound#7430
+# Takes the vertex groups on one model and renames them to match as closely as possible with another while filling in gaps
+# This script does not add or remove vertex groups or change any group weights - it only renames them
+# If two vertex groups are both similar to the same output group x, will name them x.0001, x.0002 etc. instead of merging
+# Merge duplicate vertices before using, otherwise behavior can be unpredictable
+
+# Order is source -> destination (e.g. if you want to map character1's vertex groups onto character2, set the source as character1 and the destination character2)
+
+# EXPERIMENTAL, still in development
+
+import bpy
+
+
+def main():
+    source = "Char1-vb0=hash.txt"
+    destination = "Char2-vb0=hash.txt"
+
+    source_object = bpy.data.objects[source]
+    destination_object = bpy.data.objects[destination]
+    
+    original_vg_length = len(destination_object.vertex_groups)
+
+    # Collect all the vertices in the source along with their corresponding non-zero weight vertex groups
+    source_vertices = collect_vertices(source_object)
+    tree = KDTree(list(source_vertices.keys()), 3)
+
+    # Then, go through each of the vertex groups in destination and keep a running tally of how different a given source
+    #   vertex is from the destination
+    candidates = [{} for _ in range(len(destination_object.vertex_groups))]
+    destination_vertices = collect_vertices(destination_object)
+    for vertex in destination_vertices:
+        nearest_source = source_vertices[tree.get_nearest(vertex)[1]]
+        for group, weight in destination_vertices[vertex]:
+            nearest_source_group, smallest_distance = nearest_group(weight, nearest_source)
+            # I originally recorded both the sum and count to do an averaged weighting, but just using the count
+            #    alone gives better results in most cases
+            if nearest_source_group in candidates[group]:
+                x = candidates[group][nearest_source_group]
+                candidates[group][nearest_source_group] = [x[0] + smallest_distance, x[1] + 1]
+            else:
+                candidates[group][nearest_source_group] = [smallest_distance, 1]
+
+    # Next, we need to choose the best match from the candidates
+    best = []
+    for group in candidates:
+        best_group = -1
+        highest_overlap = -1
+        for c in group:
+            if group[c][1] > highest_overlap:
+                best_group = c
+                highest_overlap = group[c][1]
+        best.append(best_group)
+
+    # And then go through the list of vertex groups and rename them
+    # In order to reduce name conflicts, we add an "x" in front and then remove it later
+    # Blender automatically renames duplicate vertex groups by adding .0001, .0002, etc.
+    for i, vg in enumerate(destination_object.vertex_groups):
+        if best[i] == -1:
+            print(f"Removing empty group {vg.name}")
+            destination_object.vertex_groups.remove(vg)
+        else:
+            print(f"Renaming {vg.name} to {best[i]}")
+            vg.name = f"x{str(best[i])}"
+
+    for i, vg in enumerate(destination_object.vertex_groups):
+        vg.name = vg.name[1:]
+      
+    # Finally, fill in missing spots and sort vertex groups 
+    missing = set([f"{i}" for i in range(original_vg_length)]) - set([x.name.split(".")[0] for x in destination_object.vertex_groups])
+    for number in missing:
+        destination_object.vertex_groups.new(name=f"{number}")
+    
+    # I'm not sure if it is possible to sort/add vertex groups without setting the current object and using ops
+    bpy.context.view_layer.objects.active = destination_object
+    bpy.ops.object.vertex_group_sort()
+    
+
+
+# Returns position, vertex group and weight data for all vertices in object
+def collect_vertices(obj):
+    results = {}
+    for v in obj.data.vertices:
+        results[(v.co.x, v.co.y, v.co.z)] = [(vg.group, vg.weight) for vg in v.groups]
+    return results
+
+
+# Finds the nearest group for a specified weight
+def nearest_group(weight, nearest_source):
+    nearest_group = -1
+    smallest_difference = 10000000000
+    for source_group, source_weight in nearest_source:
+        if abs(weight - source_weight) < smallest_difference:
+            smallest_difference = abs(weight - source_weight)
+            nearest_group = source_group
+    return nearest_group, smallest_difference
+
+
+# kdtree, i luv you
+# https://github.com/Vectorized/Python-KD-Tree
+class KDTree(object):
+    """
+    Usage:
+    1. Make the KD-Tree:
+        `kd_tree = KDTree(points, dim)`
+    2. You can then use `get_knn` for k nearest neighbors or
+       `get_nearest` for the nearest neighbor
+    points are be a list of points: [[0, 1, 2], [12.3, 4.5, 2.3], ...]
+    """
+
+    def __init__(self, points, dim, dist_sq_func=None):
+        """Makes the KD-Tree for fast lookup.
+        Parameters
+        ----------
+        points : list<point>
+            A list of points.
+        dim : int
+            The dimension of the points.
+        dist_sq_func : function(point, point), optional
+            A function that returns the squared Euclidean distance
+            between the two points.
+            If omitted, it uses the default implementation.
+        """
+
+        if dist_sq_func is None:
+            dist_sq_func = lambda a, b: sum((x - b[i]) ** 2
+                                            for i, x in enumerate(a))
+
+        def make(points, i=0):
+            if len(points) > 1:
+                points.sort(key=lambda x: x[i])
+                i = (i + 1) % dim
+                m = len(points) >> 1
+                return [make(points[:m], i), make(points[m + 1:], i),
+                        points[m]]
+            if len(points) == 1:
+                return [None, None, points[0]]
+
+        def add_point(node, point, i=0):
+            if node is not None:
+                dx = node[2][i] - point[i]
+                for j, c in ((0, dx >= 0), (1, dx < 0)):
+                    if c and node[j] is None:
+                        node[j] = [None, None, point]
+                    elif c:
+                        add_point(node[j], point, (i + 1) % dim)
+
+        import heapq
+        def get_knn(node, point, k, return_dist_sq, heap, i=0, tiebreaker=1):
+            if node is not None:
+                dist_sq = dist_sq_func(point, node[2])
+                dx = node[2][i] - point[i]
+                if len(heap) < k:
+                    heapq.heappush(heap, (-dist_sq, tiebreaker, node[2]))
+                elif dist_sq < -heap[0][0]:
+                    heapq.heappushpop(heap, (-dist_sq, tiebreaker, node[2]))
+                i = (i + 1) % dim
+                # Goes into the left branch, then the right branch if needed
+                for b in (dx < 0, dx >= 0)[:1 + (dx * dx < -heap[0][0])]:
+                    get_knn(node[b], point, k, return_dist_sq,
+                            heap, i, (tiebreaker << 1) | b)
+            if tiebreaker == 1:
+                return [(-h[0], h[2]) if return_dist_sq else h[2]
+                        for h in sorted(heap)][::-1]
+
+        def walk(node):
+            if node is not None:
+                for j in 0, 1:
+                    for x in walk(node[j]):
+                        yield x
+                yield node[2]
+
+        self._add_point = add_point
+        self._get_knn = get_knn
+        self._root = make(points)
+        self._walk = walk
+
+    def __iter__(self):
+        return self._walk(self._root)
+
+    def add_point(self, point):
+        """Adds a point to the kd-tree.
+
+        Parameters
+        ----------
+        point : array-like
+            The point.
+        """
+        if self._root is None:
+            self._root = [None, None, point]
+        else:
+            self._add_point(self._root, point)
+
+    def get_knn(self, point, k, return_dist_sq=True):
+        """Returns k nearest neighbors.
+        Parameters
+        ----------
+        point : array-like
+            The point.
+        k: int
+            The number of nearest neighbors.
+        return_dist_sq : boolean
+            Whether to return the squared Euclidean distances.
+        Returns
+        -------
+        list<array-like>
+            The nearest neighbors.
+            If `return_dist_sq` is true, the return will be:
+                [(dist_sq, point), ...]
+            else:
+                [point, ...]
+        """
+        return self._get_knn(self._root, point, k, return_dist_sq, [])
+
+    def get_nearest(self, point, return_dist_sq=True):
+        """Returns the nearest neighbor.
+        Parameters
+        ----------
+        point : array-like
+            The point.
+        return_dist_sq : boolean
+            Whether to return the squared Euclidean distance.
+        Returns
+        -------
+        array-like
+            The nearest neighbor.
+            If the tree is empty, returns `None`.
+            If `return_dist_sq` is true, the return will be:
+                (dist_sq, point)
+            else:
+                point
+        """
+        l = self._get_knn(self._root, point, 1, return_dist_sq, [])
+        return l[0] if len(l) else None
+
+
+if __name__ == "__main__":
+    main()
