@@ -18,7 +18,7 @@ def main():
     source_object = bpy.data.objects[source]
     destination_object = bpy.data.objects[destination]
     
-    original_vg_length = len(destination_object.vertex_groups)
+    original_vg_length = len(source_object.vertex_groups)
 
     # Collect all the vertices in the source along with their corresponding non-zero weight vertex groups
     source_vertices = collect_vertices(source_object)
