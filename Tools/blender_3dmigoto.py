@@ -1203,7 +1203,7 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
         all_base_classifications = [["Head", "Body", "Extra"]]
         component_names = [""]
 
-        extended_classifications = [[f"{base_classifications[-1]}{i}" for i in range(2, 10)]]
+        extended_classifications = [[f"{base_classifications[-1]}{i}" for i in range(2, 10)] for base_classifications in all_base_classifications]
 
     for k in range(len(all_base_classifications)):
         base_classifications = all_base_classifications[k]
