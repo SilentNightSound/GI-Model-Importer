@@ -1,9 +1,9 @@
 EN | [中文](CN_README.md)
 
-# GI-Model-Importer
+# GI-Model-Importer (GIMI)
 Tools and instructions on how to import custom models into Genshin Impact
 
-#### **DISCLAIMER: Using this on official Genshin servers is very likely to get you banned. I do not recommend or condone the use of these scripts and programs on official servers, and if you do use it on official servers I take no responsibility for any consequences as a result.**
+#### **DISCLAIMER: Using this on official Genshin servers is very likely to get you banned. I do not recommend or condone the use of these scripts and programs on official servers, and if you do use it on official servers I take no responsibility for any consequences as a result. I strongly recommend only using private servers for modding.**
 
 Feel free to use or modify the scripts as you wish, though please give credit if you use these programs in your projects. I am continuing to update this program/page with new features and fixes, so check back often.
 
@@ -59,3 +59,11 @@ In order to modify game models, you need to also setup your Blender plugins and 
 ## Usage Instructions
 
 See [Usage Instructions](Guides/UsageInstructions.md)
+
+Also, if you any questions about modding come join the Genshin modding discord at https://discord.gg/gR2Ts6ApP7. The only verification is that you can get the modified version of 3dmigoto working by following the steps above.
+
+&nbsp;
+## Acknowledgements
+
+Thank you to DarkStarSword and bo3b for 3dmigoto
+
