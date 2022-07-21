@@ -6,13 +6,16 @@ Replace "new_object" with the object you want to transfer properties to, and "or
 '''
 
 import bpy
-bpy.data.objects["new_object"]["3DMigoto:FirstIndex"] =  bpy.data.objects["original_object"]["3DMigoto:FirstIndex"]
-bpy.data.objects["new_object"]["3DMigoto:FirstVertex"] =  bpy.data.objects["original_object"]["3DMigoto:FirstVertex"]
-bpy.data.objects["new_object"]["3DMigoto:IBFormat"] =  bpy.data.objects["original_object"]["3DMigoto:IBFormat"]
-bpy.data.objects["new_object"]["3DMigoto:TEXCOORD.xy"] =  bpy.data.objects["original_object"]["3DMigoto:TEXCOORD.xy"]
-bpy.data.objects["new_object"]["3DMigoto:VBLayout"] =  bpy.data.objects["original_object"]["3DMigoto:VBLayout"]
-bpy.data.objects["new_object"]["3DMigoto:VBStride"] =  bpy.data.objects["original_object"]["3DMigoto:VBStride"]
+new_object = "trasfer_to"
+original_object = "transfer_from"
+
+bpy.data.objects[new_object]["3DMigoto:FirstIndex"] =  bpy.data.objects[original_object]["3DMigoto:FirstIndex"]
+bpy.data.objects[new_object]["3DMigoto:FirstVertex"] =  bpy.data.objects[original_object]["3DMigoto:FirstVertex"]
+bpy.data.objects[new_object]["3DMigoto:IBFormat"] =  bpy.data.objects[original_object]["3DMigoto:IBFormat"]
+bpy.data.objects[new_object]["3DMigoto:TEXCOORD.xy"] =  bpy.data.objects[original_object]["3DMigoto:TEXCOORD.xy"]
+bpy.data.objects[new_object]["3DMigoto:VBLayout"] =  bpy.data.objects[original_object]["3DMigoto:VBLayout"]
+bpy.data.objects[new_object]["3DMigoto:VBStride"] =  bpy.data.objects[original_object]["3DMigoto:VBStride"]
 
 
 // Some models have a second TEXCOORD, might require this line as well depending on the model:
-bpy.data.objects["new_object"]["3DMigoto:TEXCOORD1.xy"] =  bpy.data.objects["original_object"]["3DMigoto:TEXCOORD1.xy"]
+bpy.data.objects[new_object]["3DMigoto:TEXCOORD1.xy"] =  bpy.data.objects[original_object]["3DMigoto:TEXCOORD1.xy"]
