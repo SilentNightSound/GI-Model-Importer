@@ -2,6 +2,9 @@
 # Forcibly sets the COLOR of a texcoord output to a certain value
 # Use if having outline issues around the character rims
 
+# Most common use case: python genshin_set_color.py -n CharTexcoord.buf --stride X -a 0 to remove character outlines
+# Stride is either 12 or 20 in most cases, check texcoord in .ini file of the mod folder
+
 import os
 import argparse
 import struct
@@ -10,8 +13,8 @@ import json
 import math
 
 def main():
-    parser = argparse.ArgumentParser(description="Splits blender 3dmigoto output into required buffers")
-    parser.add_argument("-n", "--name", type=str, help="Name of character to use in folders and output files")
+    parser = argparse.ArgumentParser(description="Modifies COLOR component of texcoord")
+    parser.add_argument("-n", "--name", type=str, help="Name of texcoord")
     parser.add_argument("-r", type=int, default=None, help="R color value")
     parser.add_argument("-g", type=int, default=None, help="G color value")
     parser.add_argument("-b", type=int, default=None, help="B color value")
