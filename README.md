@@ -7,7 +7,7 @@ Tools and instructions on how to import custom models into Genshin Impact
 
 Feel free to use or modify the scripts as you wish, though please give credit if you use these programs in your projects. I am continuing to update this program/page with new features and fixes, so check back often.
 
-For a simple walkthrough of removing a portion of a character mesh using these tools, see [Mona Walkthrough](Guides/MonaWalkthrough.md). For a more advanced example of importing a custom model, see Cybertron's great video walkthrough: https://www.youtube.com/watch?v=7ijMOjhEvBw
+For a simple walkthrough of removing a portion of a character mesh using these tools, see [Mona Walkthrough](Guides/MonaWalkthrough.md). For a more advanced example of importing a custom model, see Cybertron's great video walkthrough: https://www.youtube.com/watch?v=7ijMOjhEvBw and SinsOfSeven#3164 annotated transcript and troubleshooting list: https://rentry.co/3dmigPlug_AnimeGame
 
 Model files for the importer are located at https://github.com/SilentNightSound/GI-Model-Importer-Assets
 
