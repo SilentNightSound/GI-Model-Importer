@@ -1,12 +1,12 @@
 '''
 Author: SilentNightSound#7430
 Can use transfer custom properties from 3dmigoto imported objects to other objects
-Replace "trasfer_to" with the object you want to transfer properties to, and "transfer_from" from
+Replace "transfer_to" with the object you want to transfer properties to, and "transfer_from" from
 
 '''
 
 import bpy
-new_object = "trasfer_to"
+new_object = "transfer_to"
 original_object = "transfer_from"
 
 bpy.data.objects[new_object]["3DMigoto:FirstIndex"] =  bpy.data.objects[original_object]["3DMigoto:FirstIndex"]
