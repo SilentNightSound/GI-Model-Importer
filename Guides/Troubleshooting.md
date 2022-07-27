@@ -29,13 +29,11 @@ I have occasionally noticed an issue where 3dmigoto will fail to inject even if 
 
 If you do not see anything in the folder, make sure you are loading in data from the ModelData folder and not the Mod folder (currently, loading files from Mod folders not supported). The correct folder should contain vb and ib .txt files
 
-<img src="https://user-images.githubusercontent.com/107697535/181100111-99222d8e-c0bf-4f02-bc5d-9748435eb1fc.png" width="300"/>
-
 ### If you get this error when loading a model, you are using an outdated plugin. The old plugin only supported Blender 2.80-2.92
 
 ![image](https://user-images.githubusercontent.com/107697535/181087328-1a3769dc-ab8b-4d2d-b35c-2a42c3ea6bf8.png)
 
-Almost all other errors are due to an issue with the model you are trying to load. Most common is 4D normals, which is due to the model dumping a component of the model and incorrectly labelling it as a normal.
+Almost all other errors are due to an issue with the model you are trying to load. Most common is 4D normals, which is due to the collect script dumping a component of the model and incorrectly labelling it as a normal.
 
 
 ## Model Exporting Issues
