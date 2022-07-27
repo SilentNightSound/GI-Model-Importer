@@ -1,9 +1,11 @@
 # Author: SilentNightSound#7430
 # Combines vertex groups with the same prefix into one
 
+# Change the value of vgroup_num to the number of whatever group you want to merge (e.g. "10")
+
 import bpy
 
-vgroup_num = "10"
+vgroup_num = "change_this"
 
 obj = bpy.context.active_object
 relevant = [x.name for x in obj.vertex_groups if x.name.split(".")[0] == f"{vgroup_num}"]
