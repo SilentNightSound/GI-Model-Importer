@@ -104,7 +104,7 @@ This is due to vertex limits on the model. Anything with blend weights/vertex gr
 
 - Large number of warnings about mod conflicts
 
-<img src="https://user-images.githubusercontent.com/107697535/181122365-2280b266-3313-4807-b2a5-be23bf92b650.png" width="600"/>
+<img src="https://user-images.githubusercontent.com/107697535/181122365-2280b266-3313-4807-b2a5-be23bf92b650.png" width="300"/>
 
 This is caused by the game attempting to load more than one file to the same hash. This usually is a result of using two mods for the same character at the same time, but an older version of the tools also had a bug where shared face components were overwritten in multiple places.
 
@@ -117,9 +117,10 @@ To fix, remove any duplicate mod folders. If you are sure that you have removed 
 
 Unlike warnings, errors usually indicate that the program has failed to load in the mod. The cause can very, but some common ones are:
 
-Incorrect names (name in .ini file does not match file in folder, like different extension)
-Textures have wrong format (look at original to see what format, usually dds and must have heights/widths that are powers of 2 and have integer ratios like 1024x1024, 2048x2048, 1024x2048, etc.)
-Forgot to replace textures with new ones, so it is still loading up the old ones from the original model
+1) Incorrect names (name in .ini file does not match file in folder, like different extension)  
+2) Textures have wrong format (look at original to see what format, usually dds and must have heights/widths that are powers of 2 and have integer ratios like 1024x1024, 2048x2048, 1024x2048, etc.)  
+3) Forgot to replace textures with new ones, so it is still loading up the old ones from the original model  
+4) Did not paint/transfer any vertex groups on the new model, when the old model had vertex groups
 
 - Objects load in with the wrong orientation
 
@@ -131,21 +132,42 @@ Example of correct orientation between original (Kazuha) and new (Noelle)
 
 <img src="https://user-images.githubusercontent.com/107697535/181127089-41f5ba37-5882-4666-a7e5-70814876ace5.png" width="300"/>
 
+- Model is completely FUBAR
+
+<img src="https://user-images.githubusercontent.com/107697535/181131070-f19c14d4-2e59-4bf2-8a59-a41ee45ddc24.png" width="150"/> <img src="https://user-images.githubusercontent.com/107697535/181132251-1f118616-c011-4af9-9bb3-21000ac5ba3b.png" width="150"/> <img src="https://user-images.githubusercontent.com/107697535/181132357-f7721ddc-201d-4fb6-8b3a-5d546059c224.png" width="300"/>
+
+Very likely due to vertex group issues. The vertex group number, order and positions need to match up between the new model and the old. Confirm that all the vertex groups are there in the new model, that they are in the correct order (e.g. 4 6 7 8 5 should be 4 5 6 7 8) and that there are no gaps (e.g. 4 7 8 9 -> 4 5 6 7 8 9).
+
+- Model is slightly FUBAR
+
+<img src="https://user-images.githubusercontent.com/107697535/181132663-e1dd363a-51e3-488b-8c4c-09a35fcfc00a.png" width="150"/>" ![image](https://user-images.githubusercontent.com/107697535/181132608-84c4082c-1d0a-44c8-94ed-f06a3f62c014.png)
+
+Still vertex group issues - double check the above, as well as ensure that the weight for the new model in that section matches up with that of the original model
+
 - Incorrect textures
 
 <img src="https://user-images.githubusercontent.com/107697535/181128459-e09c9d4a-2b04-4a5c-b338-2f46c455f0b7.png" width="300"/><img src="https://user-images.githubusercontent.com/107697535/181128502-b5587610-b61c-4b50-b60c-a73f68e89bab.png" width="100"/>
 
 This can be due to a large variety of reasons. Most common ones are:
 
-Not naming the uv map as TEXCOORD.xy
-Reversed normals
-Damaged or incorrect ObjectTexcoord.buf
+1) Not naming the uv map as TEXCOORD.xy  
+2) Reversed normals  
+3) Damaged or incorrect ObjectTexcoord.buf
 
 - Very bright/glowing textures
 
 <img src="https://user-images.githubusercontent.com/107697535/181130063-abafbd57-c44b-409e-b502-36957a96d776.png" width="300"/>
 
 This is most likely due to the texture map you are using having no alpha channel. Refer to the walkthroughs on this repo for details, but basically make sure you have a transparent layer on top of any texture files (the top layer is used to control emission and makes things bright, the bottom layer is used to draw the model colors and patterns).
+
+- Thick or abnormal color outlines
+
+![image](https://user-images.githubusercontent.com/107697535/181130423-54b0b03a-3f8f-4b66-99f8-36a98bca16ee.png) <img src="https://user-images.githubusercontent.com/107697535/181130493-1efae42a-2a48-4e69-807e-7865776fda9b.png" width="150"/> 
+
+This is due to an incorrect vertex COLOR value. Two methods to fix: 
+1) Copy over the COLOR data from a part of the model that has correct outlines on the original (see https://youtu.be/z2nvJzkwHHQ?t=4753 for details)
+2) Remove the outlines by using this script: https://github.com/SilentNightSound/GI-Model-Importer/blob/main/Tools/genshin_remove_outlines.py
+
 
 ## Model Dumping Issues
 
