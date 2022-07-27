@@ -119,8 +119,7 @@ Unlike warnings, errors usually indicate that the program has failed to load in 
 
 1) Incorrect names (name in .ini file does not match file in folder, like different extension)  
 2) Textures have wrong format (look at original to see what format, usually dds and must have heights/widths that are powers of 2 and have integer ratios like 1024x1024, 2048x2048, 1024x2048, etc.)  
-3) Forgot to replace textures with new ones, so it is still loading up the old ones from the original model  
-4) Did not paint/transfer any vertex groups on the new model, when the old model had vertex groups
+3) Did not paint/transfer any vertex groups on the new model, when the old model had vertex groups
 
 - Objects load in with the wrong orientation
 
@@ -153,6 +152,7 @@ This can be due to a large variety of reasons. Most common ones are:
 1) Not naming the uv map as TEXCOORD.xy  
 2) Reversed normals  
 3) Damaged or incorrect ObjectTexcoord.buf
+4) Forgot to replace textures with new ones, so it is still loading up the old ones from the original model  
 
 - Very bright/glowing textures
 
