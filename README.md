@@ -17,17 +17,15 @@ Model files for the importer are located at https://github.com/SilentNightSound/
 
 ## Installation Instructions (3DMigoto)
 
-(Note: SpecialK and 3DMigoto both use the same .dll file and perform similar functions, so it they cannot be run together. Melon and 3DMigoto are able to run together.)
-
 1. Download 3dmigoto.zip from [releases](https://github.com/SilentNightSound/GI-Model-Importer/releases) and extract it. I have provided two versions:
-   - "3dmigoto (for development).zip" is a development version intended for creating mods which has all features turned on (including the green text at the top and bottom of the screen) but is slower
-   - "3dmigoto (for playing mods).zip" is a version of the program with most development features turned off and is faster (no green text), intended for releasing and playing mods
+   - "3dmigoto-for-development.zip" is a development version intended for creating mods which has all features turned on (including the green text at the top and bottom of the screen) but is slower
+   - "3dmigoto-for-playing-mods.zip" is a version of the program indended for playing mods which has development features turned off (no green text) but is faster
 
-2. Depending on the location of your Genshin Impact .exe file, you may need to change this line in the d3dx.ini file to point to your own installation (the Genshin game .exe, not the Genshin launcher.exe):
+2. Depending on the location of your Genshin Impact .exe file, you may need to change this line in the d3dx.ini file to point to your own installation (the Genshin game .exe, not the Genshin launcher .exe - the one you want is usually located in the Genshin Impact Game folder):
 
 <img src="https://user-images.githubusercontent.com/107697535/174322200-b1afea95-53f5-4add-be89-698f85503908.png" width="800"/>
 
-3. Double click "3DMigoto Loader.exe" to start the loader, then start up Genshin through the GenshinImpact.exe (again, through the Genshin game .exe not the launcher.exe). If everything is correct so far, 3DMigoto should be injected into the game and you should see a green text overlay (only if using the development version, the "for playing" version does not show the green text):
+3. Double click "3DMigoto Loader.exe" to start the loader, then start up Genshin through the GenshinImpact.exe. If everything is correct so far, 3DMigoto should be injected into the game and you should see a green text overlay (only if using the "for development" version, the "for playing" version does not show the green text):
 
 ![image](https://user-images.githubusercontent.com/107697535/174324967-049b9879-c537-4bd0-b190-4ad7444fb8f1.png)
 
