@@ -3,13 +3,15 @@ EN | [中文](CN_README.md)
 # Genshin-Impact-Model-Importer (GIMI)
 Tools and instructions for importing custom models into Genshin Impact.
 
-#### DISCLAIMER: I strongly recommend only using private servers for modding. Using these tools on official Genshin servers carries a high risk of being banned. I do not recommend or condone the use of these tools and programs on official servers, and if you do use it on official servers I take no responsibility for any consequences as a result. 
+#### DISCLAIMER: I strongly recommend only using private servers for modding. Using these tools on official Genshin servers carries a high risk of being banned. I do not condone the use of these tools and programs on official servers, and take no responsibility for any consequences as a result if you do. 
 
-GIMI is a version of 3DMigoto that I have modified to be compatible with Genshin. Feel free to use or modify any of the scripts on this repo as you wish, though please give credit if you use these programs in your projects. I am continuing to update this program/page with new features and fixes, so check back often.
+GIMI is a version of 3DMigoto that I have modified to be compatible with Genshin.
 
-Troubleshooting for installation and tools here: [Troubleshooting](Guides/Troubleshooting.md)
+ Feel free to use or modify any of the scripts on this repo as you wish, though please give credit if you use these programs in your projects. I am continuing to update this page with new features and fixes, so check back often.
 
-For a simple walkthrough of removing a portion of a character mesh using these tools, see [Mona Walkthrough](Guides/MonaWalkthrough.md). For a more advanced example of importing a custom model, see Cybertron's great video walkthrough: https://www.youtube.com/watch?v=7ijMOjhEvBw and SinsOfSeven#3164 annotated transcript and troubleshooting list: https://rentry.co/3dmigPlug_AnimeGame
+Troubleshooting guide: [Troubleshooting](Guides/Troubleshooting.md)
+
+For a simple walkthrough of removing a portion of a character mesh using these tools, see [Mona Walkthrough](Guides/MonaWalkthrough.md). For a more advanced example of importing a custom model, see Cybertron's great video walkthrough [here](https://www.youtube.com/watch?v=7ijMOjhEvBw) and SinsOfSeven#3164 annotated transcript and troubleshooting guide [here](https://rentry.co/3dmigPlug_AnimeGame).
 
 Model files for the importer are located at https://github.com/SilentNightSound/GI-Model-Importer-Assets
 
@@ -17,7 +19,7 @@ Model files for the importer are located at https://github.com/SilentNightSound/
 
 (Note: SpecialK and 3DMigoto both use the same .dll file and perform similar functions, so it they cannot be run together. Melon and 3DMigoto are able to run together.)
 
-1. Download 3dmigoto.zip from this repository and extract it. I have provided two versions:
+1. Download 3dmigoto.zip from [releases](https://github.com/SilentNightSound/GI-Model-Importer/releases) and extract it. I have provided two versions:
    - "3dmigoto (for development).zip" is a development version intended for creating mods which has all features turned on (including the green text at the top and bottom of the screen) but is slower
    - "3dmigoto (for playing mods).zip" is a version of the program with most development features turned off and is faster (no green text), intended for releasing and playing mods
 
