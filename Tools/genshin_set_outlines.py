@@ -15,7 +15,8 @@ import math
 def main():
   
     parser = argparse.ArgumentParser(description="Set outline thickness")
-    parser.add_argument("--thickness", type=int, default=0, help="Thickness of outline (0 - no outline, 255 - maximum outline)")
+    parser.add_argument("--thickness", type=int, default=0, help="Thickness of outline (0 - no outline, 255 - maximum outline
+    args = parser.parse_args()
 
     texcoord_file = [x for x in os.listdir(".") if "Texcoord.buf" in x]
     if len(texcoord_file) == 0:
