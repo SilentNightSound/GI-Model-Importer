@@ -1,11 +1,11 @@
 EN | [中文](CN_README.md)
 
 # Genshin-Impact-Model-Importer (GIMI)
-Tools and instructions on how to import custom models into Genshin Impact
+Tools and instructions for importing custom models into Genshin Impact.
 
-#### **DISCLAIMER: Using this on official Genshin servers is very likely to get you banned. I do not recommend or condone the use of these scripts and programs on official servers, and if you do use it on official servers I take no responsibility for any consequences as a result. I strongly recommend only using private servers for modding.**
+#### DISCLAIMER: I strongly recommend only using private servers for modding. Using these tools on official Genshin servers carries a high risk of being banned. I do not recommend or condone the use of these tools and programs on official servers, and if you do use it on official servers I take no responsibility for any consequences as a result. 
 
-Feel free to use or modify the scripts as you wish, though please give credit if you use these programs in your projects. I am continuing to update this program/page with new features and fixes, so check back often.
+GIMI is a version of 3DMigoto that I have modified to be compatible with Genshin. Feel free to use or modify any of the scripts on this repo as you wish, though please give credit if you use these programs in your projects. I am continuing to update this program/page with new features and fixes, so check back often.
 
 Troubleshooting for installation and tools here: [Troubleshooting](Guides/Troubleshooting.md)
 
@@ -51,7 +51,7 @@ In order to modify game models, you need to also setup your Blender plugins and 
 
 2. Download and install the modified [3DMigoto plugin](Tools/blender_3dmigoto.py). You can install an add-on in Blender by going to Edit -> Preferences -> Add-Ons -> Install, then selecting the .py file. 
 
-3. If done correctly, you should see 3DMigoto in the plugin list as well as new options in the import and export menus
+3. If done correctly, you should see 3dmigoto in the plugin list as well as new options in the import and export menus
 
 <img src="https://user-images.githubusercontent.com/107697535/174328624-ccb14ded-57b2-4ac7-b0a0-0de118119174.png" width="800"/>
 
@@ -67,5 +67,5 @@ Also, if you any questions about modding come join the Genshin modding discord a
 &nbsp;
 ## Acknowledgements
 
-Thank you to DarkStarSword and bo3b for 3dmigoto
+Huge thank you to DarkStarSword and bo3b for 3dmigoto!
 
