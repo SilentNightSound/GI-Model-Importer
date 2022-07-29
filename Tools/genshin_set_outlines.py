@@ -2,7 +2,7 @@
 # Allows user to set thickness of outlines on model
 # Slightly more powerful than the remove outline script
 
-# Place in Mod folder and run with python genshin_remove_outlines.py --thickness t
+# Place in Mod folder and run with python genshin_set_outlines.py --thickness t
 #   where t is a value between 0 (no outline) and 255 (thick as possible)
 
 import os
