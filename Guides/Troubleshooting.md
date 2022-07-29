@@ -162,9 +162,10 @@ This is most likely due to the texture map you are using having no alpha channel
 
 ![image](https://user-images.githubusercontent.com/107697535/181130423-54b0b03a-3f8f-4b66-99f8-36a98bca16ee.png) <img src="https://user-images.githubusercontent.com/107697535/181130493-1efae42a-2a48-4e69-807e-7865776fda9b.png" width="150"/> 
 
-This is due to an incorrect vertex COLOR value. Two methods to fix: 
+This is due to an incorrect vertex COLOR value. Three methods to fix: 
 1) Copy over the COLOR data from a part of the model that has correct outlines on the original (see https://youtu.be/z2nvJzkwHHQ?t=4753 for details)
-2) Remove the outlines by using this script: https://github.com/SilentNightSound/GI-Model-Importer/blob/main/Tools/genshin_remove_outlines.py
+2) Change outline thickness with this script: https://github.com/SilentNightSound/GI-Model-Importer/blob/main/Tools/genshin_set_outlines.py (place in mod folder, command is `python .\genshin_set_outlines.py --thickness t` where t is from 0 to 255; 0 is no outline, 255 is max outline. Most game models use somewhere between 80-130, but you should experiment to see what looks best for your specific model)
+3) Remove the outlines by using this script: https://github.com/SilentNightSound/GI-Model-Importer/blob/main/Tools/genshin_remove_outlines.py
 
 
 - ### Other issues
