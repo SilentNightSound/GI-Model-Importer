@@ -232,8 +232,16 @@ def main():
                     seen_hashes.add(texture_hash)
                     extension = ".dds"
                     if j==0:
-                        texture_type = "Diffuse"
+                        if args.has_normalmap:
+                            texture_type = "NormalMap"
+                        else:
+                            texture_type = "Diffuse"
                     elif j==1:
+                        if args.has_normalmap:
+                            texture_type = "Diffuse"
+                        else:
+                            texture_type = "LightMap"
+                    elif j==2 and args.has_normalmap:
                         texture_type = "LightMap"
                     else:
                         extension, texture_type = identify_texture(frame_dump_folder, texture)
@@ -649,7 +657,7 @@ def output_results(frame_dump_folder, character, component_names, model_data, vb
         if len(model_data[current_part][index]) > 3:
             if has_normalmap:
                 texture_hash = ""
-                shutil.copyfile(os.path.join(frame_dump_folder, model_data[current_part][index][2]),
+                shutil.copyfile(os.path.join(frame_dump_folder, model_data[current_part][index][3]),
                                 os.path.join(character, f"{name_prefix}LightMap.dds"))
             else:
                 texture_hash = model_data[current_part][index][3].split("-vs=")[0].split("=")[-1]
