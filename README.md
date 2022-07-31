@@ -17,9 +17,9 @@ Model files for the importer are located at https://github.com/SilentNightSound/
 
 ## Installation Instructions (3DMigoto)
 
-1. Download 3dmigoto.zip from [releases](https://github.com/SilentNightSound/GI-Model-Importer/releases) and extract it. I have provided two versions:
-   - "3dmigoto-for-development.zip" is a development version intended for creating mods which has all features turned on (including the green text at the top and bottom of the screen) but is slower
-   - "3dmigoto-for-playing-mods.zip" is a version of the program indended for playing mods which has development features turned off (no green text) but is faster
+1. Download a 3dmigoto .zip from [releases](https://github.com/SilentNightSound/GI-Model-Importer/releases) and extract it. I have provided two versions:
+   - "3dmigoto-GIMI-for-development.zip" is a development version intended for creating mods which has all features turned on (including the green text at the top and bottom of the screen) but is slower
+   - "3dmigoto-GIMI-for-playing-mods.zip" is a version of the program indended for playing mods which has development features turned off (no green text) but is faster
 
 2. Depending on the location of your Genshin Impact .exe file, you may need to change this line in the d3dx.ini file to point to your own installation (the Genshin game .exe, not the Genshin launcher .exe - the one you want is usually located in the Genshin Impact Game folder):
 
