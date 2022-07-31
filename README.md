@@ -13,7 +13,7 @@ Troubleshooting guide: [Troubleshooting](Guides/Troubleshooting.md)
 
 For a simple walkthrough of removing a portion of a character mesh using these tools, see [Mona Walkthrough](Guides/MonaWalkthrough.md). For a more advanced example of importing a custom model, see Cybertron's great video walkthrough [here](https://www.youtube.com/watch?v=7ijMOjhEvBw) and SinsOfSeven#3164 annotated transcript and troubleshooting guide [here](https://rentry.co/3dmigPlug_AnimeGame).
 
-Model files for the importer are located at https://github.com/SilentNightSound/GI-Model-Importer-Assets
+Model files for the importer are located at [GI-Model-Importer-Assets](https://github.com/SilentNightSound/GI-Model-Importer-Assets)
 
 ## Installation Instructions (3DMigoto)
 
@@ -44,12 +44,11 @@ Model files for the importer are located at https://github.com/SilentNightSound/
 &nbsp;
 ## Installation Instructions (3DMigoto Blender Plugin)
 
-In order to modify game models, you need to also setup your Blender plugins and environment. The 3DMigoto plugin works with Blender 2.80-2.92
+In order to modify game models, you need to also setup your Blender plugins and environment. The 3DMigoto plugin works with supports Blender 2.80+
 
-1. Download and install [Blender](https://download.blender.org/release/Blender2.92/)
-   - Version 2.93 and above will fail to import files with the message `TypeError: '_PropertyDeferred' object is not iterable`
+1. Download and install Blender
 
-2. Download and install the modified [3DMigoto plugin](Tools/blender_3dmigoto.py). You can install an add-on in Blender by going to Edit -> Preferences -> Add-Ons -> Install, then selecting the .py file. 
+2. Download and install the modified 3DMigoto plugin (blender_3dmigoto_gimi.py) from [releases](https://github.com/SilentNightSound/GI-Model-Importer/releases). You can install an add-on in Blender by going to Edit -> Preferences -> Add-Ons -> Install, then selecting the .py file. 
 
 3. If done correctly, you should see 3dmigoto in the plugin list as well as new options in the import and export menus
 
@@ -62,7 +61,7 @@ In order to modify game models, you need to also setup your Blender plugins and 
 
 See [Usage Instructions](Guides/UsageInstructions.md)
 
-Also, if you any questions about modding come join the Genshin modding discord at https://discord.gg/gR2Ts6ApP7. The only verification is that you can get the modified version of 3dmigoto working by following the steps above.
+Also, if you any questions about modding come join the Genshin modding discord at https://discord.gg/agmg. The only verification is that you can 3dmigoto GIMI working by following the steps above.
 
 &nbsp;
 ## Acknowledgements
