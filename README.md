@@ -44,7 +44,7 @@ Model files for the importer are located at [GI-Model-Importer-Assets](https://g
 &nbsp;
 ## Installation Instructions (3DMigoto Blender Plugin)
 
-In order to modify game models, you need to also setup your Blender plugins and environment. The 3DMigoto plugin works with supports Blender 2.80+
+In order to modify game models, you need to also setup your Blender plugins and environment. The 3DMigoto plugin works with Blender 2.80+
 
 1. Download and install Blender
 
