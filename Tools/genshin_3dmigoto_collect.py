@@ -420,9 +420,10 @@ def collect_model_data(frame_dump_folder, relevant_ids, force_ids):
                     sys.exit()
             print(f"\nID: {current_id}, found object at index {first_index}")
 
+            # It turns out that not all objects have adjacent draw calls
             if first_index in model_group and not force_ids:
-                print("Reached duplicate object. Found all relevant data files, continuing")
-                break
+                print("Reached duplicate object. Skipping and continuing")
+                continue
 
             # Re-arranging texture collection to be earlier
             # I had previously assumed that all relevant ids would contain textures, but it turns out sometimes the
