@@ -113,7 +113,7 @@ To fix, remove any duplicate mod folders. If you are sure that you have removed 
 
 <img src="https://user-images.githubusercontent.com/107697535/181129048-51bc2c88-3614-4490-980a-ac26308e97dd.png" width="600"/>
 
-Unlike warnings, errors usually indicate that the program has failed to load in the mod. The cause can very, but some common ones are:
+Unlike warnings, errors usually indicate that the program has failed to load in the mod. The cause can vary, but some common ones are:
 
 1) Incorrect names (name in .ini file does not match file in folder, like different extension)  
 2) Textures have wrong format (look at original to see what format, usually dds and must have heights/widths that are powers of 2 and have integer ratios like 1024x1024, 2048x2048, 1024x2048, etc.)  
