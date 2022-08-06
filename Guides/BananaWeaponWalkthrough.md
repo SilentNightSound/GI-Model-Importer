@@ -1,18 +1,18 @@
-## Custom Weapon Import Walkthrough
+## Custom Weapon Modding Walkthrough
 
 This is a walkthrough for importing custom weapon models into Genshin Impact.
 
-For this tutorial, I am assuming you are familiar with the basics of using GIMI (how to set it up/import/export/load); if not, please read through [Mona Hat Removal](Guides/MonaWalkthrough.md). I am also assuming basic Blender knowledge – for questions on Blender basics like how to change modes, select vertices and open certain menus please search the knowledge you need on Google/Youtube.
+For this tutorial, I am assuming you are familiar with the basics of using GIMI (how to set it up/import/export/load); if not, please read through [Mona Hat Removal](MonaWalkthrough.md). I am also assuming basic Blender knowledge – for questions on Blender basics like how to change modes, select vertices and open certain menus please search the knowledge you need on Google/Youtube.
 
-Weapon mods are more complicated than basic mesh edits, but less complicated than importing custom characters. ~90% of the steps remain the same for custom characters, but characters involve much more complicated vertex group/bone structures. 
+Weapon mods are more complicated than basic mesh edits, but less complicated than importing custom characters. ~90% of the steps remain the same for custom characters, but characters involve much more complicated vertex group/bone structures than weapons. 
 
 I will be demonstrating three different weapon models, ordered by complexity. Generally speaking, for weapons the order of difficulty from easiest to hardest is Swords/Spears/Claymores without tassels → Swords/Spears/Claymores with tassels → Bows → Catalysts. Each weapon builds on the last in terms of complexity, so please read through in order. 
 
 I will be using [this]( https://sketchfab.com/3d-models/banana-6d99c6c1a8bc4b3e97cebbc49d62115d) model of a Banana for all three mods (credits to Marc Ed).
 
-First model: Banana Blade ([jump to section](#banana-blade))
-Second model: Bownana
-Third model: Ripe Catalyst
+First model: Banana Blade ([jump to section](#banana-blade))  
+Second model: Bownana ([jump to section](#the-bownana))  
+Third model: Ripe Catalyst  
 
 ## Banana Blade
 
@@ -58,7 +58,7 @@ Let’s start with the one of the simplest types of weapons, a claymore without 
 
 Note that for these types of weapons, the new object does not need to overlap exactly with the old one.
 
-6.	Now, we need add the custom 3dmigoto properties on to the new object. There are two ways to do this – you could delete all the vertices of the old model then merge the new one into it, or you could use the [custom properties transfer script](Tools/custom_property_transfer_script.txt). I’m going to use the latter method in this tutorial
+6.	Now, we need add the custom 3dmigoto properties on to the new object. There are two ways to do this – you could delete all the vertices of the old model then merge the new one into it, or you could use the [custom properties transfer script](/Tools/custom_property_transfer_script.txt). I’m going to use the latter method in this tutorial
 7.	Open up the scripting tab, and copy the transfer script into the text box. Replace “transfer_to” and “transfer_from” with the objects you are transferring to (new object) and from (original 3dmigoto object) respectively
 
 <p align="center">
@@ -128,11 +128,7 @@ This banana model does not have vertex colors, so we first need to add a color v
 13.	Now that we have a COLOR, we need to transfer the correct values from the Serpent Spine. Select the banana, go to the modifiers tab, select add modifier→data transfer
 
 <p align="center">
-<img src="https://user-images.githubusercontent.com/107697535/183232193-d04a6d50-4493-431d-8be7-3bd3e243ab3f.png" width="400"/>
-</p>
-
-<p align="center">
-<img src="https://user-images.githubusercontent.com/107697535/183232201-d2802655-944c-4ceb-b694-25546ff64cc8.png" width="400"/>
+<img src="https://user-images.githubusercontent.com/107697535/183232193-d04a6d50-4493-431d-8be7-3bd3e243ab3f.png" width="400"/> <img src="https://user-images.githubusercontent.com/107697535/183232201-d2802655-944c-4ceb-b694-25546ff64cc8.png" width="400"/>
 </p>
 
 Set the source as SerpentSpine, check the Face Corner Data box and Colors tab and make sure the options are All Layers and By Name for Colors:
@@ -221,4 +217,98 @@ Details of how exactly lightmaps work is beyond the scope of this tutorial and w
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/183232383-1b97ed85-7965-4299-91bc-a233c5bfaa49.png" width="800"/>
+</p>
+
+## The Bownana
+
+Moving on to more complex models, I am going to demonstrate how to create a Bownana by replacing Prototype Crescent. This method also applies to any swords/spears/claymores with vertex groups (e.g. tassels usually). Most of the steps remain the same as the Banana Blade, but there are a few additional complexities we need to worry about.
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/107697535/183232781-149695c9-19ae-40d5-983d-bde544e4ceaa.png" width="800"/>
+</p>
+
+1.	Import the Bow and Banana model the same way as the previous section (steps 1-3). We can confirm that the original model we are replacing falls into this section by checking if it has vertex groups
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/107697535/183233096-e6e169e3-eef4-4318-afb7-96d117216182.png" width="300"/> <img src="https://user-images.githubusercontent.com/107697535/183233106-6fa7122a-a0cd-44fc-873e-5ad550a56ea5.png" width="300"/>
+</p>
+
+2.	Since the shape we are replacing is different, we need to also change how we modify the model so it is placed correctly:
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/107697535/183233186-4f23dec9-1fed-4ca5-8737-4d83948922e6.png" width="300"/>
+</p>
+
+3.	Setting the 3dmigoto custom properties, TEXCOORDs and COLORs remains the same as the previous section (steps 6-13)
+
+4.	The first major difference occurs when we need handle the original’s vertex groups. These are responsible for things like the bowstring being pulled and how the bow deforms. The bow has a total of five groups (note: group 0 has no weight at all but still must be included in order to export properly; in practice, there are only four groups you need to worry about)
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/107697535/183233193-cd119af9-9bdc-4d34-b975-aaeaf62f85ac.png" width="800"/>
+</p>
+
+5.	If the model we are using does not need the bow string pull animation, we can just use a single group vertex group and full paint on only group 1. To do this, we go to Object data properties and add 5 vertex groups named 0,1,2,3,4 and then go to weight paint to fully paint the object on group 1:
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/107697535/183233231-a80f39b3-3ff4-4637-9c98-6849ea35ecea.png" width="300"/> <img src="https://user-images.githubusercontent.com/107697535/183233232-d2ca7009-018b-473e-ad66-7c45bfd4ddef.png" width="300"/>
+</p>
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/107697535/183233268-381443f0-4286-489d-919f-0bed57056871.png" width="800"/>
+</p>
+
+(Note: you still need to include all five groups in order for the new object to export properly)
+
+6.	While this works, it isn’t great unless you are replacing the model with something like a gun – ideally, we still want the bownana to have a string and deform properly. If the model you are using already came with vertex groups that are similar to the ones Genshin uses, you can merge and rename them until they match up with the original. This banana model does not have any, so we need to perform an auto-weight transfer
+
+7.	We need to give the banana a bowstring. We can either make a new one, or re-use the original string – I will be doing the latter in this tutorial. Copy the original bow, and delete everything but the string:
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/107697535/183233287-92ad4e09-e0de-4340-bc18-4c06788c7935.png" width="300"/>
+</p>
+
+8.	Make sure the UV map name of the string and banana object match up (TEXCOORD.xy, in order for the UV maps to merge as well), then merge the two objects together by CTRL+clicking both and using CTRL+J. Also make sure the string UV map is over a region of the texture that has the correct colors. If you previously created TEXCOORD1.xy, you will need to either recreate it or move the string to the correct position.
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/107697535/183233320-b0958745-27ea-4e7c-bcd4-d1d96c65d55c.png" width="400"/>
+</p>
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/107697535/183233326-2555eb32-0cfb-42f3-8901-c21175a99b34.png" width="400"/><img src="https://user-images.githubusercontent.com/107697535/183233328-d7b8e9e0-c657-4f94-8f23-7502c5e55844.png" width="400"/>
+</p>
+
+9.	Now that we have our bow string, it is time to assign the weights. Make sure the banana has 5 vertex groups named 0, 1, 2, 3, 4, then create a DataTransfer modifier. Select the Prototype Crescent as the source, and select the Vertex Data object and Vertex Groups tab:
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/107697535/183233355-c230a973-86d9-4126-a227-d14d752af18d.png" width="300"/>
+</p>
+
+Click the arrow and press Apply.
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/107697535/183233365-ebd690c7-e63b-40a8-bca6-043d20f23557.png" width="300"/>
+</p>
+
+If everything was done correctly, the bownana should now have approximately the same weights as the original:
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/107697535/183233373-46d4c532-5cb5-45c3-8a0c-0f0d4d43b1c2.png" width="800"/>
+</p>
+
+And double checking, it looks like the string has proper physics in-game:
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/107697535/183233380-14387251-dac0-4628-acab-ca073d5ab932.png" width="400"/>
+</p>
+
+(Note: there is an alternate method of transferring weights using the Transfer Weights option in weight paint mode – both methods should give similar results)
+
+10.	From this point on, the rest of the steps are the same as the banana blade (steps 14-20 in previous section): rotate and apply transforms, rename, export, fix the textures, and load into game:
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/107697535/183233408-75bba365-d62a-478f-b934-1cda4b4beb7d.png" width="400"/>
+</p>
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/107697535/183233419-5c1616e1-767f-40e0-870d-7bc6d3b68b36.png" width="800"/>
 </p>
