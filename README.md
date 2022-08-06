@@ -11,7 +11,7 @@ GIMI is a version of 3DMigoto that I have modified to be compatible with Genshin
 
 Troubleshooting guide: [Troubleshooting](Guides/Troubleshooting.md)
 
-For a simple walkthrough of removing a portion of a character mesh using these tools, see [Mona Walkthrough](Guides/MonaWalkthrough.md). For a more advanced example of importing a custom model, see Cybertron's great video walkthrough [here](https://www.youtube.com/watch?v=7ijMOjhEvBw) and SinsOfSeven#3164 annotated transcript and troubleshooting guide [here](https://rentry.co/3dmigPlug_AnimeGame).
+For a simple walkthrough of removing a portion of a character mesh using these tools, see [Mona Walkthrough](Guides/MonaWalkthrough.md). For an intermediate walkthrough of creating custom weapons, see [Custom Weapon Modding Walkthrough](Guides/BananaWeaponWalkthrough.md). For a more advanced example of importing a custom model, see Cybertron's great video walkthrough [here](https://www.youtube.com/watch?v=7ijMOjhEvBw) and SinsOfSeven#3164 annotated transcript and troubleshooting guide [here](https://rentry.co/3dmigPlug_AnimeGame).
 
 Model files for the importer are located at [GI-Model-Importer-Assets](https://github.com/SilentNightSound/GI-Model-Importer-Assets)
 
