@@ -12,7 +12,7 @@ I will be using [this]( https://sketchfab.com/3d-models/banana-6d99c6c1a8bc4b3e9
 
 First model: Banana Blade ([jump to section](#banana-blade))  
 Second model: Bownana ([jump to section](#the-bownana))  
-Third model: Ripe Catalyst  
+Third model: Ripe Catalyst  ([jump to section](#ripe-catalyst))  
 
 ## Banana Blade
 
@@ -298,7 +298,7 @@ If everything was done correctly, the bownana should now have approximately the 
 And double checking, it looks like the string has proper physics in-game:
 
 <p align="center">
-<img src="https://user-images.githubusercontent.com/107697535/183233380-14387251-dac0-4628-acab-ca073d5ab932.png" width="400"/>
+<img src="https://user-images.githubusercontent.com/107697535/183234166-b5a0bf83-f8e9-4168-a5c4-5be4bcb54742.png" width="400"/>
 </p>
 
 (Note: there is an alternate method of transferring weights using the Transfer Weights option in weight paint mode – both methods should give similar results)
@@ -312,3 +312,111 @@ And double checking, it looks like the string has proper physics in-game:
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/183233419-5c1616e1-767f-40e0-870d-7bc6d3b68b36.png" width="800"/>
 </p>
+
+
+## Ripe Catalyst
+
+Finally, I am going to demonstrate replacing a catalyst weapon (Eye of Perception) which has continuous motion. This is fundamentally very similar to how Bows work, but catalysts use vertex groups in different ways. I am also going to demonstrate some more advanced techniques during the process as well.
+
+I am assuming you have read the previous two sections, so I will be skipping most of the basic steps and focusing on what makes catalysts different from bows and swords.
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/107697535/183234781-4b859e82-a59f-4a4f-836d-af8118883d0b.png" width="800"/>
+</p>
+
+1.	Catalysts have vertex groups like bows, but unlike bows catalysts use them to control motion. Eye of perception has 5 groups in total, but only 2 of them are non-empty: vertex group 1, which is assigned to the inner ball, and vertex group 4 which has the outer ring:
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/107697535/183234795-b19d8e83-8c7e-4313-8b07-3d29e10e43d7.png" width="600"/>
+</p>
+
+Both rotate counter-clockwise when faced from above. Anything that is painted with vertex group1 will spin rapidly around its center, while anything painted with vertex group 4 will spin more slowly.
+
+2.	Like before, we import and position the banana. This time, I want to have it spin in the center:
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/107697535/183234810-88b522ba-2ff0-41c8-919c-57430c95be3b.png" width="400"/>
+</p>
+
+3.	Set the 3dmigoto custom properties, TEXCOORDs and COLORs.
+4.	Since we want it to spin rapidly, we paint the entire banana with vertex group 1:
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/107697535/183234827-655f9ca6-e086-4ac9-87fd-80729f72a4d8.png" width="600"/>
+</p>
+
+5.	Rotate, apply transforms, rename and export (I scaled up the banana’s size slightly so it would make more of an impact). Replace the diffuse and lightmap with the banana textures from the previous parts
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/107697535/183234840-b24d52fb-69f8-49e0-9985-8e245d2f7762.png" width="400"/>
+</p>
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/107697535/183234863-c72cbbcc-dcdd-478a-9915-cc597fabf0d0.png" width="800"/>
+</p>
+
+The banana should now load and be spinning at the same rate the original center part of the catalyst was.
+
+6.	While we are now technically done, lets play around with some effects to demonstrate what you can do with textures. Let’s start by making a rainbow banana.
+
+7.	Get a rainbow image from somewhere, then create a new layer on the banana texture. Place the rainbow image over the banana, applying 50% transparency. Be careful of the seam, and make sure the color is consistent across along the length
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/107697535/183234887-23d862de-6a96-460b-b8b0-dc95c6d9072a.png" width="400"/><img src="https://user-images.githubusercontent.com/107697535/183234899-d34c87f6-b616-42b1-b5f9-3cb054f3497f.png" width="400"/>
+</p>
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/107697535/183234916-3c4ab414-16e7-4985-924c-5505f1a4ce5a.png" width="800"/>
+</p>
+
+(The banana getting bigger is just your imagination)
+
+8.	Now, we can play with emission as well. I’m going to use this picture of the starry pattern:
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/107697535/183234930-73da1c1a-2a3b-4332-bd7a-46d4c8248543.png" width="400"/>
+</p>
+
+By overlaying this on top of the alpha layer, you get a glowing star pattern on the banana:
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/107697535/183234947-6a609268-653c-402c-beab-732dc4c1becd.png" width="400"/>
+</p>
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/107697535/183234952-1ccd69ca-a9f9-46c7-9563-f2b2943f4d4e.png" width="800"/>
+</p>
+
+9.	Finally, lets play with the fading pattern. Previously, we just set TEXCOORD1.xy to be along the length of the weapon so it fades in linearly but we aren’t actually limited to doing that.
+
+If we set the TEXCOORD1 to something like this, the weapon will fade in in three parts:
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/107697535/183234976-e5102f50-cd99-4ddc-9a15-7855f0318f0b.png" width="400"/>
+</p>
+
+If we set it like this, it will fade in all at once about halfway through:
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/107697535/183234987-91f6cc37-1b83-4981-bac1-8cbfa96bb7f8.png" width="400"/>
+</p>
+
+And last but not least, if set it like this it will fade in chaotically:
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/107697535/183235067-549af5b7-7c2b-48c7-b223-7f7002d460d8.png" width="400"/>
+</p>
+
+
+(Bonus for reaching the end: galaxy banana)
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/107697535/183235110-054ecd2a-0b60-4dc6-8a02-1d4db826d13d.png" width="400"/>
+</p>
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/107697535/183235121-7b745a4d-328d-4d1c-8622-c2f2f71010e5.png" width="800"/>
+</p>
+
+
+
