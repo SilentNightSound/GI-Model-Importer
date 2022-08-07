@@ -1,6 +1,6 @@
 # Author: SilentNightSound#7430
 # Fills in missing vertex groups for a model so there are no gaps, and sorts to make sure everything is in order
-# Works on the currently selected object, and assumes groups are numbered 0,1,2...n
+# Works on the currently selected object
 # e.g. if the selected model has groups 0 1 4 5 7 2 it adds an empty group for 3 and 6 and sorts to make it 0 1 2 3 4 5 6 7
 # Very useful to make sure there are no gaps or out-of-order vertex groups
 
@@ -9,7 +9,12 @@ import bpy
 ob = bpy.context.active_object
 ob.update_from_editmode()
 
-missing = set([f"{i}" for i in range(len(ob.vertex_groups))]) - set([x.name.split(".")[0] for x in ob.vertex_groups])
+largest = 0
+for vg in ob.vertex_groups:
+    if int(vg.name)>largest:
+        largest = int(vg.name)
+
+missing = set([f"{i}" for i in range(largest)]) - set([x.name.split(".")[0] for x in ob.vertex_groups])
 for number in missing:
     ob.vertex_groups.new(name=f"{number}")
 
