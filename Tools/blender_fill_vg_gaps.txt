@@ -11,8 +11,11 @@ ob.update_from_editmode()
 
 largest = 0
 for vg in ob.vertex_groups:
-    if int(vg.name)>largest:
-        largest = int(vg.name)
+    try:
+        if int(vg.name.split(".")[0])>largest:
+            largest = int(vg.name.split(".")[0])
+    except ValueError:
+        print("Vertex group not named as an integer, skipping")
 
 missing = set([f"{i}" for i in range(largest)]) - set([x.name.split(".")[0] for x in ob.vertex_groups])
 for number in missing:
