@@ -6,18 +6,22 @@
 
 import bpy
 
+# Can change this to another number in order to generate empty groups up to that number
+# e.g. setting this to 130 will create 0,1,2...130 even if the active selected object only has 90
+# Otherwise, it will use the largest found group number and generate everything up to that number
+largest = 0
+
 ob = bpy.context.active_object
 ob.update_from_editmode()
 
-largest = 0
 for vg in ob.vertex_groups:
     try:
         if int(vg.name.split(".")[0])>largest:
             largest = int(vg.name.split(".")[0])
     except ValueError:
-        print("Vertex group not named as an integer, skipping")
+        print("Not an integer, skipping")
 
-missing = set([f"{i}" for i in range(largest)]) - set([x.name.split(".")[0] for x in ob.vertex_groups])
+missing = set([f"{i}" for i in range(largest+1)]) - set([x.name.split(".")[0] for x in ob.vertex_groups])
 for number in missing:
     ob.vertex_groups.new(name=f"{number}")
 
