@@ -61,7 +61,7 @@ In order to modify game models, you need to also setup your Blender plugins and 
 
 See [Usage Instructions](Guides/UsageInstructions.md)
 
-Also, if you any questions about modding come join the Genshin modding discord at https://discord.gg/agmg. The only verification is that you can 3dmigoto GIMI working by following the steps above.
+Also, if you any questions about modding come join the Genshin modding discord at https://discord.gg/gR2Ts6ApP7. The only verification is that you can 3dmigoto GIMI working by following the steps above.
 
 &nbsp;
 ## Acknowledgements
