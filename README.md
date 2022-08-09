@@ -39,8 +39,6 @@ Model files for the importer are located at [GI-Model-Importer-Assets](https://g
 
 ![image](https://user-images.githubusercontent.com/107697535/175611402-c3f600ca-4136-4561-b33a-f4edf6153d1a.png)
 
-
-
 &nbsp;
 ## Installation Instructions (3DMigoto Blender Plugin)
 
@@ -67,4 +65,3 @@ Also, if you any questions about modding come join the Genshin modding discord a
 ## Acknowledgements
 
 Huge thank you to DarkStarSword and bo3b for 3dmigoto!
-
