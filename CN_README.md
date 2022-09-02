@@ -59,7 +59,7 @@ GIMI 是我为了让 3DMigoto 兼容原神而将其修改后的工具
 
 看[这里](Guides/CN_UsageInstructions.md)
 
-另外，如果你有任何关于修改的问题，请加入原神MOD的Discord，网址是https://discord.gg/gR2Ts6ApP7。
+另外，如果你有任何关于修改的问题，请加入原神MOD的Discord，网址是 https://discord.gg/agmg。
 
 &nbsp;
 ## 致谢
