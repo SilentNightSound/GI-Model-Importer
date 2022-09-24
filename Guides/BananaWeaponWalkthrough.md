@@ -183,7 +183,13 @@ It looks like the shape and position are correct, so we now move on to fixing th
 <img src="https://user-images.githubusercontent.com/107697535/183232304-34589d61-5654-42ed-9dbc-29aab182fbf5.png" width="600"/>
 </p>
 
-For this part, we won’t be doing anything too fancy with the textures so we just invert the alpha channel, save as a .dds and replace the original SerpentSpineHeadDiffuse.dds (see Mona tutorial for more details on basic genshin texture editing).
+We now want to replace this texture with the banana texture:
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/107697535/189494245-17f20a5a-3974-498c-8c96-8c5ce66c1100.png" width="500"/>
+</p>
+
+For this part, we won’t be doing anything too fancy with the banana texture: we just invert the alpha channel, save as a .dds and replace the original SerpentSpineHeadDiffuse.dds (see Mona tutorial for more details on basic genshin texture editing).
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/183232314-ca0a08ea-34dd-4902-84c4-ea62268a1997.png" width="600"/>
