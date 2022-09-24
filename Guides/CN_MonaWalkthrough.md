@@ -39,7 +39,7 @@
 
 <img src="https://user-images.githubusercontent.com/107697535/175570101-9717b9eb-7ef9-4e1c-82e2-f6871497f5f6.png" width="800"/>
 
-8. 这会在原始文件夹旁生成一个 MonaMod 文件夹 (如果 mod 文件夹没有生成，请检查你有没有 hash_info.json）：
+8. 这会在原始文件夹旁生成一个 MonaMod 文件夹：
 
 <img src="https://user-images.githubusercontent.com/107697535/174458059-363b1c56-ea76-4a01-9e1f-6e22f3b0949f.png" width="800"/>
 
