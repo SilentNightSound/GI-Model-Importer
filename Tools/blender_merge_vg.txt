@@ -1,34 +1,55 @@
 # Author: SilentNightSound#7430
-# Combines vertex groups with the same prefix into one
-
-# Change the value of vgroup_num to the number of whatever group you want to merge (e.g. "10")
+# Combines vertex groups with the same prefix into one, a fast alternative to the Vertex Weight Mix that works for multiple groups
+# You will likely want to use blender_fill_vg_gaps.txt after this to fill in any gaps caused by merging groups together
 
 import bpy
+import itertools
+selected_obj = [obj for obj in bpy.context.selected_objects]
 
-vgroup_num = "change_this"
 
-obj = bpy.context.active_object
-relevant = [x.name for x in obj.vertex_groups if x.name.split(".")[0] == f"{vgroup_num}"]
+##### USAGE INSTRUCTIONS. UNCOMMENT THE LINE FOR THE CASE YOU WANT TO USE
 
-vgroup = obj.vertex_groups.new(name=f"x{vgroup_num}")
-    
-for vert_id, vert in enumerate(obj.data.vertices):
-    available_groups = [v_group_elem.group for v_group_elem in vert.groups]
-    
-    combined = 0
-    for v in relevant:
-        if obj.vertex_groups[v].index in available_groups:
-            combined += obj.vertex_groups[v].weight(vert_id)
 
-    if combined > 0:
-        vgroup.add([vert_id], combined ,'ADD')
-        
-for vg in [x for x in obj.vertex_groups if x.name.split(".")[0] == f"{vgroup_num}"]:
-    obj.vertex_groups.remove(vg)
+# CASE 1: Runs the merge on a specific list of vertex groups in the selected object(s). Can add more names or fewer to the list - change the names to what you need
+# vgroup_names = [["replace with first vertex group name", "second vertex group name", "third name, etc."]]
 
-for vg in obj.vertex_groups:
-    if vg.name[0].lower() == "x":
-        vg.name = vg.name[1:]
-        
-bpy.context.view_layer.objects.active = obj
-bpy.ops.object.vertex_group_sort()
+
+# CASE 2: Runs the merge on a range of vertex groups in the selected object(s). Replace smallest_group with the lower bound, and largest group with the upper bound ("range" in python does not include the upper bound by default, so need to add 1)
+# vgroup_names = [[f"{i}" for i in range(smallest_group_number, largest_group_number+1)]]
+
+
+# CASE 3: Runs the merge on ALL vertex groups in the selected object(s)
+# vgroup_names = [[x.name.split(".")[0] for x in y.vertex_groups] for y in selected_obj]
+
+
+######
+
+
+for cur_obj, cur_vgroup in zip(selected_obj, itertools.cycle(vgroup_names)):
+    for vname in cur_vgroup:
+        relevant = [x.name for x in cur_obj.vertex_groups if x.name.split(".")[0] == f"{vname}"]
+
+        if relevant:
+
+            vgroup = cur_obj.vertex_groups.new(name=f"x{vname}")
+                
+            for vert_id, vert in enumerate(cur_obj.data.vertices):
+                available_groups = [v_group_elem.group for v_group_elem in vert.groups]
+                
+                combined = 0
+                for v in relevant:
+                    if cur_obj.vertex_groups[v].index in available_groups:
+                        combined += cur_obj.vertex_groups[v].weight(vert_id)
+
+                if combined > 0:
+                    vgroup.add([vert_id], combined ,'ADD')
+                    
+            for vg in [x for x in cur_obj.vertex_groups if x.name.split(".")[0] == f"{vname}"]:
+                cur_obj.vertex_groups.remove(vg)
+
+            for vg in cur_obj.vertex_groups:
+                if vg.name[0].lower() == "x":
+                    vg.name = vg.name[1:]
+                    
+    bpy.context.view_layer.objects.active = cur_obj
+    bpy.ops.object.vertex_group_sort()
