@@ -1,0 +1,17 @@
+# take from: https://blenderartists.org/t/batch-delete-vertex-groups-script/449881/23#:~:text=10%20MONTHS%20LATER-,AdenFlorian,-Jun%202021
+import bpy
+from bpy.types import Operator
+
+ob = bpy.context.active_object
+ob.update_from_editmode()
+   
+vgroup_used = {i: False for i, k in enumerate(ob.vertex_groups)}
+   
+for v in ob.data.vertices:
+    for g in v.groups:
+        if g.weight > 0.0:
+            vgroup_used[g.group] = True
+   
+for i, used in sorted(vgroup_used.items(), reverse=True):
+    if not used:
+        ob.vertex_groups.remove(ob.vertex_groups[i])
