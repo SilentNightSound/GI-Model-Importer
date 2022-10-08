@@ -1,21 +1,34 @@
-'''
-Author: SilentNightSound#7430
-Can use transfer custom properties from 3dmigoto imported objects to other objects
-Replace "transfer_to" with the object you want to transfer properties to, and "transfer_from" from
-
-'''
+# Author: SilentNightSound#7430
+# Transfers custom properties between objects
 
 import bpy
-new_object = "transfer_to"
-original_object = "transfer_from"
-
-bpy.data.objects[new_object]["3DMigoto:FirstIndex"] =  bpy.data.objects[original_object]["3DMigoto:FirstIndex"]
-bpy.data.objects[new_object]["3DMigoto:FirstVertex"] =  bpy.data.objects[original_object]["3DMigoto:FirstVertex"]
-bpy.data.objects[new_object]["3DMigoto:IBFormat"] =  bpy.data.objects[original_object]["3DMigoto:IBFormat"]
-bpy.data.objects[new_object]["3DMigoto:TEXCOORD.xy"] =  bpy.data.objects[original_object]["3DMigoto:TEXCOORD.xy"]
-bpy.data.objects[new_object]["3DMigoto:VBLayout"] =  bpy.data.objects[original_object]["3DMigoto:VBLayout"]
-bpy.data.objects[new_object]["3DMigoto:VBStride"] =  bpy.data.objects[original_object]["3DMigoto:VBStride"]
 
 
-# Some models have a second TEXCOORD, might require this line as well depending on the model:
-bpy.data.objects[new_object]["3DMigoto:TEXCOORD1.xy"] =  bpy.data.objects[original_object]["3DMigoto:TEXCOORD1.xy"]
+##### USAGE INSTRUCTIONS
+
+# Default usage
+# Click the object you are transferring TO first and then ctrl+click the object you are transferring FROM second
+# You can transfer TO multiple objects with ctrl+click, just make sure that the object you are transferring FROM is selected last
+active_obj = bpy.context.active_object
+selected_obj = [obj for obj in bpy.context.selected_objects]
+
+if len(selected_obj)>1:
+    original_object = active_obj.name
+    new_objects = [x.name for x in selected_obj if x.name != original_object]
+ 
+
+# Original usage, uncomment if needed. Overrides the above if uncommented
+# Replace "transfer_to" with the name of the object(s) are are transferring properties TO, and "transfer_from" with the name of the object you are transferring properties FROM 
+# new_objects = ["transfer_to"]
+# original_object = "transfer_from"
+
+#####
+
+
+if not new_objects:
+    print("Not enough objects selected - either select at least two objects, or manually add the names in the script")
+
+print(new_objects, original_object)
+for new_object in new_objects:
+    for k in bpy.data.objects[original_object].keys():
+        bpy.data.objects[new_object][k] =  bpy.data.objects[original_object][k]
