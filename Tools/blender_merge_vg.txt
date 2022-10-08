@@ -8,8 +8,8 @@ class Fatal(Exception): pass
 selected_obj = [obj for obj in bpy.context.selected_objects]
 vgroup_names = []
 
-##### USAGE INSTRUCTIONS. UNCOMMENT THE LINE FOR THE CASE YOU WANT TO USE
 
+##### USAGE INSTRUCTIONS. UNCOMMENT THE LINE FOR THE CASE YOU WANT TO USE
 
 # CASE 1: Runs the merge on a specific list of vertex groups in the selected object(s). Can add more names or fewer to the list - change the names to what you need
 # vgroup_names = [["replace_with_first_vertex_group_name", "second_vertex_group_name", "third_name_etc"]]
@@ -22,8 +22,8 @@ vgroup_names = []
 # CASE 3: Runs the merge on ALL vertex groups in the selected object(s)
 # vgroup_names = [[x.name.split(".")[0] for x in y.vertex_groups] for y in selected_obj]
 
-
 ######
+
 
 if not vgroup_names:
     raise Fatal("Please uncomment one of the CASE and replace values to use this script")
