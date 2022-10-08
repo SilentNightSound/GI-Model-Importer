@@ -6,7 +6,7 @@ import bpy
 
 ##### USAGE INSTRUCTIONS
 
-# Default usage
+# DEFAULT USAGE
 # Click the object you are transferring TO first and then ctrl+click the object you are transferring FROM second
 # You can transfer TO multiple objects with ctrl+click, just make sure that the object you are transferring FROM is selected last
 active_obj = bpy.context.active_object
@@ -17,7 +17,7 @@ if len(selected_obj)>1:
     new_objects = [x.name for x in selected_obj if x.name != original_object]
  
 
-# Original usage, uncomment if needed. Overrides the above if uncommented
+# ORIGINAL USAGE, uncomment if needed. Overrides the above if uncommented
 # Replace "transfer_to" with the name of the object(s) are are transferring properties TO, and "transfer_from" with the name of the object you are transferring properties FROM 
 # new_objects = ["transfer_to"]
 # original_object = "transfer_from"
