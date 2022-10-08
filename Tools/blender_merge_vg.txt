@@ -4,17 +4,18 @@
 
 import bpy
 import itertools
+class Fatal(Exception): pass
 selected_obj = [obj for obj in bpy.context.selected_objects]
-
+vgroup_names = []
 
 ##### USAGE INSTRUCTIONS. UNCOMMENT THE LINE FOR THE CASE YOU WANT TO USE
 
 
 # CASE 1: Runs the merge on a specific list of vertex groups in the selected object(s). Can add more names or fewer to the list - change the names to what you need
-# vgroup_names = [["replace with first vertex group name", "second vertex group name", "third name, etc."]]
+# vgroup_names = [["replace_with_first_vertex_group_name", "second_vertex_group_name", "third_name_etc"]]
 
 
-# CASE 2: Runs the merge on a range of vertex groups in the selected object(s). Replace smallest_group with the lower bound, and largest group with the upper bound ("range" in python does not include the upper bound by default, so need to add 1)
+# CASE 2: Runs the merge on a range of vertex groups in the selected object(s). Replace smallest_group_number with the lower bound, and largest_group_number with the upper bound ("range" in python does not include the upper bound by default, so need to add 1)
 # vgroup_names = [[f"{i}" for i in range(smallest_group_number, largest_group_number+1)]]
 
 
@@ -24,6 +25,8 @@ selected_obj = [obj for obj in bpy.context.selected_objects]
 
 ######
 
+if not vgroup_names:
+    raise Fatal("Please uncomment one of the CASE and replace values to use this script")
 
 for cur_obj, cur_vgroup in zip(selected_obj, itertools.cycle(vgroup_names)):
     for vname in cur_vgroup:
