@@ -38,7 +38,7 @@ else:
     raise Fatal("Mode not recognized, exiting")
 
 if not vgroup_names:
-    raise Fatal("Please uncomment one of the CASE and replace values to use this script")
+    raise Fatal("No vertex groups found, please double check an object is selected and required data has been entered")
 
 for cur_obj, cur_vgroup in zip(selected_obj, itertools.cycle(vgroup_names)):
     for vname in cur_vgroup:
