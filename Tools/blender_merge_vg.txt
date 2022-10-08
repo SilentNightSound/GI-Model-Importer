@@ -9,21 +9,33 @@ selected_obj = [obj for obj in bpy.context.selected_objects]
 vgroup_names = []
 
 
-##### USAGE INSTRUCTIONS. UNCOMMENT THE LINE FOR THE CASE YOU WANT TO USE
+##### USAGE INSTRUCTIONS
 
-# CASE 1: Runs the merge on a specific list of vertex groups in the selected object(s). Can add more names or fewer to the list - change the names to what you need
-# vgroup_names = [["replace_with_first_vertex_group_name", "second_vertex_group_name", "third_name_etc"]]
+# MODE 1: Runs the merge on a specific list of vertex groups in the selected object(s). Can add more names or fewer to the list - change the names to what you need
+# MODE 2: Runs the merge on a range of vertex groups in the selected object(s). Replace smallest_group_number with the lower bound, and 
+# MODE 3 (DEFAULT): Runs the merge on ALL vertex groups in the selected object(s)
 
+# Select the mode you want to run:
+mode = 3
 
-# CASE 2: Runs the merge on a range of vertex groups in the selected object(s). Replace smallest_group_number with the lower bound, and largest_group_number with the upper bound ("range" in python does not include the upper bound by default, so need to add 1)
-# vgroup_names = [[f"{i}" for i in range(smallest_group_number, largest_group_number+1)]]
+# Required data for MODE 1:
+vertex_groups = ["replace_with_first_vertex_group_name", "second_vertex_group_name", "third_name_etc"]
 
-
-# CASE 3: Runs the merge on ALL vertex groups in the selected object(s)
-# vgroup_names = [[x.name.split(".")[0] for x in y.vertex_groups] for y in selected_obj]
+# Required data for MODE 2:
+smallest_group_number = 000
+largest_group_number = 999
 
 ######
 
+
+if mode == 1:
+    vgroup_names = [vertex_groups]
+elif mode == 2:
+    vgroup_names = [[f"{i}" for i in range(smallest_group_number, largest_group_number+1)]]
+elif mode == 3:
+    vgroup_names = [[x.name.split(".")[0] for x in y.vertex_groups] for y in selected_obj]
+else:
+    raise Fatal("Mode not recognized, exiting")
 
 if not vgroup_names:
     raise Fatal("Please uncomment one of the CASE and replace values to use this script")
