@@ -246,7 +246,7 @@ def main():
                         texture_type = "LightMap"
                     else:
                         extension, texture_type = identify_texture(frame_dump_folder, texture)
-                        if [x for x in texture_group if texture_type in x[0]]:
+                        if [x for x in texture_group if texture_type == x[0]]:
                             texture_type = f"t{j}"
                     texture_group.append([texture_type, extension, texture_hash])
             texture_hashes.append(texture_group)
