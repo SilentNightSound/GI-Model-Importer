@@ -114,7 +114,8 @@ def main():
                 return
 
             if not args.no_blend and not point_vb_candidates:
-                print("WARNING: Unable to find ")
+                print("WARNING: Unable to find vbs to use for position information.")
+                return
 
             if args.no_blend or (not args.force_object and not point_vb_candidates):
                 # If we can't find a correct pointlist, fall back to using the positional data from collect_model_data
@@ -245,6 +246,8 @@ def main():
                         texture_type = "LightMap"
                     else:
                         extension, texture_type = identify_texture(frame_dump_folder, texture)
+                        if [x for x in texture_group if texture_type in x[0]]:
+                            texture_type = f"t{j}"
                     texture_group.append([texture_type, extension, texture_hash])
             texture_hashes.append(texture_group)
 
@@ -434,8 +437,7 @@ def collect_model_data(frame_dump_folder, relevant_ids, force_ids):
                         os.path.splitext(name)[1] == ".dds" or os.path.splitext(name)[1] == ".jpg")]
             print(f"Found texture maps: {texture_maps}")
             if len(texture_maps) < 2:
-                print(f"WARNING: Unable to find diffuse and lightmaps for {current_id}. Skipping id and using higher ones")
-                continue
+                print(f"WARNING: Unable to find diffuse and lightmaps for {current_id}")
 
             model_group[first_index] = []
             model_group[first_index].append(texture_maps[0])
@@ -658,6 +660,7 @@ def output_results(frame_dump_folder, character, component_names, model_data, vb
         if len(model_data[current_part][index]) > 3:
             if has_normalmap:
                 texture_hash = ""
+                texture_type = "LightMap"
                 shutil.copyfile(os.path.join(frame_dump_folder, model_data[current_part][index][3]),
                                 os.path.join(character, f"{name_prefix}LightMap.dds"))
             else:
@@ -668,9 +671,11 @@ def output_results(frame_dump_folder, character, component_names, model_data, vb
         if len(model_data[current_part][index]) > 4:
             texture_hash2 = model_data[current_part][index][4].split("-vs=")[0].split("=")[-1]
             if texture_hash2 != texture_hash:
-                extension, texture_type = identify_texture(frame_dump_folder, model_data[current_part][index][4])
+                extension2, texture_type2 = identify_texture(frame_dump_folder, model_data[current_part][index][4])
+                if texture_type2 == texture_type:
+                    texture_type2 = "t3"
                 shutil.copyfile(os.path.join(frame_dump_folder, model_data[current_part][index][4]),
-                                os.path.join(character, f"{name_prefix}{texture_type}{extension}"))
+                                os.path.join(character, f"{name_prefix}{texture_type2}{extension2}"))
         count += 1
 
 
