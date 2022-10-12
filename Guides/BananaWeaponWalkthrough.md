@@ -58,8 +58,8 @@ Let’s start with the one of the simplest types of weapons, a claymore without 
 
 Note that for these types of weapons, the new object does not need to overlap exactly with the old one.
 
-6.	Now, we need add the custom 3dmigoto properties on to the new object. There are two ways to do this – you could delete all the vertices of the old model then merge the new one into it, or you could use the [custom properties transfer script](/Tools/custom_property_transfer_script.txt). I’m going to use the latter method in this tutorial
-7.	Open up the scripting tab, and copy the transfer script into the text box. Replace “transfer_to” and “transfer_from” with the objects you are transferring to (new object) and from (original 3dmigoto object) respectively
+6.	Now, we need add the custom 3dmigoto properties on to the new object. There are two ways to do this – you could delete all the vertices of the old model then merge the new one into it, or you could use the [custom properties transfer script](/Tools/blender_custom_property_transfer_script.txt). I’m going to use the latter method in this tutorial
+7.	Open up the scripting tab, and copy the transfer script into the text box. Click on the object you are transferring properties TO first, then CTRL+Click the object you are transferring the properties FROM second. Click the play button/triangle on the top bar to run the script (OLD METHOD: Uncomment out the ORIGINAL USAGE section, then replace “transfer_to” and “transfer_from” with the objects you are transferring to (new object) and from (original 3dmigoto object) respectively)
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/183231886-b906ae94-d311-48eb-bd5d-7e238f1d4dd7.png" width="1000"/>
