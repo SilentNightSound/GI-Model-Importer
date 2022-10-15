@@ -64,4 +64,4 @@ Also, if you any questions about modding come join the Genshin modding discord a
 &nbsp;
 ## Acknowledgements
 
-Huge thank you to DarkStarSword and bo3b for 3dmigoto!
+Huge thank you to DarkStarSword, bo3b and Chiri for 3dmigoto!
