@@ -961,7 +961,10 @@ def import_3dmigoto_vb_ib(operator, context, paths, flip_texcoord_v=True, axis_f
     if ib is not None:
         import_faces_from_ib(mesh, ib)
         # Attach the index buffer layout to the object for later exporting.
-        obj['3DMigoto:IBFormat'] = ib.format
+        if ib.format == "DXGI_FORMAT_R16_UINT":
+            obj['3DMigoto:IBFormat'] = "DXGI_FORMAT_R32_UINT"
+        else:
+            obj['3DMigoto:IBFormat'] = ib.format
         obj['3DMigoto:FirstIndex'] = ib.first
     else:
         import_faces_from_vb(mesh, vb)
@@ -1115,7 +1118,11 @@ def export_3dmigoto(operator, context, vb_path, ib_path, fmt_path):
     indices = [ l.vertex_index for l in mesh.loops ]
     faces = [ indices[i:i+3] for i in range(0, len(indices), 3) ]
     try:
-        ib_format = obj['3DMigoto:IBFormat']
+        if obj['3DMigoto:IBFormat'] == "DXGI_FORMAT_R16_UINT":
+            ib_format = "DXGI_FORMAT_R32_UINT"
+        else:
+            ib_format = obj['3DMigoto:IBFormat']
+
     except KeyError:
         ib = None
         raise Fatal('FIXME: Add capability to export without an index buffer')
@@ -1275,7 +1282,10 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
             indices = [ l.vertex_index for l in mesh.loops ]
             faces = [ indices[i:i+3] for i in range(0, len(indices), 3) ]
             try:
-                ib_format = obj['3DMigoto:IBFormat']
+                if obj['3DMigoto:IBFormat'] == "DXGI_FORMAT_R16_UINT":
+                    ib_format = "DXGI_FORMAT_R32_UINT"
+                else:
+                    ib_format = obj['3DMigoto:IBFormat']
             except KeyError:
                 ib = None
                 raise Fatal('FIXME: Add capability to export without an index buffer')
@@ -1427,7 +1437,7 @@ def generate_mod_folder(path, character_name, use_original_tangents):
                 with open(os.path.join(parent_folder, f"{character_name}Mod", f"{current_name}{current_object}.ib"), "wb") as f:
                     f.write(ib)
                 ib_override_ini += f"[TextureOverride{current_name}{current_object}]\nhash = {component['ib']}\nmatch_first_index = {component['object_indexes'][i]}\nib = Resource{current_name}{current_object}IB\n"
-                ib_res_ini += f"[Resource{current_name}{current_object}IB]\ntype = Buffer\nformat = DXGI_FORMAT_R16_UINT\nfilename = {current_name}{current_object}.ib\n\n"
+                ib_res_ini += f"[Resource{current_name}{current_object}IB]\ntype = Buffer\nformat = DXGI_FORMAT_R32_UINT\nfilename = {current_name}{current_object}.ib\n\n"
 
                 if len(position) % position_stride != 0:
                     print("ERROR: VB buffer length does not match stride")
@@ -1771,8 +1781,8 @@ def collect_ib(folder, name, classification, offset):
         data = bytearray(data)
         i = 0
         while i < len(data):
-            ib += struct.pack('1H', struct.unpack('1H', data[i:i+2])[0]+offset)
-            i += 2
+            ib += struct.pack('1I', struct.unpack('1I', data[i:i+4])[0]+offset)
+            i += 4
     return ib
 
 
