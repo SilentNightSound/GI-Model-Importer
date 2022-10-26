@@ -288,7 +288,7 @@ def collect_ib(folder, name, classification, offset):
         i = 0
         while i < len(data):
             ib += struct.pack('1I', struct.unpack('1I', data[i:i+4])[0]+offset)
-            i += 2
+            i += 4
     return ib
 
 
