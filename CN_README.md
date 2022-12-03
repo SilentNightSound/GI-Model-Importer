@@ -10,7 +10,7 @@ GIMI 是我为了让 3DMigoto 兼容原神而将其修改后的工具
 
 你可以随意使用或修改本库内的脚本，但如果你在你的项目中使用这里提供的程序，请注明出处。我将持续更新并修复这个程序/网页，所以请常回来看看。
 
-故障排除指南: [Troubleshooting](Guides/Troubleshooting.md)
+故障排除指南: [看这里](Guides/CN_Troubleshooting.md)
 
 关于如何使用这些工具移除角色建模的简单指南，请参见[莫娜帽子移除教程](Guides/CN_MonaWalkthrough.md)。关于创建自定义武器的中级指南，请参见[自定义武器修改指南](Guides/CN_BananaWeaponWalkthrough.md)。关于导入自定义模型的更高级的例子，请看塞伯坦伟大的视频指南[这里](https://www.youtube.com/watch?v=7ijMOjhEvBw)和 SinsOfSeven#3164 注释的文字记录和故障排除指南[这里](https://rentry.co/3dmigPlug_AnimeGame)。
 
