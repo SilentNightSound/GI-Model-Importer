@@ -9,13 +9,11 @@
 以下的说明通常可以应用于移除网格的任何部分，不过在某些情况下，模型下面会有一个洞（特别是对于较大的物体） - 关于如何修补网格洞的教程以后会加。
 
 1. 确保你已安装了 3DMigoto 和 3DMigoto Blender 插件 （请看 [README](../CN_README.md)）
-2. 从此库中的 CharacterData 文件夹中下载莫娜角色文件和 hash_info.json。文件夹应该像下图：
+2. 从[此库](https://github.com/SilentNightSound/GI-Model-Importer-Assets)下载莫娜角色文件。文件夹应该像下图：
 
-<img src="https://user-images.githubusercontent.com/107697535/175789338-b187f6c6-2d6d-4a97-beb2-6cccdd556e2d.png" width="800"/>
+<img src="https://user-images.githubusercontent.com/107697535/178895141-ba8572ba-091c-4c49-85e6-841634747211.png" width="600"/>
 
-<img src="https://user-images.githubusercontent.com/107697535/174457572-77532f14-02ab-4bfb-904d-fe2ad251d84a.png" width="800"/>
-
-3. 我们现在要把模型导入到 Blender 中。在 File->Import 中，有一个选项可以导入 3DMigoto Frame Analysis Dumps。如果你没有看到这个选项，请确保3DMigoto 插件已经正确安装并激活。
+3. 我们现在要把模型导入到 Blender 中。在 File->Import 中，有一个选项可以导入 3DMigoto Frame Analysis Dumps。如果你没有看到这个选项，请确保 3DMigoto 插件已经正确安装并激活。
 
 <img src="https://user-images.githubusercontent.com/107697535/174457627-5b52357a-0983-4dd5-bf64-301ada192a07.png" width="800"/>
 
@@ -39,11 +37,11 @@
 
 <img src="https://user-images.githubusercontent.com/107697535/175570101-9717b9eb-7ef9-4e1c-82e2-f6871497f5f6.png" width="800"/>
 
-8. 这会在原始文件夹旁生成一个 MonaMod 文件夹：
+8. 这会在原始文件夹旁生成一个 MonaMod 文件夹（如果 mod 文件夹没有生成，请仔细检查你要导出的文件夹是否有 hash.json）：
 
 <img src="https://user-images.githubusercontent.com/107697535/174458059-363b1c56-ea76-4a01-9e1f-6e22f3b0949f.png" width="800"/>
 
-   - (注意：生成 Mod 文件夹的另一种方法是用 3DMigoto raw buffers 选项将每个组件分别导出为 MonaHead 和 MonaBody，然后使用genshin_3dmigoto_generate.py 脚本，`python .\genshin_3dmigoto_generate.py -n "Mona"`)
+- (注意：生成 Mod 文件夹的另一种方法是用 3DMigoto raw buffers 选项将每个组件分别导出为 MonaHead 和 MonaBody，然后使用 genshin_3dmigoto_generate.py 脚本，`python .\genshin_3dmigoto_generate.py -n "Mona"`)
 
 9. 把 MonaMod 文件夹复制到 3DMigoto Mods 文件夹里
 
@@ -57,7 +55,7 @@
 
 我们可以再做一些改进。注意到莫娜的头发在帽子的位置有阴影 - 这是由她头部的 lightmap 控制的。角色文件夹中包括这个文件 MonaHeadLightMap.dds，我们可以修改它来进一步改善效果。
 
-11. 为了编辑 dds 纹理，我们使用 Paint.net 的[DDS插件](https://forums.getpaint.net/topic/111731-dds-filetype-plus-04-11-2022/)和任何允许我们编辑 alpha 层的插件 [Alpha Mask Import](https://forums.getpaint.net/topic/1854-alpha-mask-import-plugin-20/) 或 [Modify Channels](https://forums.getpaint.net/topic/110805-modify-channels-v111-2022-03-07/) - 我将在本教程中使用前者，关于后者的例子，请参见 [GI_Assets](https://github.com/zeroruka/GI_Assets/wiki/Creating-Skins)。
+11. 为了编辑 dds 纹理，我们使用 Paint.net 的[DDS 插件](https://forums.getpaint.net/topic/111731-dds-filetype-plus-04-11-2022/)和任何允许我们编辑 alpha 层的插件 [Alpha Mask Import](https://forums.getpaint.net/topic/1854-alpha-mask-import-plugin-20/) 或 [Modify Channels](https://forums.getpaint.net/topic/110805-modify-channels-v111-2022-03-07/) - 我将在本教程中使用前者，关于后者的例子，请参见 [GI_Assets](https://github.com/zeroruka/GI_Assets/wiki/Creating-Skins)。
 
 12. 打开 MonaHeadLightMap.dds，我们可以通过点击 Effects->Alpha Mask 并确保所有选项都未被选中，然后按 OK 键来移除透明层：
 
@@ -75,9 +73,9 @@
 
 <img src="https://user-images.githubusercontent.com/107697535/175790958-5530e001-655b-4966-9e03-23be7dd93c7d.png" width="800"/>
 
-   - 注意：此步骤会导致部分材质效果消失（比如神之眼的亮光），因为我们正在反转整个图像的透明通道 - 如果你想在重新应用时保留原始效果，请参阅 https://www.youtube.com/watch?v=1y8oZ1TFZtg ，了解使用蒙版选择性地将反转应用于图像的一部分的例子（教程是针对Special K，但3dmigoto功能相同），或者你可用 [Modify Channels](https://forums.getpaint.net/topic/110805-modify-channels-v111-2022-03-07/) 插件。
+- 注意：此步骤会导致部分材质效果消失（比如神之眼的亮光），因为我们正在反转整个图像的透明通道 - 如果你想在重新应用时保留原始效果，请参阅 https://www.youtube.com/watch?v=1y8oZ1TFZtg ，了解使用蒙版选择性地将反转应用于图像的一部分的例子（教程是针对 Special K，但 3dmigoto 功能相同），或者你可用 [Modify Channels](https://forums.getpaint.net/topic/110805-modify-channels-v111-2022-03-07/) 插件。
 
-15. 将图保存为 .dds，确保使用 "BC7（Linear，DX 11+）"并设置 Generate Mip Maps（注意：导出时 lightmap 需要使用 BC7 Linear，Diffuse 使用BC7 SRGB）
+15. 将图保存为 .dds，确保使用 "BC7（Linear，DX 11+）"并设置 Generate Mip Maps（注意：导出时 lightmap 需要使用 BC7 Linear，Diffuse 使用 BC7 SRGB）
 
 <img src="https://user-images.githubusercontent.com/107697535/175790979-3f20d159-0eec-4fc0-947d-0cd6b02c95c9.png" width="800"/>
 
