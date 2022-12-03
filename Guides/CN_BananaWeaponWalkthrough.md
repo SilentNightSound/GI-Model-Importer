@@ -10,9 +10,9 @@
 
 我会在全部 3 个 mods 中使用[这个](https://sketchfab.com/3d-models/banana-6d99c6c1a8bc4b3e97cebbc49d62115d) 香蕉模型（作者是 Marc Ed）
 
-第一个模型: 香蕉大剑 ([jump to section](#banana-blade))  
-Second model: Bownana ([jump to section](#the-bownana))  
-Third model: Ripe Catalyst ([jump to section](#ripe-catalyst))
+第一个模型: 香蕉大剑 ([跳转](#香蕉大剑))  
+第二个模型: Bownana ([跳转](#the-bownana))  
+第三个模型: Ripe Catalyst ([跳转](#ripe-catalyst))
 
 ## 香蕉大剑
 
