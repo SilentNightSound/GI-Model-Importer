@@ -75,7 +75,7 @@ analyse_options = dump_rt dump_tex dump_cb dump_vb dump_ib buf txt dds
 
 If the folder is empty or only contains a log.txt and ShaderUsage.txt, make sure you have created and saved the .ini in the correct location, have pressed F10 to reload, and are on the screen with the texture you are looking for.
 
-6.	Once we have the folder, we can hunt through it looking for the textures we need. You can either look through the main folder which has the files sorted by draw ID (the string of 6 digits at the beginning of filenames which represents the order the textures are drawin in), or in the deduped folder which contains all the files but de-duplicated.
+6.	Once we have the folder, we can hunt through it looking for the textures we need. You can either look through the main folder which has the files sorted by draw ID (the string of 6 digits at the beginning of filenames which represents the order the textures are drawn in), or in the deduped folder which contains all the files but de-duplicated.
 
 TIP: It can be helpful to have your dds editing software set to the default for opening .dds files, since it will let you see previews in Windows explorer.
 
