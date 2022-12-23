@@ -168,7 +168,7 @@ Success! First texture mod completed.
 
 (If nothing happened after pressing F10, make sure you put the text in the .ini, the new dds images with the correct names in the same folder as the .ini, and no error messages popped up on screen)
 
-(One other possibility is that the game is not checking for textures on that specific shader for whatever reason – try emptying out the ShaderFixes folder, and adding the line `checktextureoverride = ps-t0` to the ShaderOverride sections to force 3dmigoto to check for textures on that shader)
+(One other possibility is that the game is not checking for textures on that specific shader for whatever reason – try emptying out the ShaderFixes folder, and adding the line `checktextureoverride = ps-tx` where `ps-tx` is the original buffer of the texture (in this case, `ps-t0`) to the ShaderOverride sections to force 3dmigoto to check for textures on that shader)
 
 ## Gliders
 
