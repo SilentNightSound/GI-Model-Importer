@@ -29,11 +29,14 @@ def main():
     parser.add_argument("-k", "--key", type=str, default="", help="Key to press to switch mods")
     parser.add_argument("-c", "--compress",  action="store_true", help="Makes the output mods as small as possible (warning: difficult to reverse, have backups)")
     parser.add_argument("-a", "--active", action="store_true",  default=True, help="Only active character gets swapped when swapping)")
+    parser.add_argument("-d", "--Dis", action="store_true", help="Last slot will be the original model)")
 
     args = parser.parse_args()
-
+    DisMod = 0
     print("\nGenshin Mod Merger/Toggle Creator Script\n")
-
+    if args.Dis
+        print("Last slot is chosen to be the default UN-Modded original model")
+        DisMod = 1
     if args.active:
         print("Setting to swap only the active(on-screen) character")
 
@@ -89,7 +92,7 @@ def main():
     constants += f"\n[KeySwap]\n"
     if args.active:
         constants += f"condition = $ActiveCharacter == 1\n"
-    constants += f"key = {key}\ntype = cycle\n${swapvar} = {','.join([str(x) for x in range(len(ini_files))])}\n\n"
+    constants += f"key = {key}\ntype = cycle\n${swapvar} = {','.join([str(x) for x in range(len(ini_files) + DisMod)])}\n\n"
     if args.active:
         constants += f"[Present]\npost $ActiveCharacter = 0\n\n"
 
