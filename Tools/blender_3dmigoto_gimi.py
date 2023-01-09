@@ -3,6 +3,7 @@
 # Original plugin by DarkStarSword (https://github.com/DarkStarSword/3d-fixes/blob/master/blender_3dmigoto.py)
 # Updated to support 3.0 by MicroKnightmare from the DOA modding discord
 # Modified by SilentNightSound#7430 to add Genshin support and some more Genshin-specific features
+# QOL feature (ignoring hidden meshes while exporting) added by HazrateGolabi#1364
 
 # bl_info seems to be parsed as text outside of the normal module loading by
 # Blender, meaning we can't dynamically set the Blender version to indicate the
@@ -1234,6 +1235,9 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
         # Iterate through scene objects, looking for ones that match the specified character name and object type
         for obj in scene.objects:
             print(obj.name.lower())
+            #Ignore all hidden meshes while searching
+            if not obj.visible_get():
+                continue
             for i, c in enumerate(base_classifications):
                 if f"{current_name}{c}".lower() in obj.name.lower():
                     # Even though we have found an object, since the final classification can be extended need to check
