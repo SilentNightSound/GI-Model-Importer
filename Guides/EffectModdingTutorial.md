@@ -340,6 +340,10 @@ While Hu Tao’s are normal:
 <img src="https://user-images.githubusercontent.com/107697535/211988856-0cb0690a-b65f-4db7-96e3-75e0f04dfde5.png" width="600"/>
 </p>
 
+In motion (I left a few of the effects red for contrast):
+
+https://user-images.githubusercontent.com/107697535/212006132-08528c9c-2069-451c-9d78-bd1737768bb4.mp4
+
 
 ## Passing Custom Values into Shaders (Cycling colors)
 
@@ -537,6 +541,8 @@ endif
 
 What this does is take the current time and puts it into 1 of 3 buckets, then sets the pillar to red, green or blue depending on the current time (cycling every 3 seconds). By changing the numbers you can set it to cycle faster or slower, or add/remove colors, etc.
 
+https://user-images.githubusercontent.com/107697535/212007147-b94b5eda-ca1d-40ee-938e-25d5e7b1f913.mp4
+
 8. Finally, similar to before we can load the shader in the `.ini` instead of putting it in shaderfixes:
 
 ```
@@ -572,7 +578,7 @@ This will mostly work, but there is an glitch in the compilation here that will 
 It is also possible to restrict this shader specifically to when Zhongli is on-field, though in this case I don’t know of any other object that shares this shader so it isn’t as important as it was for Diluc’s flames.
 
 
-##Animated Effects
+## Animated Effects
 
 In this final section, I will demonstrate how we can use the principles from the previous two sections to create simple animated effects – I will be going through the process of creating the animated lines in cyber bodysuit raiden (https://gamebanana.com/mods/420434). This section is advanced – I will be assuming you understand the previous two sections, know how to make mods, as well as have some basic programming knowledge.
 
@@ -754,6 +760,8 @@ if (r2.x > TIME%2/2){
 
 Result:
 
+https://user-images.githubusercontent.com/107697535/212007218-4d9aea37-e98a-4a6c-8098-f5e9bcb2bada.mp4
+
 Alternatively, to change the direction we can use `1- TIME%2/2` instead:
 
 ```
@@ -765,6 +773,8 @@ Alternatively, to change the direction we can use `1- TIME%2/2` instead:
     r2.xyzw = t0.SampleBias(s0_s, v2.xy, r0.x).xyzw;
   }
 ```
+
+https://user-images.githubusercontent.com/107697535/212006027-a20bf56e-7b36-43f9-bfd3-91e0e286e863.mp4
 
 10. The result of this isn’t bad, but it isn’t quite what I was looking for – I don’t like how the lines gradually appear/disappear, and I was hoping for a more “matrix-like” effect where the line travels along the body.
 
@@ -780,6 +790,9 @@ Instead of using a single condition, we can define a range where the lines will 
     r2.xyzw = t0.SampleBias(s0_s, v2.xy, r0.x).xyzw;
   }
 ```
+
+https://user-images.githubusercontent.com/107697535/212007252-4550a581-3ef7-48ed-865c-f3c516361224.mp4
+
 Much better, but it moves a bit fast. Also, the lines still appear all at once at the start of the cycle, making the starting and stopping points obvious. The final equation I settled on was:
 
 ```
@@ -791,6 +804,8 @@ Much better, but it moves a bit fast. Also, the lines still appear all at once a
     r2.xyzw = t0.SampleBias(s0_s, v2.xy, r0.x).xyzw;
   }
 ```
+
+https://user-images.githubusercontent.com/107697535/212007300-9ef429fc-14ae-4057-8c35-90ebc53476e8.mp4
 
 This loops every 3 seconds, and we actually put the time into the range 0 to 1.2 instead of 0 to 1 by dividing by 2.5 instead of 3 – the extra 0.2 side lets the lines gradually appear and disappear at the end of the cycle.
 
@@ -805,6 +820,8 @@ if (r2.x > 0 && (TIME % 3)/2.5 > r2.x && (TIME % 3)/2.5-0.2 < r2.x){
     r2.xyzw = t0.SampleBias(s0_s, v2.xy, r0.x).xyzw;
   }
 ```
+
+https://user-images.githubusercontent.com/107697535/212008474-dd57332e-6b00-4fef-9d95-b9b585dd37e5.mp4
 
 12. At this point, I have mostly finished explaining how to create the effect. The actual cyber Raiden mod also has some additional toggles to turn the effects on and off, to limit them to while Raiden is on-screen and to let the user choose custom colors but all of those have already been covered in previous sections.
 
@@ -837,3 +854,4 @@ The only additional thing I would note is that you aren’t just limited to usin
 
 If you have reached this point, congratulations! You know the majority of the basics of how shaders can be used to change effects or even make custom ones. Thank you for reading, and I look forward to seeing what you create!
 
+https://user-images.githubusercontent.com/107697535/212008927-9afe13ef-28ff-49b6-804e-847aa039daff.mp4
