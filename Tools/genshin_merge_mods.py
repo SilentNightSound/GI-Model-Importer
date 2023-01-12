@@ -34,7 +34,7 @@ def main():
     args = parser.parse_args()
     disable_mod_flag = 0
     print("\nGenshin Mod Merger/Toggle Creator Script\n")
-    if args.disable
+    if args.disable:
         print("Last slot is chosen to be the default UN-Modded original model")
         disable_mod_flag = 1
     if args.active:
