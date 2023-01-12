@@ -340,6 +340,7 @@ While Hu Tao’s are normal:
 <img src="https://user-images.githubusercontent.com/107697535/211988856-0cb0690a-b65f-4db7-96e3-75e0f04dfde5.png" width="600"/>
 </p>
 
+
 ## Passing Custom Values into Shaders (Cycling colors)
 
 In this section, I will demonstrate how to load custom values from the `.ini` files to shaders, and how you can use this to effects that cycle between multiple colors. I will also demonstrate how to find the parts of the shader that control emission, something that is more challenging than just effect colors.
@@ -569,3 +570,270 @@ This will mostly work, but there is an glitch in the compilation here that will 
 </p>
 
 It is also possible to restrict this shader specifically to when Zhongli is on-field, though in this case I don’t know of any other object that shares this shader so it isn’t as important as it was for Diluc’s flames.
+
+
+##Animated Effects
+
+In this final section, I will demonstrate how we can use the principles from the previous two sections to create simple animated effects – I will be going through the process of creating the animated lines in cyber bodysuit raiden (https://gamebanana.com/mods/420434). This section is advanced – I will be assuming you understand the previous two sections, know how to make mods, as well as have some basic programming knowledge.
+
+1. To start, we find the shader that controls drawing the textures on Raiden Shogun:
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/107697535/211994076-18855a3d-7400-4315-9c86-34320c9c1393.png" width="600"/>
+</p>
+
+Raiden actually uses at least two – one for the body object and one for the dress object – but we are interested in the body object since that is the one that has the emission effect we need (found through trial and error previously)
+
+The hash is `7d2763cf91813333`, and we dump it to ShaderFixes.
+
+2. Now, we look for the part of the shader responsible for emission. The emission is above the alpha layer on the diffuse texture which is in slot 0, so we are looking for things related to `t0.w`. There is only one relevant line in the shader:
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/107697535/211994193-4a061233-20e7-4817-871d-499d04b209be.png" width="400"/>
+</p>
+
+And testing it, we find it is responsible for the glow:
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/107697535/211994259-272abaad-7bb2-452a-ab81-b28a3c97c8ed.png" width="200"/>
+</p>
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/107697535/211994318-7846346e-6614-4dfc-a793-32ac6af1d173.png" width="600"/>
+</p>
+
+And we can modify the glowing portions of her texture only by adding a conditional that only triggers on pixels that have an alpha value greater than some arbitrary number:
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/107697535/211994369-a97f22ad-3d00-4aa0-846a-a69596874609.png" width="200"/>
+</p>
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/107697535/211994415-6582a59d-8ac1-464a-a245-b55ea3c4c28b.png" width="600"/>
+</p>
+
+3. Now, I am going to demonstrate the process of adding lines to my cyber bodysuit raiden mod:
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/107697535/211994483-bf30fc5b-248a-44ea-84b4-6d3bb867b502.png" width="600"/>
+</p>
+
+First, I draw the lines:
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/107697535/211994549-4268e3f1-0f26-462f-a8c9-598f5295aa3a.png" width="500"/>
+</p>
+
+I did this through the Blender texture painting tab, but you could also paint directly on to the texture using paint.net\/photoshop. Note that the final output has to be `BC7 SRGB` `dds` for the diffuse texture. Also, don’t be like me – paint these on a separate layer so you can easily separate them out later ;-;.
+
+4. The final texture looks like this after moving the lines above the alpha layer (note: it is wide because I merged a few models together and put their textures side-by-side):
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/107697535/211994700-5f1401f1-a7cb-4f7a-82bf-057638c2e6d3.png" width="700"/>
+</p>
+
+Which gives us glowing lines in-game
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/107697535/211994819-843f583b-91d2-4de3-b4ef-153c6199f540.png" width="600"/>
+</p>
+
+5. Now, time to implement some basic animations. I separate out the lines from the diffuse texture into another empty texture which I am going to call the “control” texture:
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/107697535/211994886-0ead61d0-d16d-4029-8e43-376599f51806.png" width="700"/>
+</p>
+
+This texture will essentially be what we are going to use to tell the shader which parts of the texture will have animated effects (since all four channels of the diffuse/lightmap are already in-use). The type for this texture should be `BC7 Linear`, since we want the color values to be evenly spaced. 
+
+I have also recolored it to black for simplicity – we won’t be using specific colors in this example to keep things simpler, so we set all the color channels equal; if you wanted, you could use each color channel to control different things. Make sure the color is greater than 0 though, since we want to be able to differentiate it from the background without relying on the alpha channel.
+
+Note that I have removed the lines from the original diffuse texture now, so we are back to vanilla bodysuit:
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/107697535/211995020-f2d1f4ce-e7ba-4391-a2c1-6ad4f8f2a7f4.png" width="400"/>
+</p>
+
+6. Next, we add a section into the `BodyOverride` in the `.ini` of the mod to pass the new texture to the shader:
+
+```
+[TextureOverrideRaidenShogunBody]
+hash = 428c56cd
+match_first_index = 17769
+ib = ResourceRaidenShogunBodyIBZipped
+ps-t0 = ResourceRaidenShogunBodyDiffuseRed
+ps-t1 = ResourceRaidenShogunBodyLightMap
+ps-t26 = ResourceRaidenShogunBodyControl
+
+[ResourceRaidenShogunBodyControl]
+filename = RaidenShogunBodyControl.dds
+```
+
+I chose to load it into slot 26 arbitrarily – I don’t recommend going lower than 20, since I’ve seen a few cases where they go up that high (vast majority of things use <10, and it’s rare that anything above 5 is important).
+
+7. We also need to add the variable in to the shader near the top:
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/107697535/211995132-b3a2b48c-e562-4ae8-af43-157ccc0e87b6.png" width="300"/>
+</p>
+
+We can now load this texture in a similar way to how we load the other textures:
+
+`r2.xyzw = t26.SampleBias(s0_s, v2.xy, r0.x).xyzw;`
+
+(If you are wondering how we got this line, it was from looking at how the `t0` and `t1` textures are loaded in and mimicking the format. I chose `r2` since I know it will be replaced by whatever we load in from the diffuse, so it won’t end up breaking any other lines of code – another option would be to create an additional register variable).
+
+8. Now, we can add a conditional that only triggers on pixels of the control texture that have a red channel value greater than 0. When we see that, we set the pixel color to green; otherwise, we simply load the pixel value from the original diffuse texture:
+
+```
+  r2.xyzw = t26.SampleBias(s0_s, v2.xy, r0.x).xyzw;
+  if (r2.x > 0){
+    r2.xyz = float3(0,1,0);
+    r2.w = 0.6;
+  }
+  else{
+    r2.xyzw = t0.SampleBias(s0_s, v2.xy, r0.x).xyzw;
+  }
+```
+(Note: I’m being a bit lazy setting the values here since they should be normalized but it won’t make too much of a difference).
+
+Which leads us back to our original starting point:
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/107697535/211995286-4e89fdea-a027-4c25-bdcb-15807d890ee5.png" width="600"/>
+</p>
+
+However, there is now one key difference – the line colors and locations are being fully controlled through the control texture and shader calculations, and not being read from the original texture.
+
+This lets us easily change the color just by changing the value of `r2.xyz = float3(R,G,B)`;
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/107697535/211995384-8e650f7b-697f-495f-b058-186d67083141.png" width="600"/>
+</p>
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/107697535/211995416-ee01bbe2-ded5-4aaa-9f85-8fe2d87a1846.png" width="600"/>
+</p>
+
+Or even set them in the `.ini` like we did in the previous section. We can even make them cycle between colors using this as well!
+
+9. Now that the lines are being controlled through the shader and control texture, we have a lot more flexibility in what we can do. Let’s start by animating them. Instead of using a constant black across all the control texture lines, I am going to use a gradient from white to black:
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/107697535/211995487-2705e187-b9c7-4d7a-8885-e09c690db396.png" width="400"/>
+</p>
+
+Now, the value of `r2.x` will linearly increase from 0 to 1 as you travel down the lines (this is why we saved as `BC7 linear` – otherwise, the values would be skewed leading to issues). We can then pass the time variable from the `.ini` into the shader:
+
+```
+[TextureOverrideRaidenShogunBody]
+hash = 428c56cd
+match_first_index = 17769
+ib = ResourceRaidenShogunBodyIBZipped
+ps-t0 = ResourceRaidenShogunBodyDiffuseRed
+ps-t1 = ResourceRaidenShogunBodyLightMap
+ps-t26 = ResourceRaidenShogunBodyControl
+x180 = time
+```
+
+Define a new variable in the shader:
+
+`#define TIME IniParams[180].x`
+
+Now, we can compare the value of `r2.x` to `TIME` to figure out what part of the model we want to draw. `r2.x` is in the range 0 to 1, so we need to shift the `TIME` into this range as well – we can divide `TIME` into repeating buckets using the modulo operator, then divide by the max value to put into the range 0 to 1. So the equation would be `TIME%2/2` to have it cycle between 0 and 1 every two seconds.
+
+```
+if (r2.x > TIME%2/2){
+    r2.xyz = float3(0,1,0);
+    r2.w = 0.6;
+  }
+  else{
+    r2.xyzw = t0.SampleBias(s0_s, v2.xy, r0.x).xyzw;
+  }
+```
+
+Result:
+
+Alternatively, to change the direction we can use `1- TIME%2/2` instead:
+
+```
+  if (r2.x > 1-TIME%2/2){
+    r2.xyz = float3(0,1,0);
+    r2.w = 0.6;
+  }
+  else{
+    r2.xyzw = t0.SampleBias(s0_s, v2.xy, r0.x).xyzw;
+  }
+```
+
+10. The result of this isn’t bad, but it isn’t quite what I was looking for – I don’t like how the lines gradually appear/disappear, and I was hoping for a more “matrix-like” effect where the line travels along the body.
+
+Instead of using a single condition, we can define a range where the lines will appear. This will only allow values that are at most 0.2 away of `TIME%2/2`:
+
+```
+  r2.xyzw = t26.SampleBias(s0_s, v2.xy, r0.x).xyzw;
+  if (r2.x > TIME%2/2 && r2.x < TIME%2/2+0.2){
+    r2.xyz = float3(0,1,0);
+    r2.w = 0.6;
+  }
+  else{
+    r2.xyzw = t0.SampleBias(s0_s, v2.xy, r0.x).xyzw;
+  }
+```
+Much better, but it moves a bit fast. Also, the lines still appear all at once at the start of the cycle, making the starting and stopping points obvious. The final equation I settled on was:
+
+```
+  if (r2.x > 0 && (TIME % 3)/2.5 > r2.x && (TIME % 3)/2.5-0.2 < r2.x){
+    r2.xyz = float3(0,1,0);
+    r2.w = 0.6;
+  }
+  else{
+    r2.xyzw = t0.SampleBias(s0_s, v2.xy, r0.x).xyzw;
+  }
+```
+
+This loops every 3 seconds, and we actually put the time into the range 0 to 1.2 instead of 0 to 1 by dividing by 2.5 instead of 3 – the extra 0.2 side lets the lines gradually appear and disappear at the end of the cycle.
+
+11. Now, lets add some more cool effects. We are just using a constant color green, but we don’t have to – we can use math to make the colors cycle. Explaining how this works is beyond the scope of this tutorial, but basically we are using out of sync sine waves to travel around the color wheel. For more details, look here: https://krazydad.com/tutorials/makecolors.php
+
+```
+if (r2.x > 0 && (TIME % 3)/2.5 > r2.x && (TIME % 3)/2.5-0.2 < r2.x){
+    r2.xyz = float3((sin(TIME)+1)/2, (sin(TIME+2)+1)/2, (sin(TIME+4)+1)/2);
+    r2.w = 0.6;
+  }
+  else{
+    r2.xyzw = t0.SampleBias(s0_s, v2.xy, r0.x).xyzw;
+  }
+```
+
+12. At this point, I have mostly finished explaining how to create the effect. The actual cyber Raiden mod also has some additional toggles to turn the effects on and off, to limit them to while Raiden is on-screen and to let the user choose custom colors but all of those have already been covered in previous sections.
+
+The only additional thing I would note is that you aren’t just limited to using colors with this technique – instead of setting `r2` to be a constant color, you could instead use this to pick and choose between different textures. You can also use the separate channels on the control texture for different effects, or use different variables for toggles – the possibilities are limitless! (not really, but you can still do a lot!)
+
+13. While we are mostly done, I will point out some issues:
+
+- The lines don’t appear for ~1-2 seconds after character swap. This is because characters actually use a different shader when they are loading into the game for a few seconds – you can hunt down this shader and replace it as well to remove this issue
+- Reflections don’t have the lines. This is also because the reflections use a different shader, and can be fixed by also hunting down and replacing the shader.
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/107697535/211996519-bbb1ce32-70dd-4e53-8708-646f50ecc7cf.png" width="200"/>
+</p>
+
+- The transparency filter is applied. While this isn’t an error, it means that someone using the remove transparency filter mod will have that one overwritten for Raiden. If you want to fix this, do a dif on the shader file with the one from remove transparency filter to see what the differences are and apply them to your file
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/107697535/211996611-a550eddc-a7e1-44a0-8e9f-9246a8fa8411.png" width="600"/>
+</p>
+
+- Some characters break while Raiden is on screen for a moment when using the party menu. I don’t actually know why this happens – the part that breaks doesn’t even use the same shader and I couldn’t seem to isolate the issue. If anyone knows, please send me a message
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/107697535/211996685-a4c68680-57b7-40c7-8036-ffc0fc5a27e4.png" width="600"/>
+</p>
+
+- The rainbow color effect is cool but isn’t 100% mathematically sound – the diffuse texture uses an `SRGB` color space not a `linear` one, which means you would need an additional step to convert the colors (you can see that the lines don’t ever turn fully red/green/blue as you would expect). See something like https://lettier.github.io/3d-game-shaders-for-beginners/gamma-correction.html for details
+
+- Shaders can change hashes between versions, and tend to do so more commonly than character hashes so you may need to update effect mods more often than character ones.
+
+If you have reached this point, congratulations! You know the majority of the basics of how shaders can be used to change effects or even make custom ones. Thank you for reading, and I look forward to seeing what you create!
+
