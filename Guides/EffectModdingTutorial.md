@@ -209,7 +209,7 @@ Getting these shaders is more annoying, but not impossible. The first method is 
 <img src="https://user-images.githubusercontent.com/107697535/212235277-b8d9de11-78d7-4f97-8c09-dc220be72980.png" width="600"/>
 </p>
 
-The second is to use a cheat software like Akebi to reduce the gamespeed to below 1, which lets you watch the effects in slow-motion. Note that using cheat software can be risky on official servers, so I recommend only using private servers if you decide to use this method.
+The second is to use a cheat software like Akebi to reduce the gamespeed to below 1, which lets you watch the effects in slow-motion. Note that using cheat software can result in bans if used on official servers, so I recommend only using private servers if you decide to use this method.
 
 Big thank you to ComplexSignal31#5778 and NK#1321 for the recommendations!)
 
