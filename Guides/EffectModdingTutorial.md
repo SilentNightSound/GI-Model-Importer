@@ -193,7 +193,7 @@ Instead of changing the output it is also possible to change the effects by chan
 <img src="https://user-images.githubusercontent.com/107697535/211987673-309f0467-ba0f-40ae-94cc-256912c056c0.png" width="600"/>
 </p>
 
-Collecting all the different shaders is what takes the majority of the time when editing textures.
+Collecting all the different shaders is what takes the majority of the time when editing shaders.
 
 13.	Even turning all of the above black, you may have noticed that there are still flame effects that show up during the ult where we cannot pause the game:
 
@@ -721,7 +721,7 @@ This lets us easily change the color just by changing the value of `r2.xyz = flo
 
 Or even set them in the `.ini` like we did in the previous section. We can even make them cycle between colors using this as well!
 
-9. Now that the lines are being controlled through the shader and control texture, we have a lot more flexibility in what we can do. Let’s start by animating them. Instead of using a constant black across all the control texture lines, I am going to use a gradient from white to black:
+9. Now that the lines are being controlled through the shader and control texture, we have a lot more flexibility in what we can do. Let’s start by animating them. Instead of using a constant black across all the control texture lines, I am going to use a gradient from black to white:
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/211995487-2705e187-b9c7-4d7a-8885-e09c690db396.png" width="400"/>
