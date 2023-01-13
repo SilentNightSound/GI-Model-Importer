@@ -203,6 +203,16 @@ Collecting all the different shaders is what takes the majority of the time when
 
 Getting these shaders is more annoying, but not impossible. The first method is to enable something like infinite burst energy in grasscutter and cast the ult over and over while cycling. This will take some time, but should work for anything that is repeatable.
 
+(UPDATE: I have received recommendations of two more ways you can get shader information from bursts: one is to stand in shallow water or with your back to a wall to disable the burst camera. This will let you pause normally during bursts and give you time to cycle through the hashes:
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/107697535/212235277-b8d9de11-78d7-4f97-8c09-dc220be72980.png" width="600"/>
+</p>
+
+The second is to use a cheat software like Akebi to reduce the gamespeed to below 1, which lets you watch the effects in slow-motion. Note that using cheat software can be risky on official servers, so I recommend only using private servers if you decide to use this method.
+
+Big thank you to ComplexSignal31#5778 and NK#1321 for the recommendations!)
+
 For effects that only show up in cutscenes or are hard to reproduce, however, the fastest method is to do a frame dump. See the texture modding tutorial for more details on how to perform frame dumps, but essentially you press `F8` while the effect is on-screen to perform the dump at the same time as the effect is visible. 
 
 Unfortunately, since we do not know the shader hash it will need to be a full dump so make sure you have 5-10GB of space free and as few objects on screen as possible.
