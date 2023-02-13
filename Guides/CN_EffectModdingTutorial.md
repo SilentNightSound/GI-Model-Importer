@@ -6,7 +6,7 @@
 
 我粗略地按照难度增加的顺序安排了本教程，所以即使阅读第一节也足以进行简单的编辑。后面的章节将需要基本的编程知识。
 
-我将列举三个逐渐复杂的例子： 
+我将列举三个逐渐复杂的例子: 
 
 -	改变角色的攻击/技能颜色(请参见 https://gamebanana.com/mods/409181 关于甘雨的冰攻击重新着色的例子)
 -	创建一个随着时间的推移在多种颜色之间切换的效果(请参见 https://gamebanana.com/mods/418434 关于圣诞树改变灯光的颜色的例子)
@@ -18,7 +18,7 @@
 
 ## 重要说明
 
-默认情况下，我禁用了GIMI转储着色器的能力，因为它们可以干扰mods。您可以通过确保d3dx.ini的`marking_actions`行在列表中包含`hlsl`和`asm`来重新启用它们。
+默认情况下，我禁用了GIMI转储着色器的能力，因为它们可以干扰mods。你可以通过确保d3dx.ini的`marking_actions`行在列表中包含`hlsl`和`asm`来重新启用它们。
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/211983955-7a13e1a0-542e-435f-ab67-aa5e78031bd7.PNG" width="600"/>
@@ -38,7 +38,7 @@
 <img src="https://user-images.githubusercontent.com/107697535/211985874-1e3a43e6-bb5e-48e1-9b8c-c99a199595a0.png" width="600"/>
 </p>
 
-2.一旦你找到了一个好的位置，触发你想要的效果并进入暂停菜单。在这种情况下，我们对迪卢克技能的火焰效果感兴趣，所以我们按下e然后暂停（注意：对于只有在游戏未暂停时才显示的效果，仍然有可能获得稍微困难一点的效果——我稍后会解释）
+2.一旦你找到了一个好的位置，触发你想要的效果并进入暂停菜单。在这种情况下，我们对迪卢克技能的火焰效果感兴趣，所以我们按下e然后暂停（注意:对于只有在游戏未暂停时才显示的效果，仍然有可能获得稍微困难一点的效果——我稍后会解释）
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/211986006-20e3e92b-29c4-4f3e-8808-bf151fb72e97.png" width="600"/>
@@ -60,49 +60,49 @@
 
 我们从这两个开始。
 
-5.	在数字键盘上按' 3 '将PS哈希值复制到剪贴板，并将着色器保存到ShaderFixes文件夹中。上面两个着色器的哈希值是' e75b3ffb93a1d268 '和' dd0757868249aaa5 '(注意:如果你需要快速回到起点，你可以按数字键盘上的 ' + '将缓冲区重置为0)。注意，着色器哈希值可以在不同版本之间改变，所以你的哈希值可能不相同
+5.	在数字键盘上按` 3 `将PS哈希值复制到剪贴板，并将着色器保存到ShaderFixes文件夹中。上面两个着色器的哈希值是` e75b3ffb93a1d268 `和` dd0757868249aaa5 `(注意:如果你需要快速回到起点，你可以按数字键盘上的 ` + `将缓冲区重置为0)。注意，着色器哈希值可以在不同版本之间改变，所以你的哈希值可能不相同
 
-6.	着色器现在应该显示在ShaderFixes中，名称类似' hash-ps_replace.txt '。
+6.	着色器现在应该显示在ShaderFixes中，名称类似` hash-ps_replace.txt `。
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/211986246-48a6ccdb-e779-4e13-8b1e-ce02bcb1b044.png" width="400"/>
 </p>
 
-如果它们在numpad上按下“3”后没有显示，请确保您将“hlsl”和“asm”放在“marking_actions”中，正如顶部的重要说明中提到的那样，并使用“F10”刷新。
+如果它们在数字键盘上按下`3`后没有显示，请确保你将`hlsl`和`asm`放在`marking_actions`中，正如顶部的重要说明中提到的那样，并使用`F10`刷新。
 
-还要注意的是，少数着色器不会正确地反编译为' hlsl '(高级着色器语言)，而是会恢复为' asm '(汇编)。这些着色器仍然可以工作，但编辑起来会更加笨拙。我不会在本教程中介绍asm，但概念是相同的-着色器的语法只是更难阅读。
+还要注意的是，少数着色器不会正确地反编译为` hlsl `(高级着色器语言)，而是会恢复为` asm `(汇编)。这些着色器仍然可以工作，但编辑起来会更加笨拙。我不会在本教程中介绍asm，但概念是相同的-着色器的语法只是更难阅读。
 
-7.	用你选择的文本编辑器(Notepad/ notepad++ /Sublime text /随便什么)打开它们。这个文件一开始看起来很吓人，但是不要担心——您不需要了解细节就可以进行基本的更改(我将在后面的章节中详细介绍这个文件的工作方式)。
+7.	用你选择的文本编辑器(Notepad/ notepad++ /Sublime text /随便什么)打开它们。这个文件一开始看起来很吓人，但是不要担心——你不需要了解细节就可以进行基本的更改(我将在后面的章节中详细介绍这个文件的工作方式)。
 	
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/211986377-e2fd3418-f673-4cf8-9ff1-938faf945c76.png" width="400"/>
 </p>
 
-8.	现在，我们最感兴趣的是处理输入和输出。这些都列在main下面——这个文件有9个输入(编号为' v0 '， ' v1 '， ' v2 '，…' v8 ')，有一个输出(' o0 ')。
+8.	现在，我们最感兴趣的是处理输入和输出。这些都列在main下面——这个文件有9个输入(编号为` v0 `， ` v1 `， ` v2 `，…` v8 `)，有一个输出(` o0 `)。
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/211986455-0a5ca895-c3a7-4066-a59f-be71fe2634e6.png" width="300"/>
 </p>
 
-9.	通常从输出开始是最简单的。它有一个' float4 '类型，这意味着它有一个' x '， ' y '， ' z '和' w '组件，并接受一个浮点数(即十进制)作为输入。我们可以通过在代码末尾放一行来强制将值设置为常量，来看看它是怎么做的:
+9.	通常从输出开始是最简单的。它有一个` float4 `类型，这意味着它有一个` x `， ` y `， ` z `和` w `组件，并接受一个浮点数(即十进制)作为输入。我们可以通过在代码末尾放一行来强制将值设置为常量，来看看它是怎么做的:
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/211986560-b25728ae-e24a-4fe1-929e-0d49bf02dadf.png" width="300"/>
 </p>
 
-（`//`和`/**/`表示代码中的注释，并被程序忽略。3dmigoto还将`asm`代码导出到`hlsl`代码下面——当我说“end”时，我的意思是“return”之前，而不是之后。该点之后的所有内容都被注释掉，默认情况下不会运行。如果您看到像`div`、`mul`和`mov`这样的内容，您跑得太远了）
+（`//`和`/**/`表示代码中的注释，并被程序忽略。3dmigoto还将`asm`代码导出到`hlsl`代码下面——当我说`end`时，我的意思是`return`之前，而不是之后。该点之后的所有内容都被注释掉，默认情况下不会运行。如果你看到像`div`、`mul`和`mov`这样的内容，你跑得太远了）
 
 基本上，我们所做的就是覆盖游戏计算的值，并将其替换为我们自己的值
 
-10.	保存文件，然后在游戏中按“F10”重新加载(确保也按“+”重置缓冲区!)3dmigoto会自动从ShaderFixes文件夹中加载着色器。这就是所发生的:
+10.	保存文件，然后在游戏中按`F10`重新加载(确保也按`+`重置缓冲区!)3dmigoto会自动从ShaderFixes文件夹中加载着色器。这就是所发生的:
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/211986773-ee66b8c6-2d80-44fc-b1cf-fa8e41f4f9db.png" width="600"/>
 </p>
 
-中线变成了黑色，火花变成了绿色。如果你熟悉颜色是如何储存的，你可能会猜到' o0.X '表示，但我们可以继续检查以确保:
+中线变成了黑色，火花变成了绿色。如果你熟悉颜色是如何储存的，你可能会猜到` o0.X `表示，但我们可以继续检查以确保:
 
-将' x '和' z '组件设置为0，' y '设置为1:
+将` x `和` z `组件设置为0，` y `设置为1:
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/211986865-67fb5c91-3c25-4df7-8821-c5b11c3531fa.png" width="300"/>
@@ -114,7 +114,7 @@
 <img src="https://user-images.githubusercontent.com/107697535/211986940-01ebfc18-ef72-4c60-b7e2-91985bf9c2b1.png" width="600"/>
 </p>
 
-同时将“x”和“y”设置为0，“z”设置为1
+同时将`x`和`y`设置为0，`z`设置为1
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/211986994-c3070f3f-9eb5-480a-b8ed-13ab90076c80.png" width="300"/>
@@ -126,16 +126,16 @@
 <img src="https://user-images.githubusercontent.com/107697535/211987033-f9a1b299-9676-4687-9ae9-808db2b84b3d.png" width="600"/>
 </p>
 
-或者换句话说' o0.xyz '对应效果的RGB颜色。并不总是“o0”是颜色——一些着色器有多个输出，所以颜色可能是“o1”或“o2”等;值得庆幸的是，这个着色器相当简单，只有一个输出“o0”。
+或者换句话说` o0.xyz `对应效果的RGB颜色。并不总是`o0`是颜色——一些着色器有多个输出，所以颜色可能是`o1`或`o2`等;值得庆幸的是，这个着色器相当简单，只有一个输出`o0`。
 
-(如果你想知道“w”代表什么，它似乎与效果的宽度/放射有关:)
+(如果你想知道`w`代表什么，它似乎与效果的宽度/发射有关:)
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/211987161-edd09e67-99e8-42ff-9653-9aafadda4531.png" width="600"/>
 </p>
 
 
-11.	现在我们知道了这些值对应的是什么，我们可以对颜色进行基本的更改。例如，设置三个' o0.xyz '到0会导致迪卢克的火焰变成黑色:
+11.	现在我们知道了这些值对应的是什么，我们可以对颜色进行基本的更改。例如，设置三个` o0.xyz `到0会导致迪卢克的火焰变成黑色:
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/211987214-bc9c7a29-1bf0-483d-bb9d-7cba39afd1da.png" width="300"/>
@@ -145,13 +145,13 @@
 <img src="https://user-images.githubusercontent.com/107697535/211987253-b4480e4e-b3f3-4726-b66d-cb8e5c698815.png" width="600"/>
 </p>
 
-或者我们可以把它们变成紫色，把' r '和' b '设为1，把' g '设为0:
+或者我们可以把它们变成紫色，把` r `和` b `设为1，把` g `设为0:
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/211987317-f0237be8-da62-43d1-8d0f-7f6447872f09.png" width="600"/>
 </p>
 
-注意，我们也不局限于设置常量-我们也可以改变颜色的色调。这减少了攻击中的红色数量，同时增加了更多的绿色和蓝色，以创造一个鲑鱼粉色的颜色:
+注意，我们也不局限于设置常量-我们也可以改变颜色的色调。这减少了攻击中的红色数量，同时增加了更多的绿色和蓝色，以创造一个鲑鱼粉的颜色:
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/211987374-be4661b0-46aa-4829-82c0-2274175a8b6e.png" width="200"/>
@@ -161,7 +161,7 @@
 <img src="https://user-images.githubusercontent.com/107697535/211987415-bf5057ee-1c20-4e19-8195-0c3ace4fd26f.png" width="600"/>
 </p>
 
-注意，与我们强制设置恒定值的情况不同，火焰纹理在这里仍然可见。
+注意，与我们强制设置常量的情况不同，火焰纹理在这里仍然可见。
 
 我们甚至可以做一些更花哨的事情，比如将值设置为数学表达式，但我将在最后一节中讨论这个问题。
 
@@ -187,7 +187,7 @@
 <img src="https://user-images.githubusercontent.com/107697535/211987610-6a3362cf-bcb9-4d9f-b1a7-a47feb245bc4.png" width="600"/>
 </p>
 
-`7690cf4aa6647c6c` 是元素爆发期间的剑辉：
+`7690cf4aa6647c6c` 是元素爆发期间的剑辉:
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/211987673-309f0467-ba0f-40ae-94cc-256912c056c0.png" width="600"/>
@@ -213,7 +213,7 @@
 
 非常感谢ComplexSignal31#5778和NK#1321的推荐!)
 
-然而，对于只在过场动画中出现或难以重现的效果，最快的方法是进行帧转储。关于如何执行帧转储的更多细节，请参阅纹理修改教程，但本质上，当效果在屏幕上显示时，您按“F8”来执行转储，同时效果是可见的。
+然而，对于只在过场动画中出现或难以重现的效果，最快的方法是进行帧转储。关于如何执行帧转储的更多细节，请参阅纹理修改教程，但本质上，当效果在屏幕上显示时，你按`F8`来执行转储，同时效果是可见的。
 
 不幸的是，由于我们不知道着色器哈希，它将需要一个完整的转储，所以确保你有5-10GB的空闲空间和屏幕上尽可能少的对象。
 
@@ -221,7 +221,7 @@
 <img src="https://user-images.githubusercontent.com/107697535/211987810-78fc6d7f-1f98-4474-8e59-86d155378fda.png" width="300"/>
 </p>
 
-当你有了按下“F8”后创建的框架分析文件夹时，你可以通过它来查看效果何时绘制。“o0”和“o1”文件显示了每个ID所绘制的内容，对于隔离在屏幕上绘制效果的确切ID非常有用。
+当你有了按下`F8`后创建的帧分析文件夹时，你可以通过它来查看效果何时绘制。`o0`和`o1`文件显示了每个ID所绘制的内容，对于分离在屏幕上绘制效果的确切ID非常有用。
 
 例子: `000351-o0=3315d2b5-vs=eb65cb4eba57132b-ps=7690cf4aa6647c6c.dds` 看起来像在我的帧转储这样:
 
@@ -251,9 +251,9 @@
 <img src="https://user-images.githubusercontent.com/107697535/211988083-9efb97a2-9d6d-48fc-8faa-878dc85f48c7.png" width="600"/>
 </p>
 
-14.	现在我们有了剩下的哈希值，我们需要转储它们。按numpad ' + '重置缓冲区，施放ult，然后开始使用numpad ' 1 ' / ' 2 '循环，而效果在屏幕上。即使在我们到达哈希时，效果已经离开了屏幕，只要我们在效果出现在屏幕上时开始循环，它就会显示在列表中，并且可以转储:
+14.	现在我们有了剩下的哈希值，我们需要转储它们。按数字键盘 ` + `重置缓冲区，施放元素爆发，然后开始使用数字键盘 ` 1 ` / ` 2 `循环，而效果在屏幕上。即使在我们到达哈希时，效果已经离开了屏幕，只要我们在效果出现在屏幕上时开始循环，它就会显示在列表中，并且可以转储:
 
-PS ' 4d4da8a4cbe1149a '即使ult没有激活显示的例子:
+PS ` 4d4da8a4cbe1149a `即使元素爆发没有激活显示的例子:
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/211988198-9a6ddd0e-e55b-4783-8602-d21bca4d61c0.png" width="600"/>
@@ -273,17 +273,17 @@ PS ' 4d4da8a4cbe1149a '即使ult没有激活显示的例子:
 
 我们已经把所有的火焰都设置为黑色，不只是迪卢克的。此外，如果其他人创建了一个mod，改变了其他角色的火焰，如胡桃或可莉的，它也会与迪卢克的重叠。
 
-16.	我们想要一种方法来限制效果，只有当迪卢克在场上时才会出现。我们有几种方法可以做到这一点，但它们都遵循相同的基本原则-我们确定了当Diluc在场上时引起的某些条件，然后仅在该条件为真时应用这些效果。
+16.	我们想要一种方法来限制效果，只有当迪卢克在场上时才会出现。我们有几种方法可以做到这一点，但它们都遵循相同的基本原则-我们确定了当迪卢克在场上时引起的某些条件，然后仅在该条件为真时应用这些效果。
 
 这是一个更高级的主题，在你玩了更多的着色器和阅读后面的部分后会更有意义-如果你有理解这个问题，试着阅读下面的部分，然后再回来。
 
-首先，我们需要确定迪卢克唯一的哈希值。为了简单起见，我将使用迪卢克的`VB` 哈希 `56159d74` (' VB '可以与numpad ' / '和' * '循环，并使用numpad ' - '复制):
+首先，我们需要确定迪卢克唯一的哈希值。为了简单起见，我将使用迪卢克的`VB` 哈希 `56159d74` (` VB `可以与数字键盘 ` / `和` * `循环，并使用数字键盘 ` - `复制):
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/211988418-a6af34f5-b9dc-4446-aa84-44ddf93a435c.png" width="600"/>
 </p>
 
-17.	接下来，我们构建一个' .ini '，我们将使用它来选择性地应用效果。我们定义了一个名为“$ActiveCharacter”的变量，并在每一帧开始时将其设置为0 (' [Present] '在每一帧开始时运行一次)。当迪卢克在场上时时，我们只将值设置为1，由匹配的VB散列表示:
+17.	接下来，我们构建一个` .ini `，我们将使用它来选择性地应用效果。我们定义了一个名为`$ActiveCharacter`的变量，并在每一帧开始时将其设置为0 (` [Present] `在每一帧开始时运行一次)。当迪卢克在场上时时，我们只将值设置为1，由匹配的VBhash表示:
 
 ```
 [Constants]
@@ -292,34 +292,34 @@ global $ActiveCharacter
 [Present]
 post $ActiveCharacter = 0
 
-[TextureOverrideDilucVB]
+[TextureOverride迪卢克VB]
 hash = 56159d74
 match_priority = 1
 $ActiveCharacter = 1
 ```
 这里的`match_priority`只是为了确保这个效果不会干扰任何加载的迪卢克mod -如果你将这个效果作为一个mod的一部分而不是单独添加，你不需要包括它。
 
-18.	现在，我们有两种方法来隔离着色器。两种方法中比较简单的是简单地定义一个自定义着色器并执行替换，然后创建一个`shaderoverride`，并且只在迪卢克是活动角色时运行自定义着色器:
+18.	现在，我们有两种方法来分离着色器。两种方法中比较简单的是简单地定义一个自定义着色器并执行替换，然后创建一个`shaderoverride`，并且只在迪卢克是活动角色时运行自定义着色器:
 
 ```
-[ShaderOverrideDilucFlame]
+[ShaderOverride迪卢克Flame]
 hash = 4d4da8a4cbe1149a
 if $ActiveCharacter == 1
-	run = CustomShaderDilucFlame
+	run = CustomShader迪卢克Flame
 endif
 
-[CustomShaderDilucFlame]
+[CustomShader迪卢克Flame]
 ps = 4d4da8a4cbe1149a-ps_replace.txt
 handling = skip
 drawindexed = auto
 ```
 
-这通常会工作，但3dmigoto有时不能正确编译' hlsl '如果这样做会导致错误。同样，它也不会对' asm '起作用。但优点是，着色器可以捆绑在mod文件夹与mod的其余部分，它不会影响如果另一个mod试图修改相同的着色器。
+这通常会工作，但3dmigoto有时不能正确编译` hlsl `如果这样做会导致错误。同样，它也不会对` asm `起作用。但优点是，着色器可以捆绑在mod文件夹与mod的其余部分，它不会影响如果另一个mod试图修改相同的着色器。
 
 另一种方法是传递一个自定义变量给着色器，只有当变量匹配时才执行效果。下一节将更详细地讨论这一点，但本质上你想为每个着色器创建一个这样的部分:
 
 ```
-[ShaderOverrideDilucFlame]
+[ShaderOverride迪卢克Flame]
 hash = 0fa220b5adced192
 x160 = $ActiveCharacter
 ```
@@ -355,19 +355,19 @@ https://user-images.githubusercontent.com/107697535/212006132-08528c9c-2069-451c
 
 ## 将自定义值传递到着色器(循环颜色)
 
-在本节中，我将演示如何从“.ini”文件加载自定义值到着色器，以及如何使用它来制作多种颜色之间循环的效果。我还将演示如何找到着色器中控制放射的部分，这比仅仅是效果颜色更具挑战性。
+在本节中，我将演示如何从`.ini`文件加载自定义值到着色器，以及如何使用它来制作多种颜色之间循环的效果。我还将演示如何找到着色器中控制发射的部分，这比仅仅是效果颜色更具挑战性。
 
-本节属于中等难度，我假设你已经阅读了前一节的大部分内容，并且至少对“.ini”文件和着色器有一些基本的熟悉(例如，知道如何打开它们，至少模糊地理解不同的部分)。有基本的编程知识。
+本节属于中等难度，我假设你已经阅读了前一节的大部分内容，并且至少对`.ini`文件和着色器有一些基本的熟悉(例如，知道如何打开它们，至少模糊地理解不同的部分)。有基本的编程知识。
 
-1. 像以前一样，我们从收集着色器哈希开始，这次是中立的柱子:
+1. 像以前一样，我们从收集着色器哈希开始，这次是钟离的柱子:
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/211990319-6809dcff-aa24-46de-8d50-56e21511f384.png" width="600"/>
 </p>
 
-与Diluc不同，这个散列不会导致整个柱子消失——只会导致纹理消失。这是因为它是使用多个着色器绘制的，所以即使我们跳过对象的一部分，仍然会绘制(在这种情况下，柱子的轮廓仍然保留)。
+与迪卢克不同，这个hash不会导致整个柱子消失——只会导致纹理消失。这是因为它是使用多个着色器绘制的，所以即使我们跳过对象的一部分，仍然会绘制(在这种情况下，柱子的轮廓仍然保留)。
 
-本例中的哈希值是 `4c99fec14dca7797` – 按' 3 '将着色器转储到ShaderFixes。
+本例中的哈希值是 `4c99fec14dca7797` – 按` 3 `将着色器转储到ShaderFixes。
 
 我们的最终目标是改变黄色裂隙效果的颜色，而其他部分保持不变。
 
@@ -375,7 +375,7 @@ https://user-images.githubusercontent.com/107697535/212006132-08528c9c-2069-451c
 <img src="https://user-images.githubusercontent.com/107697535/211990446-34c57fcf-fb0a-495a-adf0-4c3834236f0f.png" width="200"/>
 </p>
 
-2. 打开着色器，我们可以看到它比以前的9个输入和6个输出更复杂。这是因为着色器负责做很多事情，比如绘制纹理，处理放射，计算阴影等。
+2. 打开着色器，我们可以看到它比以前的9个输入和6个输出更复杂。这是因为着色器负责做很多事情，比如绘制纹理，处理发射，计算阴影等。
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/211990505-a83e9b5d-e53f-4d81-8bf1-4b88224c4b3f.png" width="300"/>
@@ -383,13 +383,13 @@ https://user-images.githubusercontent.com/107697535/212006132-08528c9c-2069-451c
 
 我们首先尝试与前面相同的方法——将每个输出设置为常量，以了解它们控制的内容。
 
-3.' o0 '似乎与轮廓有关，使它们变得更厚和更薄(有点难以看到，但可以使用' F9 '在修改模式和无修改模式之间来回切换):
+3.` o0 `似乎与轮廓有关，使它们变得更厚和更薄(有点难以看到，但可以使用` F9 `在修改模式和无修改模式之间来回切换):
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/211990621-0a6ae9bb-00d8-4da2-b533-bc49e373b2d4.png" width="200"/>
 </p>
 
-`o1.xyz` 似乎和之前一样对应颜色RGB，而' w '似乎控制亮度
+`o1.xyz` 似乎和之前一样对应颜色RGB，而` w `似乎控制亮度
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/211990706-ae3443bf-e591-49a0-a071-6725d806bb0e.png" width="600"/>
@@ -407,19 +407,19 @@ https://user-images.githubusercontent.com/107697535/212006132-08528c9c-2069-451c
 
 `o3`-`o5` 不清楚，但似乎影响线粗细。
 
-但是，您可能已经注意到一个问题——所有这些选项都会改变整个柱子的颜色，而不仅仅是黄色地理线!我们必须再深入挖掘一下，以找出这是如何处理的。
+但是，你可能已经注意到一个问题——所有这些选项都会改变整个柱子的颜色，而不仅仅是黄色地理线!我们必须再深入挖掘一下，以找出这是如何处理的。
 
 4. 在我们继续之前，让我更详细地解释着色器中最重要的符号:
 
 - `v0`,`v1`,`v2`..etc. 是vb文件中加载的输入数据，也就是说，与顶点位置、顶点颜色(与纹理颜色不同!)、uv贴图、混合权重等相关的数据。
-- `o0`, `o1`, `o2`… 是输出目标，是实际绘制到屏幕上的东西(或者在顶点着色器' VS '的情况下，传递给像素着色器' PS '的东西)
-- `t0`, `t1`, `t2`… 是纹理-典型的像DDS纹理，尽管它们在某些情况下也可以是缓冲区。当你在.ini文件中看到' ps-t0 '， ' vs-t0 '， ' ps-t1 '， ' vs-t1 '等时，这就是它们对应的
+- `o0`, `o1`, `o2`… 是输出目标，是实际绘制到屏幕上的东西(或者在顶点着色器` VS `的情况下，传递给像素着色器` PS `的东西)
+- `t0`, `t1`, `t2`… 是纹理-典型的像DDS纹理，尽管它们在某些情况下也可以是缓冲区。当你在.ini文件中看到` ps-t0 `， ` vs-t0 `， ` ps-t1 `， ` vs-t1 `等时，这就是它们对应的
 - `r0`, `r1`, `r2`… 寄存器——这些是着色器用来存储计算结果的临时变量
 - `cb0`, `cb1`, `cb2`… 常量缓冲区-这些是游戏传递给着色器的值，代表当前游戏状态的值，如对象的全局位置或自游戏开始以来传递的时间
 
 考虑到这一点，我们可以专注于我们感兴趣的代码部分，而不是试图理解所有200多行代码。
 
-我们感兴趣的是中立柱子的光芒。查看柱子的纹理，我们可以看到diffuse纹理包含alpha层之上的发光部分，并加载在插槽0(第一个哈希来自柱子的哈希.json)。或者通过查看创建的mod，看到diffuse加载为' ps-t0 '):
+我们感兴趣的是钟离柱子的光芒。查看柱子的纹理，我们可以看到diffuse纹理包含alpha层之上的发光部分，并加载在插槽0(第一个哈希来自柱子的hash.json)。或者通过查看创建的mod，看到diffuse加载为` ps-t0 `):
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/211991323-68087da3-c621-4238-a994-50e3859837a5.png" width="200"/>
@@ -429,15 +429,15 @@ https://user-images.githubusercontent.com/107697535/212006132-08528c9c-2069-451c
 <img src="https://user-images.githubusercontent.com/107697535/211991357-5a0c0cee-eb64-410c-875f-db1576e107b9.png" width="300"/>
 </p>
 
-因此，我们感兴趣的是代码中涉及到变量' t0 '的任何部分，这对应于diffuse纹理。具体来说，我们最感兴趣的是任何涉及w分量的东西，因为它代表发光部分。
+因此，我们感兴趣的是代码中涉及到变量` t0 `的任何部分，这对应于diffuse纹理。具体来说，我们最感兴趣的是任何涉及w组件的东西，因为它代表发光部分。
 
-5. ' t0 '在着色器中被加载了两次:一次是在第100行左右的变量' r2 '中:
+5. ` t0 `在着色器中被加载了两次:一次是在第100行左右的变量` r2 `中:
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/211991507-ed958308-a38f-40dc-a056-5d663f389052.png" width="400"/>
 </p>
 
-还有一次在第235行左右，输入变量' r0 ':
+还有一次在第235行左右，输入变量` r0 `:
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/211991578-04bb9823-8bb5-4523-a0f5-2b81e4f32502.png" width="400"/>
@@ -445,7 +445,7 @@ https://user-images.githubusercontent.com/107697535/212006132-08528c9c-2069-451c
 
 有很多方法可以通过阅读代码来判断哪个是正确的，但尝试每种方法也可以:
 
-设置“r2.X '作为第一个块中的常数:
+设置`r2.X `作为第一个代码块中的常数:
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/211991690-68c079f5-5111-4b09-90ae-e7120338b791.png" width="300"/>
@@ -457,65 +457,65 @@ https://user-images.githubusercontent.com/107697535/212006132-08528c9c-2069-451c
 <img src="https://user-images.githubusercontent.com/107697535/211991731-c2bbb878-2a7b-401d-8d79-0020e46e92e5.png" width="600"/>
 </p>
 
-So we should probably look near the second block instead. The color is most likely represented by a variable with 3 components (one for each color channel), and the nearest one to that block is the `r1` that shows up 3 lines down:
+所以我们应该去第二个代码块附近看看。颜色很可能是由一个有3个组件的变量表示的(每个颜色通道一个组件)，最接近该块的是`r1`，它显示在3行以下:
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/211991835-9983b92e-4ee2-4541-b546-2a5a9a560ed8.png" width="300"/>
 </p>
 
-If we set `r1.x` to 1 here:
+如果我们设 `r1.x` 为1:
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/211991910-4e13e1e6-ac7c-4b7d-879e-305903c5632a.png" width="300"/>
 </p>
 
-We get:
+我们得到:
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/211991957-54261de6-263f-491b-bfa9-e1cdd4bf7ffd.png" width="600"/>
 </p>
 
-Success! This `r1` value is what controls the RGB of the pillar glow (we set the red component to 0).
+成功!这个`r1`值是控制柱子辉光的RGB(我们将红色组件设置为0)。
 
-(Note: this does not mean that `r1` is always responsible for the pillar glow color everywhere in the code, just that it holds the pillar glow at this specific point in time. Register values are reused by the shader when performing calculations, so the “meaning” of what each one represents can change from line to line unlike the inputs and outputs).
+(注意:这并不意味着` r1 `总是负责代码中所有地方的柱状辉光颜色，只是它保留了这个特定时间点的柱状辉光。寄存器值在执行计算时被着色器重用，因此每一个所代表的`含义`可以从一行到一行地改变，不像输入和输出)。
 
-This same basic principle can be used in other situations to find what part of the shader controls what output – start with some component you know is tied to whatever you are looking for (such as a texture, or a specific vb value), then search the surrounding shader code and experiment to find it. 
+同样的基本原理也可以用在其他情况下，找到着色器的哪个部分控制输出-从你知道的某个组件开始，它与你正在寻找的任何东西(比如纹理，或特定的vb值)，然后搜索周围的着色器代码，并尝试找到它。
 
-6. One color is boring however – what if we could set the color to whatever we wanted? Actually, it is possible to pass custom values from the `.ini` files to the shader.
+6. 然而，只有一种颜色是无趣的-如果我们可以设置任何我们想要的颜色呢?实际上，可以将自定义值从` .ini `文件传递给着色器。
 
-First, define the variables you want to use near the top of the file under 3dmigoto declarations (180 was chosen arbitrarily, though ideally you should pick numbers over 100 so they don’t accidentally interfere with the ones the game uses)
+首先，在3dmigoto声明的文件顶部定义你想要使用的变量(180是任意选择的，但理想情况下你应该选择超过100的数字，这样它们就不会意外地干扰游戏使用的变量)
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/211992100-bce019e7-bf54-442e-a4b3-52f856352fb4.png" width="400"/>
 </p>
 
-Next, we set the R, G and B below the t0 line we found in the previous part
+接下来，我们将R、G和B设置在上一部分中找到的t0行以下
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/211992193-e24ab261-b997-4cb7-9a9c-59e02a9bff5f.png" width="300"/>
 </p>
 
-(NOTE: the `r1` has an `x`,`z` and `w` component not an `x`,`y`, and `z` component. They still correspond to RGB though, just the letters are different)
+(注意:` r1 `有一个` x `， ` z `和` w `组件，而不是` x `， ` y `和` z `组件。它们仍然对应RGB，只是字母不同)
 
-Finally, in the .ini we are going to set the three values whenever we see the `IB` for the pillar:
+最后，在.ini文件中，当我们看到柱子的` IB `时，我们将设置三个值:
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/211992258-b40caa68-9a4e-4d16-bfd6-63b60ad8e7b5.png" width="200"/>
 </p>
 
-(You can find the pillar `IB` by using numpad `7`/`8` to cycle until you find the one that makes the pillar vanish, or by looking in hash.json):
+(你可以通过使用数字键盘 ` 7 ` / ` 8 `循环找到柱子` IB `，直到你找到令柱子消失的IB，或者通过查找hash.json):
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/211992424-ddbab70d-4fdd-42e8-996b-4c8cde2337f3.png" width="600"/>
 </p>
 
-Success! We have set the lines to red:
+成功!我们将线条设置为红色:
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/211992488-bc79ec9e-2155-4142-8b00-89cd264c6308.png" width="600"/>
 </p>
 
-And we can set them to other colors just by changing the .ini values; this will set them to purple:
+我们可以通过改变.ini值将它们设置为其他颜色;这将把它们设置为紫色:
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/211992526-3ad6084c-60b6-402d-b265-d59e9aa09757.png" width="300"/>
@@ -525,9 +525,9 @@ And we can set them to other colors just by changing the .ini values; this will 
 <img src="https://user-images.githubusercontent.com/107697535/211992599-f58f70da-1ebb-41c5-8f1f-bf0f690a1c5d.png" width="600"/>
 </p>
 
-However, note that this isn’t perfect – we have lost some of the animated effects in exchange for custom colors. I will go over ways to implement animations in the final section of this tutorial.
+但是，请注意这并不完美——我们已经失去了一些动画效果，以换取自定义颜色。我将在本教程的最后一节中介绍实现动画的方法。
 
-7. We can still do more with this. One color is great, but what if we could have it automatically cycle between them? 3dmigoto has a special variable called `time` which represents the number of seconds that have passed since the game has started. We can use this to cycle between colors automatically over time:
+7. 我们还可以做更多的事情。一种颜色很棒，但如果我们能在它们之间自动循环呢?3dmigoto有一个叫做`time`的特殊变量，它表示游戏开始后经过的秒数。我们可以使用它在颜色之间自动循环:
 
 ```
 [TextureOverridePillarIB]
@@ -547,11 +547,11 @@ else
 endif
 ```
 
-What this does is take the current time and puts it into 1 of 3 buckets, then sets the pillar to red, green or blue depending on the current time (cycling every 3 seconds). By changing the numbers you can set it to cycle faster or slower, or add/remove colors, etc.
+它所做的是将当前时间放入3个桶中的1个，然后根据当前时间将柱子设置为红色、绿色或蓝色(每3秒循环一次)。通过改变数字，你可以设置它的周期更快或更慢，或添加/删除颜色，等等。
 
 https://user-images.githubusercontent.com/107697535/212007147-b94b5eda-ca1d-40ee-938e-25d5e7b1f913.mp4
 
-8. Finally, similar to before we can load the shader in the `.ini` instead of putting it in shaderfixes:
+8. 最后，类似于之前，我们可以在` .ini `中加载着色器，而不是将它放在shaderfixes中:
 
 ```
 [TextureOverridePillarIB]
@@ -577,36 +577,36 @@ handling = skip
 drawindexed = auto
 ```
 
-This will mostly work, but there is an glitch in the compilation here that will cause the pillar to leave a residue for ~1 second after disappearing:
+这在大多数情况下是可行的，但是这里的编译中有一个小故障，会导致柱子消失后留下大约1秒的残留:
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/211992799-823cb1d7-cb97-469a-b1d0-6d80affed8a8.png" width="600"/>
 </p>
 
-It is also possible to restrict this shader specifically to when Zhongli is on-field, though in this case I don’t know of any other object that shares this shader so it isn’t as important as it was for Diluc’s flames.
+也可以限制这个着色器，特别是当钟离在场上时，尽管在这种情况下，我不知道有任何其他对象共享这个着色器，所以它不像迪卢克的火焰那么重要。
 
 
-## Animated Effects
+## 动画效果
 
-In this final section, I will demonstrate how we can use the principles from the previous two sections to create simple animated effects – I will be going through the process of creating the animated lines in cyber bodysuit raiden (https://gamebanana.com/mods/420434). This section is advanced – I will be assuming you understand the previous two sections, know how to make mods, as well as have some basic programming knowledge.
+在这最后一节中，我将演示我们如何使用前两节的原理来创建简单的动画效果-我将通过在 cyber bodysuit raiden (https://gamebanana.com/mods/420434) 中创建动画线条的过程。本节是高级的-我将假设你理解前两节，知道如何制作mod，以及有一些基本的编程知识。
 
-1. To start, we find the shader that controls drawing the textures on Raiden Shogun:
+1. 首先，我们找到在雷电将军上控制绘制纹理的着色器:
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/211994076-18855a3d-7400-4315-9c86-34320c9c1393.png" width="600"/>
 </p>
 
-Raiden actually uses at least two – one for the body object and one for the dress object – but we are interested in the body object since that is the one that has the emission effect we need (found through trial and error previously)
+雷电实际上使用至少两个——一个为身体对象和一个为服装对象——但我们对身体对象感兴趣，因为它具有我们需要的发射效果（之前通过反复试验发现的）
 
-The hash is `7d2763cf91813333`, and we dump it to ShaderFixes.
+哈希值是 `7d2763cf91813333`, 我们将它转储到ShaderFixes。
 
-2. Now, we look for the part of the shader responsible for emission. The emission is above the alpha layer on the diffuse texture which is in slot 0, so we are looking for things related to `t0.w`. There is only one relevant line in the shader:
+2.现在，我们寻找着色器中负责发射的部分。发射位于diffuse纹理（位于槽0中）的alpha层之上，因此我们正在查找与`t0.w`相关的内容。着色器中只有一条相关的行:
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/211994193-4a061233-20e7-4817-871d-499d04b209be.png" width="400"/>
 </p>
 
-And testing it, we find it is responsible for the glow:
+经过测试，我们发现它是发光的原因:
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/211994259-272abaad-7bb2-452a-ab81-b28a3c97c8ed.png" width="200"/>
@@ -616,7 +616,7 @@ And testing it, we find it is responsible for the glow:
 <img src="https://user-images.githubusercontent.com/107697535/211994318-7846346e-6614-4dfc-a793-32ac6af1d173.png" width="600"/>
 </p>
 
-And we can modify the glowing portions of her texture only by adding a conditional that only triggers on pixels that have an alpha value greater than some arbitrary number:
+我们只能通过添加一个条件来修改她的纹理的发光部分，该条件仅在alpha值大于某个任意数字的像素上触发:
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/211994369-a97f22ad-3d00-4aa0-846a-a69596874609.png" width="400"/>
@@ -626,49 +626,49 @@ And we can modify the glowing portions of her texture only by adding a condition
 <img src="https://user-images.githubusercontent.com/107697535/211994415-6582a59d-8ac1-464a-a245-b55ea3c4c28b.png" width="600"/>
 </p>
 
-3. Now, I am going to demonstrate the process of adding lines to my cyber bodysuit raiden mod:
+3.现在，我将演示添加线条到我的cyber bodysuit raiden mod的过程:
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/211994483-bf30fc5b-248a-44ea-84b4-6d3bb867b502.png" width="600"/>
 </p>
 
-First, I draw the lines:
+首先，我绘制了线:
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/211994549-4268e3f1-0f26-462f-a8c9-598f5295aa3a.png" width="500"/>
 </p>
 
-I did this through the Blender texture painting tab, but you could also paint directly on to the texture using paint.net\/photoshop. Note that the final output has to be `BC7 SRGB` `dds` for the diffuse texture. Also, don’t be like me – paint these on a separate layer so you can easily separate them out later ;-;.
+我是通过Blender纹理绘制选项卡完成的，但你也可以使用paint.net\/photoshop直接在纹理上绘制。注意，对于diffuse纹理，最终输出必须是 `BC7 SRGB` `dds` 。另外，不要像我一样——在一个单独的图层上画这些，这样你以后就可以很容易地把它们分开;-;。
 
-4. The final texture looks like this after moving the lines above the alpha layer (note: it is wide because I merged a few models together and put their textures side-by-side):
+4. 在alpha图层上移动线条后，最终的纹理看起来是这样的(注意:它很宽，因为我把几个模型合并在一起，并把它们的纹理并排放在一起):
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/211994700-5f1401f1-a7cb-4f7a-82bf-057638c2e6d3.png" width="700"/>
 </p>
 
-Which gives us glowing lines in-game
+这让我们在游戏中看到了发光的线条
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/211994819-843f583b-91d2-4de3-b4ef-153c6199f540.png" width="600"/>
 </p>
 
-5. Now, time to implement some basic animations. I separate out the lines from the diffuse texture into another empty texture which I am going to call the “control” texture:
+5. 现在，是时候执行一些基本的动画了。我将线条从diffuse纹理中分离出来，放入另一个空白纹理中，我将其称为`control`纹理:
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/211994886-0ead61d0-d16d-4029-8e43-376599f51806.png" width="700"/>
 </p>
 
-This texture will essentially be what we are going to use to tell the shader which parts of the texture will have animated effects (since all four channels of the diffuse/lightmap are already in-use). The type for this texture should be `BC7 Linear`, since we want the color values to be evenly spaced. 
+这个纹理本质上是我们要用来告诉着色器纹理的哪些部分会有动画效果的(因为diffuse/光贴图的所有四个通道都已经在使用中)。这个纹理的类型应该是` BC7 Linear `，因为我们希望颜色值是均匀分布的。
 
-I have also recolored it to black for simplicity – we won’t be using specific colors in this example to keep things simpler, so we set all the color channels equal; if you wanted, you could use each color channel to control different things. Make sure the color is greater than 0 though, since we want to be able to differentiate it from the background without relying on the alpha channel.
+为了简单起见，我也将它重新上色为黑色-为了保持事情简单我们不会在这个例子中使用特别的颜色，所以我们设置所有的颜色通道相等;如果你愿意，你可以使用每个颜色通道来控制不同的东西。但是要确保颜色大于0，因为我们希望能够在不依赖alpha通道的情况下将其与背景区分开来。
 
-Note that I have removed the lines from the original diffuse texture now, so we are back to vanilla bodysuit:
+注意，我现在已经从原来的diffuse纹理中删除了线条，所以我们回到了普通的紧身衣:
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/211995020-f2d1f4ce-e7ba-4391-a2c1-6ad4f8f2a7f4.png" width="400"/>
 </p>
 
-6. Next, we add a section into the `BodyOverride` in the `.ini` of the mod to pass the new texture to the shader:
+6. 接下来，我们在mod的` .ini `中的` BodyOverride `中添加了一个部分，将新纹理传递给着色器:
 
 ```
 [TextureOverrideRaidenShogunBody]
@@ -683,21 +683,21 @@ ps-t26 = ResourceRaidenShogunBodyControl
 filename = RaidenShogunBodyControl.dds
 ```
 
-I chose to load it into slot 26 arbitrarily – I don’t recommend going lower than 20, since I’ve seen a few cases where they go up that high (vast majority of things use <10, and it’s rare that anything above 5 is important).
+我选择将它加载到插槽26 -我不建议低于20，因为我见过一些情况下，它们会达到这么高(绝大多数的东西使用<10，很少有高于5的东西是重要的)。
 
-7. We also need to add the variable in to the shader near the top:
+7. 我们还需要在着色器顶部附近添加变量:
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/211995132-b3a2b48c-e562-4ae8-af43-157ccc0e87b6.png" width="400"/>
 </p>
 
-We can now load this texture in a similar way to how we load the other textures:
+现在我们可以用类似于加载其他纹理的方式加载这个纹理:
 
 `r2.xyzw = t26.SampleBias(s0_s, v2.xy, r0.x).xyzw;`
 
-(If you are wondering how we got this line, it was from looking at how the `t0` and `t1` textures are loaded in and mimicking the format. I chose `r2` since I know it will be replaced by whatever we load in from the diffuse, so it won’t end up breaking any other lines of code – another option would be to create an additional register variable).
+(如果你想知道我们是如何得到这一行的，它是通过观察` t0 `和` t1 `纹理是如何加载的，并模仿格式。我选择了` r2 `，因为我知道它将被我们从diffuse加载的任何东西所取代，所以它最终不会破坏任何其他代码行-另一种选择是创建一个额外的寄存器变量)。
 
-8. Now, we can add a conditional that only triggers on pixels of the control texture that have a red channel value greater than 0. When we see that, we set the pixel color to green; otherwise, we simply load the pixel value from the original diffuse texture:
+8. 现在，我们可以添加一个条件，只触发控件纹理中红色通道值大于0的像素。当我们看到这个时，我们将像素颜色设置为绿色;否则，我们只是从原始的diffuse纹理中加载像素值:
 
 ```
   r2.xyzw = t26.SampleBias(s0_s, v2.xy, r0.x).xyzw;
@@ -709,17 +709,17 @@ We can now load this texture in a similar way to how we load the other textures:
     r2.xyzw = t0.SampleBias(s0_s, v2.xy, r0.x).xyzw;
   }
 ```
-(Note: I’m being a bit lazy setting the values here since they should be normalized but it won’t make too much of a difference).
+(注意:我有点懒于在这里设置值，因为它们应该是标准化的，但这不会有太大的区别)。
 
-Which leads us back to our original starting point:
+这让我们回到了最初的起点:
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/211995286-4e89fdea-a027-4c25-bdcb-15807d890ee5.png" width="600"/>
 </p>
 
-However, there is now one key difference – the line colors and locations are being fully controlled through the control texture and shader calculations, and not being read from the original texture.
+但是，现在有一个关键的区别-线的颜色和位置是完全控制通过控制纹理和着色器计算，而不是从原始纹理读取。
 
-This lets us easily change the color just by changing the value of `r2.xyz = float3(R,G,B)`;
+这让我们可以通过改变 `r2.xyz = float3(R,G,B)` 的值来轻松地改变颜色。;
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/211995384-8e650f7b-697f-495f-b058-186d67083141.png" width="600"/>
@@ -729,15 +729,15 @@ This lets us easily change the color just by changing the value of `r2.xyz = flo
 <img src="https://user-images.githubusercontent.com/107697535/211995416-ee01bbe2-ded5-4aaa-9f85-8fe2d87a1846.png" width="600"/>
 </p>
 
-Or even set them in the `.ini` like we did in the previous section. We can even make them cycle between colors using this as well!
+或者甚至像我们在上一节中所做的那样，将它们设置在`.ini`中。我们甚至可以用这个让它们在颜色之间循环！
 
-9. Now that the lines are being controlled through the shader and control texture, we have a lot more flexibility in what we can do. Let’s start by animating them. Instead of using a constant black across all the control texture lines, I am going to use a gradient from black to white:
+9. 现在，线条是通过着色器和控制纹理控制的，我们有更多的灵活性，我们可以做什么。让我们从动画开始。我将使用从黑到白的渐变，而不是在所有的控制纹理线上使用常量黑色:
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/211995487-2705e187-b9c7-4d7a-8885-e09c690db396.png" width="400"/>
 </p>
 
-Now, the value of `r2.x` will linearly increase from 0 to 1 as you travel down the lines (this is why we saved as `BC7 linear` – otherwise, the values would be skewed leading to issues). We can then pass the time variable from the `.ini` into the shader:
+现在，`r2.x`的值将从0线性增加到1（这就是为什么我们将其保存为`BC7 线性`的原因，否则，值会出现偏差，从而导致问题）。然后，我们可以将时间变量从`.ini`传递到着色器中:
 
 ```
 [TextureOverrideRaidenShogunBody]
@@ -750,11 +750,11 @@ ps-t26 = ResourceRaidenShogunBodyControl
 x180 = time
 ```
 
-Define a new variable in the shader:
+在着色器中定义一个新变量:
 
 `#define TIME IniParams[180].x`
 
-Now, we can compare the value of `r2.x` to `TIME` to figure out what part of the model we want to draw. `r2.x` is in the range 0 to 1, so we need to shift the `TIME` into this range as well – we can divide `TIME` into repeating buckets using the modulo operator, then divide by the max value to put into the range 0 to 1. So the equation would be `TIME%2/2` to have it cycle between 0 and 1 every two seconds.
+现在，我们可以将`r2.x`的值与`TIME`进行比较，以确定我们要绘制模型的哪个部分`r2.x`在0到1的范围内，因此我们需要将`TIME`也移到这个范围内–我们可以使用模运算符将`TIME`划分为重复的桶，然后除以最大值，将其置于0到1范围内。因此，方程式将为`TIME%2/2`，使其每两秒在0和1之间循环。
 
 ```
 if (r2.x > TIME%2/2){
@@ -766,11 +766,11 @@ if (r2.x > TIME%2/2){
   }
 ```
 
-Result:
+结果:
 
 https://user-images.githubusercontent.com/107697535/212007218-4d9aea37-e98a-4a6c-8098-f5e9bcb2bada.mp4
 
-Alternatively, to change the direction we can use `1- TIME%2/2` instead:
+或者，我们可以用 `1- TIME%2/2` 来改变方向:
 
 ```
   if (r2.x > 1-TIME%2/2){
@@ -784,9 +784,9 @@ Alternatively, to change the direction we can use `1- TIME%2/2` instead:
 
 https://user-images.githubusercontent.com/107697535/212006027-a20bf56e-7b36-43f9-bfd3-91e0e286e863.mp4
 
-10. The result of this isn’t bad, but it isn’t quite what I was looking for – I don’t like how the lines gradually appear/disappear, and I was hoping for a more “matrix-like” effect where the line travels along the body.
+10. 这样做的结果还不错，但这不是我想要的——我不喜欢线条逐渐出现/消失的方式，我希望线条在身体上移动的时候有一个更`矩阵`的效果。
 
-Instead of using a single condition, we can define a range where the lines will appear. This will only allow values that are at most 0.2 away of `TIME%2/2`:
+我们可以定义线条出现的范围，而不是使用单个条件。这将只允许与 `TIME%2/2`最多相差0.2的值:
 
 ```
   r2.xyzw = t26.SampleBias(s0_s, v2.xy, r0.x).xyzw;
@@ -801,7 +801,7 @@ Instead of using a single condition, we can define a range where the lines will 
 
 https://user-images.githubusercontent.com/107697535/212007252-4550a581-3ef7-48ed-865c-f3c516361224.mp4
 
-Much better, but it moves a bit fast. Also, the lines still appear all at once at the start of the cycle, making the starting and stopping points obvious. The final equation I settled on was:
+好多了，但是速度有点快。此外，线条仍然在循环开始时同时出现，使得开始点和停止点很明显。我最终确定的方程是:
 
 ```
   if (r2.x > 0 && (TIME % 3)/2.5 > r2.x && (TIME % 3)/2.5-0.2 < r2.x){
@@ -815,9 +815,9 @@ Much better, but it moves a bit fast. Also, the lines still appear all at once a
 
 https://user-images.githubusercontent.com/107697535/212007300-9ef429fc-14ae-4057-8c35-90ebc53476e8.mp4
 
-This loops every 3 seconds, and we actually put the time into the range 0 to 1.2 instead of 0 to 1 by dividing by 2.5 instead of 3 – the extra 0.2 side lets the lines gradually appear and disappear at the end of the cycle.
+这个循环每3秒一次，我们实际上把时间放在0到1.2的范围内，而不是0到1，除以2.5而不是3——额外的0.2边让线条在循环结束时逐渐出现和消失。
 
-11. Now, lets add some more cool effects. We are just using a constant color green, but we don’t have to – we can use math to make the colors cycle. Explaining how this works is beyond the scope of this tutorial, but basically we are using out of sync sine waves to travel around the color wheel. For more details, look here: https://krazydad.com/tutorials/makecolors.php
+11. 现在，让我们添加一些更酷的效果。我们只是使用一个不变的颜色绿色，但我们不需要-我们可以用数学让颜色循环。解释这是如何工作的超出了本教程的范围，但基本上我们是使用不同步的正弦波在色轮周围传播。更多详情，请看这里:https://krazydad.com/tutorials/makecolors.php
 
 ```
 if (r2.x > 0 && (TIME % 3)/2.5 > r2.x && (TIME % 3)/2.5-0.2 < r2.x){
@@ -831,35 +831,35 @@ if (r2.x > 0 && (TIME % 3)/2.5 > r2.x && (TIME % 3)/2.5-0.2 < r2.x){
 
 https://user-images.githubusercontent.com/107697535/212008474-dd57332e-6b00-4fef-9d95-b9b585dd37e5.mp4
 
-12. At this point, I have mostly finished explaining how to create the effect. The actual cyber Raiden mod also has some additional toggles to turn the effects on and off, to limit them to while Raiden is on-screen and to let the user choose custom colors but all of those have already been covered in previous sections.
+12. 在这一点上，我已经基本完成了如何创建效果的解释。实际上 cyber bodysuit raiden mod 也有一些额外的切换，以打开和关闭的效果，以限制它们，而雷电是在屏幕上，让用户选择自定义的颜色，但所有这些已经在前面的章节涵盖。
 
-The only additional thing I would note is that you aren’t just limited to using colors with this technique – instead of setting `r2` to be a constant color, you could instead use this to pick and choose between different textures. You can also use the separate channels on the control texture for different effects, or use different variables for toggles – the possibilities are limitless! (not really, but you can still do a lot!)
+我要提示的唯一一点是，你不仅限于使用这种技术的颜色——你可以使用这种方法在不同的纹理之间进行选择，而不是将`r2`设置为恒定的颜色。你也可以使用控制纹理上的单独通道来获得不同的效果，或者使用不同的变量来切换–可能性是无限的！（不是真的，但你仍然可以做很多！）
 
-13. While we are mostly done, I will point out some issues:
+13. 虽然我们已经基本完成了，但我将指出一些问题:
 
-- The lines don’t appear for ~1-2 seconds after character swap. This is because characters actually use a different shader when they are loading into the game for a few seconds – you can hunt down this shader and replace it as well to remove this issue
-- Reflections don’t have the lines. This is also because the reflections use a different shader, and can be fixed by also hunting down and replacing the shader.
+- 角色切换后，这些线条不会出现1-2秒。这是因为角色在加载到游戏中几秒钟时实际上使用了不同的着色器-你可以找到这个着色器并替换它来消除这个问题
+- 倒影没有线条。这也是因为反射使用了不同的着色器，并且可以通过查找和替换着色器来修复。
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/211996519-bbb1ce32-70dd-4e53-8708-646f50ecc7cf.png" width="200"/>
 </p>
 
-- The transparency filter is applied. While this isn’t an error, it means that someone using the remove transparency filter mod will have that one overwritten for Raiden. If you want to fix this, do a dif on the shader file with the one from remove transparency filter to see what the differences are and apply them to your file
+- 应用了透明滤镜。虽然这不是一个错误，这意味着有人使用移除透明滤镜mod将有一个覆盖雷电的着色器。如果你想修复这个问题，在shader文件上做一个dif，用一个从删除透明滤镜，看看有什么不同，并将它们应用到你的文件
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/211996611-a550eddc-a7e1-44a0-8e9f-9246a8fa8411.png" width="600"/>
 </p>
 
-- Some characters break while Raiden is on screen for a moment when using the party menu. I don’t actually know why this happens – the part that breaks doesn’t even use the same shader and I couldn’t seem to isolate the issue. If anyone knows, please send me a message
+- 在使用队伍配置时，有些角色会在雷电出现在屏幕上时破坏。我实际上不知道为什么会发生这种情况-损坏的部分甚至没有使用相同的着色器，我似乎无法孤立这个问题。如果有人知道，请给我留言
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/107697535/211996685-a4c68680-57b7-40c7-8036-ffc0fc5a27e4.png" width="600"/>
 </p>
 
-- The rainbow color effect is cool but isn’t 100% mathematically sound – the diffuse texture uses an `SRGB` color space not a `linear` one, which means you would need an additional step to convert the colors (you can see that the lines don’t ever turn fully red/green/blue as you would expect). See something like https://lettier.github.io/3d-game-shaders-for-beginners/gamma-correction.html for details
+- 彩虹色效果很酷，但在数学上不是100%合理-diffuse纹理使用`SRGB`颜色空间而不是`线性`，这意味着你需要一个额外的步骤来转换颜色(你可以看到线条不会像你期望的那样完全变成红色/绿色/蓝色)。详细信息请参见类似于 https://lettier.github.io/3d-game-shaders-for-beginners/gamma-correction.html 的东西
 
-- Shaders can change hashes between versions, and tend to do so more commonly than character hashes so you may need to update effect mods more often than character ones.
+- 着色器可以在不同版本之间更改哈希值，而且比角色哈希值更常见，所以你可能需要更频繁地更新效果mod而不是角色mod。
 
-If you have reached this point, congratulations! You know the majority of the basics of how shaders can be used to change effects or even make custom ones. Thank you for reading, and I look forward to seeing what you create!
+如果你已经做到了这一点，恭喜你!你知道如何使用着色器来更改效果甚至生成自定义效果的大部分基本知识。感谢你的阅读，我期待着看到你的创作！
 
 https://user-images.githubusercontent.com/107697535/212008927-9afe13ef-28ff-49b6-804e-847aa039daff.mp4
