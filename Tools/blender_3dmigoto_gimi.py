@@ -1543,19 +1543,21 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
                         vertex = vertex_group[0]
                     
                         vertex_group_set = set(vertex_group)
+                        
+                        FacesConnectedbySameVertex = Precalculated_Outline_data.get('Connected_Faces_bySameVertex').get(vertex)
                     
-                        ConnectedFaces = [mesh.polygons[x].vertices for x in Precalculated_Outline_data.get('Connected_Faces_bySameVertex').get(vertex)]
+                        ConnectedFaces = [mesh.polygons[x].vertices for x in FacesConnectedbySameVertex]
                         ConnectedFaceNormals = []
                         ConnectedWeightedNormal = []
                         
                         if checkEnclosedFacesVertex(ConnectedFaces, vertex_group_set, Precalculated_Outline_data):
-                            ConnectedFaceNormals = [mesh.polygons[x].normal for x in Precalculated_Outline_data.get('Connected_Faces_bySameVertex').get(vertex)]
+                            ConnectedFaceNormals = [mesh.polygons[x].normal for x in FacesConnectedbySameVertex]
                             
                             AntiP = filter(antiparallel, itertools.product(ConnectedFaceNormals, ConnectedFaceNormals)) 
                             
                             if not any(AntiP):
                             
-                                for facei in Precalculated_Outline_data.get('Connected_Faces_bySameVertex').get(vertex):
+                                for facei in FacesConnectedbySameVertex:
                                     face = mesh.polygons[facei]
                                     vlist = set(face.vertices)
                                     
