@@ -1106,7 +1106,7 @@ def blender_vertex_to_3dmigoto_vertex(mesh, obj, blender_loop_vertex, layout, te
 def unit_vector(vector):
     a = numpy.linalg.norm(vector)
     if  a == 0:
-        return None
+        return numpy.array([0,0,0])
     return vector / a
 
 def angle_between(v1, v2):
@@ -1117,52 +1117,6 @@ def angle_between(v1, v2):
 def antiparallel(t):
     fn1, fn2 = t
     return numpy.dot(fn1,fn2) == -1
-
-def recursive_connections(Over2_connected_points):
-    for entry, connectedpointentry in Over2_connected_points.items():
-        if len(set(connectedpointentry) & Over2_connected_points.keys()) > 1:
-            continue
-        else:
-            Over2_connected_points.pop(entry)
-            if len(Over2_connected_points) < 3:
-                return False
-            return recursive_connections(Over2_connected_points)
-    return True
-    
-def checkEnclosedFacesVertex(ConnectedFaces, vg_set, Precalculated_Outline_data):
-    
-    Main_connected_points = {} # {point: {connected points}}
-        # connected points non-same vertex
-    for face in ConnectedFaces:
-        non_vg_points = []
-        for point in face:
-            if point not in vg_set:
-                non_vg_points.append(point)
-        if len(non_vg_points) > 1:
-            for point in non_vg_points:
-                Main_connected_points.setdefault(point, []).extend([x for x in non_vg_points if x != point])
-        # connected points same vertex
-    New_Main_connect = {}
-    keys_connectM = Main_connected_points.keys()
-    for entry, setvalue in Main_connected_points.items():
-        for val in setvalue:
-            ivspv = Precalculated_Outline_data.get('Same_Vertex').get(val)
-            intersect_sidevertex = ivspv & keys_connectM
-            for i in intersect_sidevertex:
-                New_Main_connect.setdefault(entry, []).append(i)
-        # connected points same vertex reverse connection
-    for key, value in New_Main_connect.items():
-        Main_connected_points.setdefault(key, []).extend(value)
-        for val in value:
-            Main_connected_points.setdefault(val, []).append(key)
-    
-    Over2_connected_points = {}
-        # exclude for only 2 way paths 
-    for entry, setvalue in Main_connected_points.items():         
-        if len(setvalue) > 1:
-            Over2_connected_points.setdefault(entry, []).extend(setvalue)
-
-    return recursive_connections(Over2_connected_points)
 
 def blender_vertex_to_3dmigoto_vertex_outline(mesh, obj, blender_loop_vertex, layout, texcoords, export_Outline):
     blender_vertex = mesh.vertices[blender_loop_vertex.vertex_index]
@@ -1344,7 +1298,7 @@ def export_3dmigoto(operator, context, vb_path, ib_path, fmt_path):
     write_fmt_file(open(fmt_path, 'w'), vb, ib)
 
 
-def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fmt_path, use_foldername, ignore_hidden, only_selected, no_ramps, delete_intermediate, credit, outline_optimization, toggle_rounding_outline, decimal_rounding_outline):
+def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fmt_path, use_foldername, ignore_hidden, only_selected, no_ramps, delete_intermediate, credit, outline_optimization, toggle_rounding_outline, decimal_rounding_outline, angle_weighted, overlapping_faces):
     scene = bpy.context.scene
 
     # Quick sanity check
@@ -1507,7 +1461,7 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
                 indexed_vertices = collections.OrderedDict()
 
                 if outline_optimization:
-                    print("outline optimization start")
+                    print("Optimize Outline: " + obj.name.lower())
                     ################# PRE-DICTIONARY #####################
                     verts_obj = mesh.vertices
                     Pos_Same_Vertices = {}
@@ -1521,9 +1475,9 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
                             Precalculated_Outline_data.setdefault('Connected_Faces', {}).setdefault(vert, []).append(poly.index)
                             
                             if toggle_rounding_outline:
-                                Pos_Same_Vertices.setdefault(tuple(round(coord, decimal_rounding_outline) for coord in vert_position), []).append(vert)
+                                Pos_Same_Vertices.setdefault(tuple(round(coord, decimal_rounding_outline) for coord in vert_position), {vert}).add(vert)
                             else:
-                                Pos_Same_Vertices.setdefault(tuple(vert_position), []).append(vert)
+                                Pos_Same_Vertices.setdefault(tuple(vert_position), {vert}).add(vert)
 
                     for values in Pos_Same_Vertices.values():
                         same_vertex_group = set(x for x in values)
@@ -1537,45 +1491,45 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
                             .extend(Precalculated_Outline_data.get('Connected_Faces').get(vertex))
                         
                     ################# CALCULATIONS #####################
-                    
+
                     for vertex_group in Pos_Same_Vertices.values():
-                    
-                        vertex = vertex_group[0]
-                    
-                        vertex_group_set = set(vertex_group)
+
+                        if len(vertex_group) < 2: continue 
+
+                        for vertex in vertex_group: break
                         
                         FacesConnectedbySameVertex = Precalculated_Outline_data.get('Connected_Faces_bySameVertex').get(vertex)
-                    
                         ConnectedFaces = [mesh.polygons[x].vertices for x in FacesConnectedbySameVertex]
-                        ConnectedFaceNormals = []
                         ConnectedWeightedNormal = []
-                        
-                        if checkEnclosedFacesVertex(ConnectedFaces, vertex_group_set, Precalculated_Outline_data):
+                            
+                        if overlapping_faces:
                             ConnectedFaceNormals = [mesh.polygons[x].normal for x in FacesConnectedbySameVertex]
-                            
                             AntiP = filter(antiparallel, itertools.product(ConnectedFaceNormals, ConnectedFaceNormals)) 
+                            if any(AntiP): continue
+                        
+                        for facei in FacesConnectedbySameVertex:
+                            face = mesh.polygons[facei]
+                            vlist = set(face.vertices)
                             
-                            if not any(AntiP):
+                            vert0p = vlist & vertex_group
                             
-                                for facei in FacesConnectedbySameVertex:
-                                    face = mesh.polygons[facei]
-                                    vlist = set(face.vertices)
+                            for vert0 in vert0p:
+
+                                if angle_weighted:
+                                    v0 = verts_obj[vert0].undeformed_co
+                                    vn = [verts_obj[x].undeformed_co for x in vlist if x != vert0]
+                                    angle0 = angle_between(vn[0]-v0,vn[1]-v0)
                                     
-                                    vert0p = vlist & vertex_group_set
-                                    
-                                    for vert0 in vert0p:
-                                        v0 = verts_obj[vert0].undeformed_co
-                                        vn = [verts_obj[x].undeformed_co for x in vlist if x != vert0]
-                                        
-                                        angle0 = angle_between(vn[0]-v0,vn[1]-v0)
-                                        
-                                        ConnectedWeightedNormal.append(numpy.dot(face.normal, angle0))
-                                
-                                wSum = unit_vector(sum(ConnectedWeightedNormal)).tolist()
-                                
-                                if wSum != None:
-                                    for vertexf in vertex_group:
-                                        export_Outline.setdefault(vertexf, wSum)
+                                    ConnectedWeightedNormal.append(numpy.dot(face.normal, angle0))
+
+                                else:
+                                    ConnectedWeightedNormal.append(numpy.array(face.normal))
+
+                        wSum = unit_vector(sum(ConnectedWeightedNormal)).tolist()
+                        
+                        if wSum != [0,0,0]:
+                            for vertexf in vertex_group:
+                                export_Outline.setdefault(vertexf, wSum)
                     
                     for poly in mesh.polygons:
                         face = []
@@ -1584,7 +1538,6 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
                             face.append(indexed_vertices.setdefault(HashableVertex(vertex), len(indexed_vertices)))           
                         if ib is not None:
                             ib.append(face)
-                    print("optimization end")
                     
                 else:
                 
@@ -2254,20 +2207,32 @@ class Export3DMigotoGenshin(bpy.types.Operator, ExportHelper):
     
     outline_optimization : BoolProperty(
         name="Outline Optimization",
-        description="Experimental. Recalculate outlines",
-        default=True,
+        description="Recalculate broken outlines. Recommended for final export. Check more options below to improve quality",
+        default=False,
     )
     
     toggle_rounding_outline : BoolProperty(
         name="Round vertex positions",
         description="Rounding of vertex positions to specify which are the overlapping vertices",
-        default=True
-    )
+        default=True,
+    ) 
     
     decimal_rounding_outline : bpy.props.IntProperty(
         name="Decimals:",
         description="Rounding of vertex positions to specify which are the overlapping vertices",
         default=3,
+    )
+
+    angle_weighted : BoolProperty(
+        name="Weight by angle",
+        description="Calculate angles to improve accuracy of outlines. Recommended",
+        default=False,
+    )
+
+    overlapping_faces : BoolProperty(
+        name="Ignore overlapping faces",
+        description="Ignore overlapping faces to avoid buggy outlines. Recommended if you have overlaps",
+        default=False,
     )
     
     def draw(self, context):
@@ -2288,6 +2253,8 @@ class Export3DMigotoGenshin(bpy.types.Operator, ExportHelper):
         if self.outline_optimization:
             col.prop(self, 'toggle_rounding_outline', text='Vertex Position Rounding', toggle=True, icon="SHADING_WIRE")
             col.prop(self, 'decimal_rounding_outline')
+            col.prop(self, 'angle_weighted')
+            col.prop(self, 'overlapping_faces')
 
     def execute(self, context):
         try:
@@ -2298,7 +2265,7 @@ class Export3DMigotoGenshin(bpy.types.Operator, ExportHelper):
 
             # FIXME: ExportHelper will check for overwriting vb_path, but not ib_path
 
-            export_3dmigoto_genshin(self, context, object_name, vb_path, ib_path, fmt_path, self.use_foldername, self.ignore_hidden, self.only_selected, self.no_ramps, self.delete_intermediate, self.credit, self.outline_optimization, self.toggle_rounding_outline, self.decimal_rounding_outline)
+            export_3dmigoto_genshin(self, context, object_name, vb_path, ib_path, fmt_path, self.use_foldername, self.ignore_hidden, self.only_selected, self.no_ramps, self.delete_intermediate, self.credit, self.outline_optimization, self.toggle_rounding_outline, self.decimal_rounding_outline, self.angle_weighted, self.overlapping_faces)
         except Fatal as e:
             self.report({'ERROR'}, str(e))
         return {'FINISHED'}
