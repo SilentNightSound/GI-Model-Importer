@@ -2337,7 +2337,7 @@ class Export3DMigotoGenshin(bpy.types.Operator, ExportHelper):
 
     detect_edges : BoolProperty(
         name="Calculate edges",
-        description="Calculate for disconnected edges when rounding, closing holes in the edge outline. Slow",
+        description="Calculate for disconnected edges when rounding, closing holes in the edge outline. Very slow",
         default=False,
     )
 
