@@ -1558,21 +1558,24 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
                             if not checkEnclosedFacesVertex(ConnectedFaces, vertex_group, Precalculated_Outline_data):
 
                                 for vertex in vertex_group:
-                                    Precalculated_Outline_data.get('RepositionLocal').add(vertex)
                                     p1, p2, p3 = verts_obj[vertex].undeformed_co
-                                    p1n = p1+nearest_edge_distance
-                                    p1nn = p1-nearest_edge_distance
-                                    p2n = p2+nearest_edge_distance
-                                    p2nn = p2-nearest_edge_distance
-                                    p3n = p3+nearest_edge_distance
-                                    p3nn = p3-nearest_edge_distance
-                                    
                                     closest_group = Pos_Close_Vertices.get((round(p1, i_nedd), round(p2, i_nedd), round(p3, i_nedd)))
 
-                                    for v_closest_pos in closest_group:
-                                        o1, o2, o3 = verts_obj[v_closest_pos].undeformed_co
-                                        if p1n >= o1 >= p1nn and p2n >= o2 >= p2nn and p3n >= o3 >= p3nn:
-                                            Precalculated_Outline_data.get('Same_Vertex').get(vertex).add(v_closest_pos)
+                                    if closest_group:
+                                        Precalculated_Outline_data.get('RepositionLocal').add(vertex)
+                                        
+                                        p1n = p1+nearest_edge_distance
+                                        p1nn = p1-nearest_edge_distance
+                                        p2n = p2+nearest_edge_distance
+                                        p2nn = p2-nearest_edge_distance
+                                        p3n = p3+nearest_edge_distance
+                                        p3nn = p3-nearest_edge_distance
+                                                    
+                                        for v_closest_pos in closest_group:
+                                            o1, o2, o3 = verts_obj[v_closest_pos].undeformed_co
+                                            if p1n >= o1 >= p1nn and p2n >= o2 >= p2nn and p3n >= o3 >= p3nn:
+                                                Precalculated_Outline_data.get('Same_Vertex').get(vertex).add(v_closest_pos)
+                                    else: break
                     
                     for key, value in Precalculated_Outline_data.get('Same_Vertex').items():
                         
@@ -1588,9 +1591,7 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
 
                         if key in IteratedValues: continue
 
-                        if len(vertex_group) == 1:
-                            if not calculate_all_faces:
-                                continue
+                        if not calculate_all_faces and len(vertex_group) == 1: continue
                         
                         FacesConnectedbySameVertex = Precalculated_Outline_data.get('Connected_Faces_bySameVertex').get(key)
                         ConnectedFaces = [mesh.polygons[x].vertices for x in FacesConnectedbySameVertex]
@@ -2349,7 +2350,7 @@ class Export3DMigotoGenshin(bpy.types.Operator, ExportHelper):
     nearest_edge_distance : bpy.props.FloatProperty(
         name="Distance:",
         description="Expand grouping for edge vertices within this radial distance to close holes in the edge outline. Requires rounding",
-        default=0.002,
+        default=0.005,
         soft_min=0,
         precision=4,
     )
