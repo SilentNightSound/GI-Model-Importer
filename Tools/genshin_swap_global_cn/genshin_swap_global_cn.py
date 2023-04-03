@@ -36,7 +36,8 @@ def main():
     for root, dirs, files in os.walk("."):
 
         # Searching and sanity checks
-        ini_files = [file for file in files if os.path.splitext(file)[1] == ".ini" and "DISABLED" not in file]
+        ini_files = [file for file in files if os.path.splitext(file)[1] == ".ini" \
+                     and "DISABLED" not in file and "desktop" not in file.lower()]
         if len(ini_files) != 1:
             continue
         ini_file = ini_files[0]
