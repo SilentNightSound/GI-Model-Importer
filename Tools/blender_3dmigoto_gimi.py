@@ -1514,7 +1514,7 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
                 outline_optimization, toggle_rounding_outline, decimal_rounding_outline, angle_weighted, overlapping_faces, detect_edges, calculate_all_faces, nearest_edge_distance = Outline_Properties
 
                 if outline_optimization:
-                    print("Optimize Outline: " + obj.name.lower())
+                    print("Optimize Outline: " + obj.name.lower() + "; Initialize data sets         ", end='\r')
 
                     ################# PRE-DICTIONARY #####################
 
@@ -1523,6 +1523,7 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
                     Pos_Close_Vertices = {}
 
                     i_nedd = min(precision(nearest_edge_distance), decimal_rounding_outline) - 1
+                    i_nedd_increment =  1**(-i_nedd)
                     
                     for poly in mesh.polygons:
                         face_vertices = list(poly.vertices)
@@ -1547,6 +1548,7 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
                             Precalculated_Outline_data.setdefault('Same_Vertex', {}).setdefault(vertex, same_vertex_group)
 
                     if detect_edges and toggle_rounding_outline:
+                        print("Optimize Outline: " + obj.name.lower() + "; Edge detection       ", end='\r')
                         Precalculated_Outline_data.setdefault('RepositionLocal', set())
 
                         for vertex_group in Pos_Same_Vertices.values():
@@ -1554,28 +1556,46 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
                             FacesConnected = []
                             for x in vertex_group: FacesConnected.extend(Precalculated_Outline_data.get('Connected_Faces').get(x))
                             ConnectedFaces = [mesh.polygons[x].vertices for x in FacesConnected]
-
+                            
                             if not checkEnclosedFacesVertex(ConnectedFaces, vertex_group, Precalculated_Outline_data):
+                                for vertex in vertex_group: break
+                                p1, p2, p3 = verts_obj[vertex].undeformed_co
 
-                                for vertex in vertex_group:
-                                    p1, p2, p3 = verts_obj[vertex].undeformed_co
-                                    closest_group = Pos_Close_Vertices.get((round(p1, i_nedd), round(p2, i_nedd), round(p3, i_nedd)))
+                                p1n = p1+nearest_edge_distance
+                                p1nn = p1-nearest_edge_distance
+                                p2n = p2+nearest_edge_distance
+                                p2nn = p2-nearest_edge_distance
+                                p3n = p3+nearest_edge_distance
+                                p3nn = p3-nearest_edge_distance
 
-                                    if closest_group:
-                                        Precalculated_Outline_data.get('RepositionLocal').add(vertex)
-                                        
-                                        p1n = p1+nearest_edge_distance
-                                        p1nn = p1-nearest_edge_distance
-                                        p2n = p2+nearest_edge_distance
-                                        p2nn = p2-nearest_edge_distance
-                                        p3n = p3+nearest_edge_distance
-                                        p3nn = p3-nearest_edge_distance
-                                                    
-                                        for v_closest_pos in closest_group:
+                                coord = [[round(p1n, i_nedd), round(p1nn, i_nedd)],\
+                                         [round(p2n, i_nedd), round(p2nn, i_nedd)],\
+                                         [round(p3n, i_nedd), round(p3nn, i_nedd)]]
+
+                                for i in range(3):
+                                    z, n = coord[i]
+                                    zndifference = (z - n)/i_nedd_increment 
+                                    if zndifference > 1: 
+                                        for r in range(zndifference - 1):
+                                            coord[i].append(z - r*i_nedd_increment)
+
+                                closest_group = set()
+                                for pos1 in coord[0]:
+                                    for pos2 in coord[1]:
+                                        for pos3 in coord[2]:
+                                            try: closest_group.update(Pos_Close_Vertices.get(tuple([pos1, pos2, pos3])))
+                                            except: continue
+
+                                if len(closest_group) != 1:
+                                    for x in vertex_group: Precalculated_Outline_data.get('RepositionLocal').add(x)
+                                                
+                                    for v_closest_pos in closest_group:
+                                        if not v_closest_pos in vertex_group:
+
                                             o1, o2, o3 = verts_obj[v_closest_pos].undeformed_co
                                             if p1n >= o1 >= p1nn and p2n >= o2 >= p2nn and p3n >= o3 >= p3nn:
-                                                Precalculated_Outline_data.get('Same_Vertex').get(vertex).add(v_closest_pos)
-                                    else: break
+                                                for x in vertex_group:
+                                                    Precalculated_Outline_data.get('Same_Vertex').get(x).add(v_closest_pos)
                     
                     for key, value in Precalculated_Outline_data.get('Same_Vertex').items():
                         
@@ -1587,6 +1607,7 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
 
                     RepositionLocal = Precalculated_Outline_data.get('RepositionLocal')
                     IteratedValues = set()
+                    print("Optimize Outline: " + obj.name.lower() + "; Calculation          ", end='\r')
                     for key, vertex_group in Precalculated_Outline_data.get('Same_Vertex').items():
 
                         if key in IteratedValues: continue
@@ -1637,7 +1658,8 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
                             face.append(indexed_vertices.setdefault(HashableVertex(vertex), len(indexed_vertices)))           
                         if ib is not None:
                             ib.append(face)
-                    
+                    print("Optimize Outline: " + obj.name.lower() + "; Completed            ")
+
                 else:
                 
                     for poly in mesh.polygons:
@@ -2337,7 +2359,7 @@ class Export3DMigotoGenshin(bpy.types.Operator, ExportHelper):
 
     detect_edges : BoolProperty(
         name="Calculate edges",
-        description="Calculate for disconnected edges when rounding, closing holes in the edge outline. Very slow",
+        description="Calculate for disconnected edges when rounding, closing holes in the edge outline. Slower",
         default=False,
     )
 
