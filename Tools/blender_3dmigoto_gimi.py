@@ -1640,7 +1640,7 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
                         wSum = unit_vector(sum(ConnectedWeightedNormal)).tolist()
 
                         if wSum != [0,0,0]:
-                            if key in RepositionLocal:
+                            if RepositionLocal and key in RepositionLocal:
                                 export_Outline.setdefault(key, wSum)
                                 continue
                             for vertexf in vertex_group:
