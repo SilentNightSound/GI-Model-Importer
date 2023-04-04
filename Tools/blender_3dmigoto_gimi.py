@@ -2349,13 +2349,13 @@ class Export3DMigotoGenshin(bpy.types.Operator, ExportHelper):
 
     overlapping_faces : BoolProperty(
         name="Ignore overlapping faces",
-        description="Detect and ignore overlapping faces to avoid buggy outlines. Recommended if you have overlaps. Slow",
+        description="Detect and ignore overlapping faces to avoid buggy outlines. Recommended if you have overlaps. Extremely Slow",
         default=False,
     )
 
     detect_edges : BoolProperty(
         name="Calculate edges",
-        description="Calculate for disconnected edges when rounding, closing holes in the edge outline. Slower",
+        description="Calculate for disconnected edges when rounding, closing holes in the edge outline. Slow",
         default=False,
     )
 
