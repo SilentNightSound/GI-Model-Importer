@@ -1119,10 +1119,7 @@ def antiparallel(t):
     return numpy.dot(fn1,fn2) == -1
 
 def precision(x): 
-    front, back = (p for p in str(x).split('.'))
-    if front != '0': return -len(front)
-    elif back != '0': return len(back)
-    else: return 0
+    return -numpy.floor(numpy.log10(x))
 
 def recursive_connections(Over2_connected_points):
     for entry, connectedpointentry in Over2_connected_points.items():
