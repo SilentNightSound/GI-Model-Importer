@@ -1521,9 +1521,9 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
                     verts_obj = mesh.vertices
                     Pos_Same_Vertices = {}
                     Pos_Close_Vertices = {}
-
-                    i_nedd = min(precision(nearest_edge_distance), decimal_rounding_outline) - 1
-                    i_nedd_increment =  1**(-i_nedd)
+                    if detect_edges and toggle_rounding_outline:
+                        i_nedd = min(precision(nearest_edge_distance), decimal_rounding_outline) - 1
+                        i_nedd_increment =  1**(-i_nedd)
                     
                     for poly in mesh.polygons:
                         face_vertices = list(poly.vertices)
@@ -1615,7 +1615,6 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
                         if not calculate_all_faces and len(vertex_group) == 1: continue
                         
                         FacesConnectedbySameVertex = Precalculated_Outline_data.get('Connected_Faces_bySameVertex').get(key)
-                        ConnectedFaces = [mesh.polygons[x].vertices for x in FacesConnectedbySameVertex]
                         ConnectedWeightedNormal = []
                                   
                         if overlapping_faces:
