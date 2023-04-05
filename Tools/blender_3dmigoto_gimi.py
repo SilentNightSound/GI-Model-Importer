@@ -2360,13 +2360,13 @@ class Export3DMigotoGenshin(bpy.types.Operator, ExportHelper):
 
     angle_weighted : BoolProperty(
         name="Weight by angle",
-        description="Calculate angles to improve accuracy of outlines. Slow",
+        description="Calculate angles to improve accuracy of outlines",
         default=False,
     )
 
     overlapping_faces : BoolProperty(
         name="Ignore overlapping faces",
-        description="Detect and ignore overlapping faces to avoid buggy outlines. Recommended if you have overlaps. Extremely Slow",
+        description="Detect and ignore overlapping faces to avoid buggy outlines. Recommended if you have overlaps",
         default=False,
     )
 
@@ -2378,14 +2378,14 @@ class Export3DMigotoGenshin(bpy.types.Operator, ExportHelper):
 
     calculate_all_faces : BoolProperty(
         name="Calculate outline for all faces",
-        description="If you have any flat shaded internal faces or if you just need to fix outline for all faces, turn on this option for better outlines. Very slow",
+        description="If you have any flat shaded internal faces or if you just need to fix outline for all faces, turn on this option for better outlines. Slow",
         default=False,
     )
 
     nearest_edge_distance : bpy.props.FloatProperty(
         name="Distance:",
         description="Expand grouping for edge vertices within this radial distance to close holes in the edge outline. Requires rounding",
-        default=0.005,
+        default=0.001,
         soft_min=0,
         precision=4,
     )
