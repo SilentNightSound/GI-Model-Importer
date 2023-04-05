@@ -1114,9 +1114,12 @@ def angle_between(v1, v2):
     v2_u = unit_vector(v2)
     return numpy.arccos(numpy.clip(numpy.dot(v1_u, v2_u), -1.0, 1.0))
 
-def antiparallel(t):
-    fn1, fn2 = t
-    return numpy.dot(fn1,fn2) == -1
+def antiparallel_search(ConnectedFaceNormals):
+    for fn1 in ConnectedFaceNormals:
+        for fn2 in ConnectedFaceNormals:
+            if numpy.dot(fn1,fn2) == -1:
+                return True
+    return False
 
 def precision(x): 
     return -int(numpy.floor(numpy.log10(x)))
@@ -1518,18 +1521,26 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
                     verts_obj = mesh.vertices
                     Pos_Same_Vertices = {}
                     Pos_Close_Vertices = {}
+                    Face_Normals = {}
+                    Numpy_Position = {}
                     if detect_edges and toggle_rounding_outline:
                         i_nedd = min(precision(nearest_edge_distance), decimal_rounding_outline) - 1
-                        i_nedd_increment =  1**(-i_nedd)
+                        i_nedd_increment =  10**(-i_nedd)
                     
+                    searched_vertex_pos = set()
                     for poly in mesh.polygons:
-                        face_vertices = list(poly.vertices)
-                        
+                        i_poly = poly.index
+                        face_vertices = poly.vertices
+                        facenormal = numpy.array(poly.normal)
+                        Face_Normals.setdefault(i_poly, facenormal)
+
                         for vert in face_vertices:
+                            Precalculated_Outline_data.setdefault('Connected_Faces', {}).setdefault(vert, []).append(i_poly)
+                            if vert in searched_vertex_pos: continue
+
+                            searched_vertex_pos.add(vert)
                             vert_obj = verts_obj[vert]
                             vert_position = vert_obj.undeformed_co
-                            
-                            Precalculated_Outline_data.setdefault('Connected_Faces', {}).setdefault(vert, []).append(poly.index)
                             
                             if toggle_rounding_outline:
                                 Pos_Same_Vertices.setdefault(tuple(round(coord, decimal_rounding_outline) for coord in vert_position), {vert}).add(vert)
@@ -1539,25 +1550,27 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
                             else:
                                 Pos_Same_Vertices.setdefault(tuple(vert_position), {vert}).add(vert)
 
+                            if angle_weighted:
+                                numpy_pos = numpy.array(vert_position)
+                                Numpy_Position.setdefault(vert, numpy_pos)
+
                     for values in Pos_Same_Vertices.values():
-                        same_vertex_group = set(x for x in values)
                         for vertex in values:
-                            Precalculated_Outline_data.setdefault('Same_Vertex', {}).setdefault(vertex, same_vertex_group)
+                            Precalculated_Outline_data.setdefault('Same_Vertex', {}).setdefault(vertex, set(values))
 
                     if detect_edges and toggle_rounding_outline:
                         print("Optimize Outline: " + obj.name.lower() + "; Edge detection       ", end='\r')
                         Precalculated_Outline_data.setdefault('RepositionLocal', set())
 
                         for vertex_group in Pos_Same_Vertices.values():
-
                             FacesConnected = []
                             for x in vertex_group: FacesConnected.extend(Precalculated_Outline_data.get('Connected_Faces').get(x))
                             ConnectedFaces = [mesh.polygons[x].vertices for x in FacesConnected]
                             
                             if not checkEnclosedFacesVertex(ConnectedFaces, vertex_group, Precalculated_Outline_data):
                                 for vertex in vertex_group: break
-                                p1, p2, p3 = verts_obj[vertex].undeformed_co
 
+                                p1, p2, p3 = verts_obj[vertex].undeformed_co
                                 p1n = p1+nearest_edge_distance
                                 p1nn = p1-nearest_edge_distance
                                 p2n = p2+nearest_edge_distance
@@ -1571,7 +1584,7 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
 
                                 for i in range(3):
                                     z, n = coord[i]
-                                    zndifference = (z - n)/i_nedd_increment 
+                                    zndifference = int((z - n)/i_nedd_increment)
                                     if zndifference > 1: 
                                         for r in range(zndifference - 1):
                                             coord[i].append(z - r*i_nedd_increment)
@@ -1593,51 +1606,55 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
                                             if p1n >= o1 >= p1nn and p2n >= o2 >= p2nn and p3n >= o3 >= p3nn:
                                                 for x in vertex_group:
                                                     Precalculated_Outline_data.get('Same_Vertex').get(x).add(v_closest_pos)
-                    
+
                     for key, value in Precalculated_Outline_data.get('Same_Vertex').items():
                         
                         for vertex in value:
-                            Precalculated_Outline_data.setdefault('Connected_Faces_bySameVertex', {}).setdefault(key, []) \
-                            .extend(Precalculated_Outline_data.get('Connected_Faces').get(vertex))
+                            Precalculated_Outline_data.setdefault('Connected_Faces_bySameVertex', {}).setdefault(key, set()) \
+                            .update(Precalculated_Outline_data.get('Connected_Faces').get(vertex))
 
                     ################# CALCULATIONS #####################
 
                     RepositionLocal = Precalculated_Outline_data.get('RepositionLocal')
                     IteratedValues = set()
                     print("Optimize Outline: " + obj.name.lower() + "; Calculation          ", end='\r')
-                    for key, vertex_group in Precalculated_Outline_data.get('Same_Vertex').items():
 
+                    for key, vertex_group in Precalculated_Outline_data.get('Same_Vertex').items():
                         if key in IteratedValues: continue
 
                         if not calculate_all_faces and len(vertex_group) == 1: continue
                         
-                        FacesConnectedbySameVertex = Precalculated_Outline_data.get('Connected_Faces_bySameVertex').get(key)
-                        ConnectedWeightedNormal = []
-                                  
+                        FacesConnectedbySameVertex = list(Precalculated_Outline_data.get('Connected_Faces_bySameVertex').get(key))
+                        ConnectedWeightedNormal = numpy.empty(len(FacesConnectedbySameVertex), dtype=object)
+
+                        i = 0
                         if overlapping_faces:
-                            ConnectedFaceNormals = [mesh.polygons[x].normal for x in FacesConnectedbySameVertex]
-                            AntiP = filter(antiparallel, itertools.product(ConnectedFaceNormals, ConnectedFaceNormals)) 
-                            if any(AntiP): continue
-                        
+                            ConnectedFaceNormals = [Face_Normals.get(x) for x in FacesConnectedbySameVertex]
+                            if antiparallel_search(ConnectedFaceNormals): continue
+
                         for facei in FacesConnectedbySameVertex:
                             face = mesh.polygons[facei]
                             vlist = set(face.vertices)
+                            face_index = face.index
                             
                             vert0p = vlist & vertex_group
                             
                             for vert0 in vert0p:
-
                                 if angle_weighted:
-                                    v0 = verts_obj[vert0].undeformed_co
-                                    vn = [verts_obj[x].undeformed_co for x in vlist if x != vert0]
-                                    angle0 = angle_between(vn[0]-v0,vn[1]-v0)
+                                    v0 = Numpy_Position.get(vert0)
+                                    vn = [Numpy_Position.get(x) for x in vlist if x != vert0]
+                                    angle0 = angle_between(numpy.add(vn[0],-v0), numpy.add(vn[1],-v0))
                                     
-                                    ConnectedWeightedNormal.append(numpy.dot(face.normal, angle0))
-
+                                    ConnectedWeightedNormal[i] = numpy.multiply(Face_Normals.get(face_index), angle0) 
                                 else:
-                                    ConnectedWeightedNormal.append(numpy.array(face.normal))
+                                    ConnectedWeightedNormal[i] = Face_Normals.get(face_index)
 
-                        wSum = unit_vector(sum(ConnectedWeightedNormal)).tolist()
+                            influence_restriction = len(vert0p)
+                            if  influence_restriction > 1:
+                                numpy.multiply(ConnectedWeightedNormal[i], 0.5**(1-influence_restriction))
+                            i += 1
+
+                        wSum = unit_vector(numpy.sum(ConnectedWeightedNormal)).tolist()
 
                         if wSum != [0,0,0]:
                             if RepositionLocal and key in RepositionLocal:
@@ -1646,7 +1663,7 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
                             for vertexf in vertex_group:
                                 export_Outline.setdefault(vertexf, wSum)
                                 IteratedValues.add(vertexf)
-                    
+
                     for poly in mesh.polygons:
                         face = []
                         for blender_lvertex in mesh.loops[poly.loop_start:poly.loop_start + poly.loop_total]:
