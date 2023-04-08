@@ -2,8 +2,12 @@
 
 # Original plugin by DarkStarSword (https://github.com/DarkStarSword/3d-fixes/blob/master/blender_3dmigoto.py)
 # Updated to support 3.0 by MicroKnightmare from the DOA modding discord
+
+####### AGMG Discord Contributors #######
+
 # Modified by SilentNightSound#7430 to add Genshin support and some more Genshin-specific features
 # QOL feature (ignoring hidden meshes while exporting) added by HazrateGolabi#1364
+# HummyR#8131
 
 # bl_info seems to be parsed as text outside of the normal module loading by
 # Blender, meaning we can't dynamically set the Blender version to indicate the
@@ -1012,6 +1016,7 @@ def mesh_triangulate(me):
 
 def blender_vertex_to_3dmigoto_vertex(mesh, obj, blender_loop_vertex, layout, texcoords):
     blender_vertex = mesh.vertices[blender_loop_vertex.vertex_index]
+    pos = list(blender_vertex.undeformed_co)
     vertex = {}
     seen_offsets = set()
 
@@ -1029,10 +1034,9 @@ def blender_vertex_to_3dmigoto_vertex(mesh, obj, blender_loop_vertex, layout, te
 
         if elem.name == 'POSITION':
             if 'POSITION.w' in mesh.vertex_layers_float:
-                vertex[elem.name] = list(blender_vertex.undeformed_co) + \
-                                        [mesh.vertex_layers_float['POSITION.w'].data[blender_loop_vertex.vertex_index].value]
+                vertex[elem.name] = pos + [mesh.vertex_layers_float['POSITION.w'].data[blender_loop_vertex.vertex_index].value]
             else:
-                vertex[elem.name] = elem.pad(list(blender_vertex.undeformed_co), 1.0)
+                vertex[elem.name] = elem.pad(pos, 1.0)
         elif elem.name.startswith('COLOR'):
             if elem.name in mesh.vertex_colors:
                 vertex[elem.name] = elem.clip(list(mesh.vertex_colors[elem.name].data[blender_loop_vertex.index].color))
@@ -1048,7 +1052,8 @@ def blender_vertex_to_3dmigoto_vertex(mesh, obj, blender_loop_vertex, layout, te
             # DOAXVV has +1/-1 in the 4th component. Not positive what this is,
             # but guessing maybe the bitangent sign? Not even sure it is used...
             # FIXME: Other games
-            vertex[elem.name] = elem.pad(list(blender_loop_vertex.tangent), blender_loop_vertex.bitangent_sign)
+                #temporarily set tangent to normal for Anime Game since blender doesnt wanna import tangent
+            vertex[elem.name] = elem.pad(list(blender_loop_vertex.normal), blender_loop_vertex.bitangent_sign)
         elif elem.name.startswith('BINORMAL'):
             # Some DOA6 meshes (skirts) use BINORMAL, but I'm not certain it is
             # actually the binormal. These meshes are weird though, since they
@@ -1095,6 +1100,151 @@ def blender_vertex_to_3dmigoto_vertex(mesh, obj, blender_loop_vertex, layout, te
             print('NOTICE: Unhandled vertex element: %s' % elem.name)
         #else:
         #    print('%s: %s' % (elem.name, repr(vertex[elem.name])))
+
+    return vertex
+
+def unit_vector(vector):
+    a = numpy.linalg.norm(vector)
+    if  a == 0:
+        return numpy.array([0,0,0])
+    return vector / a
+
+def angle_between(v1, v2):
+    v1_u = unit_vector(v1)
+    v2_u = unit_vector(v2)
+    return numpy.arccos(numpy.clip(numpy.dot(v1_u, v2_u), -1.0, 1.0))
+
+def antiparallel_search(ConnectedFaceNormals):
+    for fn1 in ConnectedFaceNormals:
+        for fn2 in ConnectedFaceNormals:
+            if numpy.dot(fn1,fn2) == -1:
+                return True
+    return False
+
+def precision(x): 
+    return -int(numpy.floor(numpy.log10(x)))
+
+def recursive_connections(Over2_connected_points):
+    for entry, connectedpointentry in Over2_connected_points.items():
+        if len(set(connectedpointentry) & Over2_connected_points.keys()) > 1:
+            continue
+        else:
+            Over2_connected_points.pop(entry)
+            if len(Over2_connected_points) < 3:
+                return False
+            return recursive_connections(Over2_connected_points)
+    return True
+    
+def checkEnclosedFacesVertex(ConnectedFaces, vg_set, Precalculated_Outline_data):
+    
+    Main_connected_points = {} # {point: {connected points}}
+        # connected points non-same vertex
+    for face in ConnectedFaces:
+        non_vg_points = []
+        for point in face:
+            if point not in vg_set:
+                non_vg_points.append(point)
+        if len(non_vg_points) > 1:
+            for point in non_vg_points:
+                Main_connected_points.setdefault(point, []).extend([x for x in non_vg_points if x != point])
+        # connected points same vertex
+    New_Main_connect = {}
+    keys_connectM = Main_connected_points.keys()
+    for entry, setvalue in Main_connected_points.items():
+        for val in setvalue:
+            ivspv = Precalculated_Outline_data.get('Same_Vertex').get(val)
+            intersect_sidevertex = ivspv & keys_connectM
+            for i in intersect_sidevertex:
+                New_Main_connect.setdefault(entry, []).append(i)
+        # connected points same vertex reverse connection
+    for key, value in New_Main_connect.items():
+        Main_connected_points.setdefault(key, []).extend(value)
+        for val in value:
+            Main_connected_points.setdefault(val, []).append(key)
+    
+    Over2_connected_points = {}
+        # exclude for only 2 way paths 
+    for entry, setvalue in Main_connected_points.items():         
+        if len(setvalue) > 1:
+            Over2_connected_points.setdefault(entry, []).extend(setvalue)
+
+    return recursive_connections(Over2_connected_points)
+
+def blender_vertex_to_3dmigoto_vertex_outline(mesh, obj, blender_loop_vertex, layout, texcoords, export_Outline):
+    blender_vertex = mesh.vertices[blender_loop_vertex.vertex_index]
+    pos = list(blender_vertex.undeformed_co)
+    vertex = {}
+    seen_offsets = set()
+
+    # TODO: Warn if vertex is in too many vertex groups for this layout,
+    # ignoring groups with weight=0.0
+    vertex_groups = sorted(blender_vertex.groups, key=lambda x: x.weight, reverse=True)
+
+    for elem in layout:
+        if elem.InputSlotClass != 'per-vertex':
+            continue
+
+        if (elem.InputSlot, elem.AlignedByteOffset) in seen_offsets:
+            continue
+        seen_offsets.add((elem.InputSlot, elem.AlignedByteOffset))
+
+        if elem.name == 'POSITION':
+            if 'POSITION.w' in mesh.vertex_layers_float:
+                vertex[elem.name] = pos + [mesh.vertex_layers_float['POSITION.w'].data[blender_loop_vertex.vertex_index].value]
+            else:
+                vertex[elem.name] = elem.pad(pos, 1.0)
+        elif elem.name.startswith('COLOR'):
+            if elem.name in mesh.vertex_colors:
+                vertex[elem.name] = elem.clip(list(mesh.vertex_colors[elem.name].data[blender_loop_vertex.index].color))
+            else:
+                try:
+                    vertex[elem.name] = list(mesh.vertex_colors[elem.name+'.RGB'].data[blender_loop_vertex.index].color)[:3] + \
+                                            [mesh.vertex_colors[elem.name+'.A'].data[blender_loop_vertex.index].color[0]]
+                except KeyError:
+                    raise Fatal("ERROR: Unable to find COLOR property. Ensure the model you are exporting has a color attribute (of type Face Corner/Byte Color) called COLOR")
+        elif elem.name == 'NORMAL':
+            vertex[elem.name] = elem.pad(list(blender_loop_vertex.normal), 0.0)
+        elif elem.name.startswith('TANGENT'):
+            
+            tangent_value = export_Outline.get(blender_loop_vertex.vertex_index)
+
+            if tangent_value:
+                vertex[elem.name] = elem.pad(tangent_value, blender_loop_vertex.bitangent_sign)
+            else:
+                vertex[elem.name] = elem.pad(list(blender_loop_vertex.normal), blender_loop_vertex.bitangent_sign)
+
+        elif elem.name.startswith('BINORMAL'):
+
+            pass
+        elif elem.name.startswith('BLENDINDICES'):
+            i = elem.SemanticIndex * 4
+            vertex[elem.name] = elem.pad([ x.group for x in vertex_groups[i:i+4] ], 0)
+        elif elem.name.startswith('BLENDWEIGHT'):
+            # TODO: Warn if vertex is in too many vertex groups for this layout
+            i = elem.SemanticIndex * 4
+            vertex[elem.name] = elem.pad([ x.weight for x in vertex_groups[i:i+4] ], 0.0)
+        elif elem.name.startswith('TEXCOORD') and elem.is_float():
+            # FIXME: Handle texcoords of other dimensions
+            uvs = []
+            for uv_name in ('%s.xy' % elem.name, '%s.zw' % elem.name):
+                if uv_name in texcoords:
+                    uvs += list(texcoords[uv_name][blender_loop_vertex.index])
+
+            vertex[elem.name] = uvs
+        else:
+            # Unhandled semantics are saved in vertex layers
+            data = []
+            for component in 'xyzw':
+                layer_name = '%s.%s' % (elem.name, component)
+                if layer_name in mesh.vertex_layers_int:
+                    data.append(mesh.vertex_layers_int[layer_name].data[blender_loop_vertex.vertex_index].value)
+                elif layer_name in mesh.vertex_layers_float:
+                    data.append(mesh.vertex_layers_float[layer_name].data[blender_loop_vertex.vertex_index].value)
+            if data:
+                vertex[elem.name] = data
+
+        if elem.name not in vertex:
+            print('NOTICE: Unhandled vertex element: %s' % elem.name)
 
     return vertex
 
@@ -1200,7 +1350,7 @@ def export_3dmigoto(operator, context, vb_path, ib_path, fmt_path):
     write_fmt_file(open(fmt_path, 'w'), vb, ib)
 
 
-def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fmt_path, use_foldername, ignore_hidden, only_selected, no_ramps, delete_intermediate, credit):
+def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fmt_path, use_foldername, ignore_hidden, only_selected, no_ramps, delete_intermediate, credit, Outline_Properties):
     scene = bpy.context.scene
 
     # Quick sanity check
@@ -1357,14 +1507,181 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
                 # completely blow this out - we still want to reuse identical vertices
                 # via the index buffer. There might be a convenience function in
                 # Blender to do this, but it's easy enough to do this ourselves
+
                 indexed_vertices = collections.OrderedDict()
-                for poly in mesh.polygons:
-                    face = []
-                    for blender_lvertex in mesh.loops[poly.loop_start:poly.loop_start + poly.loop_total]:
-                        vertex = blender_vertex_to_3dmigoto_vertex(mesh, obj, blender_lvertex, layout, texcoord_layers)
-                        face.append(indexed_vertices.setdefault(HashableVertex(vertex), len(indexed_vertices)))
-                    if ib is not None:
-                        ib.append(face)
+                Precalculated_Outline_data = {}
+                export_Outline = {}
+                outline_optimization, toggle_rounding_outline, decimal_rounding_outline, angle_weighted, overlapping_faces, detect_edges, calculate_all_faces, nearest_edge_distance = Outline_Properties
+
+                if outline_optimization:
+                    print("Optimize Outline: " + obj.name.lower() + "; Initialize data sets         ", end='\r')
+
+                    ################# PRE-DICTIONARY #####################
+
+                    verts_obj = mesh.vertices
+                    Pos_Same_Vertices = {}
+                    Pos_Close_Vertices = {}
+                    Face_Normals = {}
+                    Numpy_Position = {}
+                    if detect_edges and toggle_rounding_outline:
+                        i_nedd = min(precision(nearest_edge_distance), decimal_rounding_outline) - 1
+                        i_nedd_increment =  10**(-i_nedd)
+                    
+                    searched_vertex_pos = set()
+                    for poly in mesh.polygons:
+                        i_poly = poly.index
+                        face_vertices = poly.vertices
+                        facenormal = numpy.array(poly.normal)
+                        Face_Normals.setdefault(i_poly, facenormal)
+
+                        for vert in face_vertices:
+                            Precalculated_Outline_data.setdefault('Connected_Faces', {}).setdefault(vert, []).append(i_poly)
+                            if vert in searched_vertex_pos: continue
+
+                            searched_vertex_pos.add(vert)
+                            vert_obj = verts_obj[vert]
+                            vert_position = vert_obj.undeformed_co
+                            
+                            if toggle_rounding_outline:
+                                Pos_Same_Vertices.setdefault(tuple(round(coord, decimal_rounding_outline) for coord in vert_position), {vert}).add(vert)
+                                
+                                if detect_edges:
+                                    Pos_Close_Vertices.setdefault(tuple(round(coord, i_nedd) for coord in vert_position), {vert}).add(vert)
+                            else:
+                                Pos_Same_Vertices.setdefault(tuple(vert_position), {vert}).add(vert)
+
+                            if angle_weighted:
+                                numpy_pos = numpy.array(vert_position)
+                                Numpy_Position.setdefault(vert, numpy_pos)
+
+                    for values in Pos_Same_Vertices.values():
+                        for vertex in values:
+                            Precalculated_Outline_data.setdefault('Same_Vertex', {}).setdefault(vertex, set(values))
+
+                    if detect_edges and toggle_rounding_outline:
+                        print("Optimize Outline: " + obj.name.lower() + "; Edge detection       ", end='\r')
+                        Precalculated_Outline_data.setdefault('RepositionLocal', set())
+
+                        for vertex_group in Pos_Same_Vertices.values():
+                            FacesConnected = []
+                            for x in vertex_group: FacesConnected.extend(Precalculated_Outline_data.get('Connected_Faces').get(x))
+                            ConnectedFaces = [mesh.polygons[x].vertices for x in FacesConnected]
+                            
+                            if not checkEnclosedFacesVertex(ConnectedFaces, vertex_group, Precalculated_Outline_data):
+                                for vertex in vertex_group: break
+
+                                p1, p2, p3 = verts_obj[vertex].undeformed_co
+                                p1n = p1+nearest_edge_distance
+                                p1nn = p1-nearest_edge_distance
+                                p2n = p2+nearest_edge_distance
+                                p2nn = p2-nearest_edge_distance
+                                p3n = p3+nearest_edge_distance
+                                p3nn = p3-nearest_edge_distance
+
+                                coord = [[round(p1n, i_nedd), round(p1nn, i_nedd)],\
+                                         [round(p2n, i_nedd), round(p2nn, i_nedd)],\
+                                         [round(p3n, i_nedd), round(p3nn, i_nedd)]]
+
+                                for i in range(3):
+                                    z, n = coord[i]
+                                    zndifference = int((z - n)/i_nedd_increment)
+                                    if zndifference > 1: 
+                                        for r in range(zndifference - 1):
+                                            coord[i].append(z - r*i_nedd_increment)
+
+                                closest_group = set()
+                                for pos1 in coord[0]:
+                                    for pos2 in coord[1]:
+                                        for pos3 in coord[2]:
+                                            try: closest_group.update(Pos_Close_Vertices.get(tuple([pos1, pos2, pos3])))
+                                            except: continue
+
+                                if len(closest_group) != 1:
+                                    for x in vertex_group: Precalculated_Outline_data.get('RepositionLocal').add(x)
+                                                
+                                    for v_closest_pos in closest_group:
+                                        if not v_closest_pos in vertex_group:
+
+                                            o1, o2, o3 = verts_obj[v_closest_pos].undeformed_co
+                                            if p1n >= o1 >= p1nn and p2n >= o2 >= p2nn and p3n >= o3 >= p3nn:
+                                                for x in vertex_group:
+                                                    Precalculated_Outline_data.get('Same_Vertex').get(x).add(v_closest_pos)
+
+                    for key, value in Precalculated_Outline_data.get('Same_Vertex').items():
+                        
+                        for vertex in value:
+                            Precalculated_Outline_data.setdefault('Connected_Faces_bySameVertex', {}).setdefault(key, set()) \
+                            .update(Precalculated_Outline_data.get('Connected_Faces').get(vertex))
+
+                    ################# CALCULATIONS #####################
+
+                    RepositionLocal = Precalculated_Outline_data.get('RepositionLocal')
+                    IteratedValues = set()
+                    print("Optimize Outline: " + obj.name.lower() + "; Calculation          ", end='\r')
+
+                    for key, vertex_group in Precalculated_Outline_data.get('Same_Vertex').items():
+                        if key in IteratedValues: continue
+
+                        if not calculate_all_faces and len(vertex_group) == 1: continue
+                        
+                        FacesConnectedbySameVertex = list(Precalculated_Outline_data.get('Connected_Faces_bySameVertex').get(key))
+                        ConnectedWeightedNormal = numpy.empty(len(FacesConnectedbySameVertex), dtype=object)
+
+                        i = 0
+                        if overlapping_faces:
+                            ConnectedFaceNormals = [Face_Normals.get(x) for x in FacesConnectedbySameVertex]
+                            if antiparallel_search(ConnectedFaceNormals): continue
+
+                        for facei in FacesConnectedbySameVertex:
+                            face = mesh.polygons[facei]
+                            vlist = set(face.vertices)
+                            face_index = face.index
+                            
+                            vert0p = vlist & vertex_group
+                            
+                            for vert0 in vert0p:
+                                if angle_weighted:
+                                    v0 = Numpy_Position.get(vert0)
+                                    vn = [Numpy_Position.get(x) for x in vlist if x != vert0]
+                                    angle0 = angle_between(numpy.add(vn[0],-v0), numpy.add(vn[1],-v0))
+                                    
+                                    ConnectedWeightedNormal[i] = numpy.multiply(Face_Normals.get(face_index), angle0) 
+                                else:
+                                    ConnectedWeightedNormal[i] = Face_Normals.get(face_index)
+
+                            influence_restriction = len(vert0p)
+                            if  influence_restriction > 1:
+                                numpy.multiply(ConnectedWeightedNormal[i], 0.5**(1-influence_restriction))
+                            i += 1
+
+                        wSum = unit_vector(numpy.sum(ConnectedWeightedNormal)).tolist()
+
+                        if wSum != [0,0,0]:
+                            if RepositionLocal and key in RepositionLocal:
+                                export_Outline.setdefault(key, wSum)
+                                continue
+                            for vertexf in vertex_group:
+                                export_Outline.setdefault(vertexf, wSum)
+                                IteratedValues.add(vertexf)
+
+                    for poly in mesh.polygons:
+                        face = []
+                        for blender_lvertex in mesh.loops[poly.loop_start:poly.loop_start + poly.loop_total]:
+                            vertex = blender_vertex_to_3dmigoto_vertex_outline(mesh, obj, blender_lvertex, layout, texcoord_layers, export_Outline)
+                            face.append(indexed_vertices.setdefault(HashableVertex(vertex), len(indexed_vertices)))           
+                        if ib is not None:
+                            ib.append(face)
+                    print("Optimize Outline: " + obj.name.lower() + "; Completed            ")
+
+                else:
+                
+                    for poly in mesh.polygons:
+                        face = []
+                        for blender_lvertex in mesh.loops[poly.loop_start:poly.loop_start + poly.loop_total]:
+                            vertex = blender_vertex_to_3dmigoto_vertex(mesh, obj, blender_lvertex, layout, texcoord_layers)
+                            face.append(indexed_vertices.setdefault(HashableVertex(vertex), len(indexed_vertices)))
+                        if ib is not None:
+                            ib.append(face)
 
                 vb = VertexBuffer(layout=layout)
                 for vertex in indexed_vertices:
@@ -1633,7 +1950,7 @@ def create_mod_folder(parent_folder, name):
     else:
         print(f"WARNING: Everything currently in the {name}Mod folder will be overwritten - make sure any important files are backed up. Press any button to continue")
 
-def collect_vb(folder, name, classification, stride, ignore_tangent=True):
+def collect_vb(folder, name, classification, stride): 
     position = bytearray()
     blend = bytearray()
     texcoord = bytearray()
@@ -1642,16 +1959,8 @@ def collect_vb(folder, name, classification, stride, ignore_tangent=True):
         data = bytearray(data)
         i = 0
         while i < len(data):
-            # This gave me a lot of trouble - the "tangent" the game uses doesn't seem to be any sort of tangent I'm
-            #   familiar with. In fact, it has a lot more in common with the normal
-            # Setting this equal to the normal gives significantly better results in most cases than using the tangent
-            #   calculated by blender
             import binascii
-            if ignore_tangent:
-                position += data[i:i + 24]
-                position += data[i+12:i+24] + bytearray(struct.pack("f", 1))
-            else:
-                position += data[i:i+40]
+            position += data[i:i+40]
             blend += data[i+40:i+72]
             texcoord += data[i+72:i+stride]
             i += stride
@@ -1670,17 +1979,14 @@ def collect_ib(folder, name, classification, offset):
     return ib
 
 
-def collect_vb_single(folder, name, classification, stride, ignore_tangent=True):
+def collect_vb_single(folder, name, classification, stride): 
     result = bytearray()
     with open(os.path.join(folder, f"{name}{classification}.vb"), "rb") as f:
         data = f.read()
         data = bytearray(data)
         i = 0
         while i < len(data):
-            if ignore_tangent:
-                result += data[i:i + stride - 4] + data[i+8:i+12]
-            else:
-                result += data[i:i+stride]
+            result += data[i:i+stride]
             i += stride
     return result
 
@@ -1990,6 +2296,7 @@ class Export3DMigotoGenshin(bpy.types.Operator, ExportHelper):
     """Export a mesh for re-injection into a game with 3DMigoto"""
     bl_idname = "export_mesh_genshin.migoto"
     bl_label = "Export Genshin mod folder"
+    bl_options = {'PRESET', 'UNDO'}
 
     filename_ext = '.vb'
     filter_glob : StringProperty(
@@ -2032,6 +2339,82 @@ class Export3DMigotoGenshin(bpy.types.Operator, ExportHelper):
         description="Name that pops up on screen when mod is loaded. If left blank, will result in no pop up",
         default='',
     )
+    
+    outline_optimization : BoolProperty(
+        name="Outline Optimization",
+        description="Recalculate outlines. Recommended for final export. Check more options below to improve quality",
+        default=False,
+    )
+    
+    toggle_rounding_outline : BoolProperty(
+        name="Round vertex positions",
+        description="Rounding of vertex positions to specify which are the overlapping vertices",
+        default=True,
+    ) 
+    
+    decimal_rounding_outline : bpy.props.IntProperty(
+        name="Decimals:",
+        description="Rounding of vertex positions to specify which are the overlapping vertices",
+        default=3,
+    )
+
+    angle_weighted : BoolProperty(
+        name="Weight by angle",
+        description="Calculate angles to improve accuracy of outlines",
+        default=False,
+    )
+
+    overlapping_faces : BoolProperty(
+        name="Ignore overlapping faces",
+        description="Detect and ignore overlapping faces to avoid buggy outlines. Recommended if you have overlaps",
+        default=False,
+    )
+
+    detect_edges : BoolProperty(
+        name="Calculate edges",
+        description="Calculate for disconnected edges when rounding, closing holes in the edge outline. Slow",
+        default=False,
+    )
+
+    calculate_all_faces : BoolProperty(
+        name="Calculate outline for all faces",
+        description="If you have any flat shaded internal faces or if you just need to fix outline for all faces, turn on this option for better outlines. Slow",
+        default=False,
+    )
+
+    nearest_edge_distance : bpy.props.FloatProperty(
+        name="Distance:",
+        description="Expand grouping for edge vertices within this radial distance to close holes in the edge outline. Requires rounding",
+        default=0.001,
+        soft_min=0,
+        precision=4,
+    )
+    
+    def draw(self, context):
+        layout = self.layout
+        col = layout.column(align=True)
+        
+        col.prop(self, 'use_foldername')
+        col.prop(self, 'ignore_hidden')
+        col.prop(self, 'only_selected')
+        col.prop(self, 'no_ramps')
+        col.prop(self, 'delete_intermediate')
+        col.prop(self, 'credit')
+        layout.separator()
+        
+        col = layout.column(align=True)
+        col.prop(self, 'outline_optimization')
+        
+        if self.outline_optimization:
+            col.prop(self, 'toggle_rounding_outline', text='Vertex Position Rounding', toggle=True, icon="SHADING_WIRE")
+            col.prop(self, 'decimal_rounding_outline')
+            col.prop(self, 'angle_weighted')
+            col.prop(self, 'overlapping_faces')
+            if self.toggle_rounding_outline:
+                col.prop(self, 'detect_edges')
+            if self.detect_edges and self.toggle_rounding_outline:
+                col.prop(self, 'nearest_edge_distance')
+            col.prop(self, 'calculate_all_faces')
 
     def execute(self, context):
         try:
@@ -2041,8 +2424,8 @@ class Export3DMigotoGenshin(bpy.types.Operator, ExportHelper):
             object_name = os.path.splitext(os.path.basename(self.filepath))[0]
 
             # FIXME: ExportHelper will check for overwriting vb_path, but not ib_path
-
-            export_3dmigoto_genshin(self, context, object_name, vb_path, ib_path, fmt_path, self.use_foldername, self.ignore_hidden, self.only_selected, self.no_ramps, self.delete_intermediate, self.credit)
+            Outline_Properties = (self.outline_optimization, self.toggle_rounding_outline, self.decimal_rounding_outline, self.angle_weighted, self.overlapping_faces, self.detect_edges, self.calculate_all_faces, self.nearest_edge_distance)
+            export_3dmigoto_genshin(self, context, object_name, vb_path, ib_path, fmt_path, self.use_foldername, self.ignore_hidden, self.only_selected, self.no_ramps, self.delete_intermediate, self.credit, Outline_Properties)
         except Fatal as e:
             self.report({'ERROR'}, str(e))
         return {'FINISHED'}
