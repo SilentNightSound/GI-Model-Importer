@@ -2313,7 +2313,7 @@ class Export3DMigotoGenshin(bpy.types.Operator, ExportHelper):
     ignore_hidden : BoolProperty(
         name="Ignore hidden objects",
         description="Does not use objects in the Blender window that are hidden while exporting mods",
-        default=False,
+        default=True,
     )
 
     only_selected : BoolProperty(
