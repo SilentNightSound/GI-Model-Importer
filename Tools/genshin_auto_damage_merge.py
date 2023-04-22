@@ -131,10 +131,10 @@ def main():
     if args.reflection:
         constants += f"post $reflection = 0\n"
     if args.accumulate:
-        constants += f"if $\\mods\\buffervalues\\healthbar.ini\\health < $health\n\t${swapvar} = ${swapvar} + $health - $\\mods\\buffervalues\\healthbar.ini\\health\nendif\n"
+        constants += f"if $\\global\\HealthBar\\health < $health\n\t${swapvar} = ${swapvar} + $health - $\\global\\HealthBar\\health\nendif\n"
     elif args.hit:
-        constants += f"if $\\mods\\buffervalues\\healthbar.ini\\health + {hit_threshold} < $health\n\t${swapvar} = ${swapvar} + 1\nendif\n"
-    constants += "$health = $\\mods\\buffervalues\\healthbar.ini\\health\n"
+        constants += f"if $\\global\\HealthBar\\health + {hit_threshold} < $health\n\t${swapvar} = ${swapvar} + 1\nendif\n"
+    constants += "$health = $\\global\\HealthBar\\health\n"
 
 
     print("Parsing ini sections")
