@@ -110,10 +110,10 @@ def main():
     constants += f"[Constants]\n"
     if args.accumulate:
         swapvar = "damage"
-        constants += "global persist $health = 0\n"
+        constants += "global persist $health = 100\n"
     elif args.hit:
         swapvar = "hits"
-        constants += "global persist $health = 0\n"
+        constants += "global persist $health = 100\n"
     else:
         swapvar = "health"
     constants += f"global persist ${swapvar} = 0\n"
@@ -194,6 +194,7 @@ drawindexed = auto
                 if args.active:
                     if "Position" in all_mod_data[i]["name"]:
                         overrides += f"$active = 1\n"
+                        overrides += f"$\\global\\HealthBar\\HPActive = 1\n"
                 overrides += "\n"
             # Otherwise, we have seen the hash before and we just need to append it to the commandlist
             else:
