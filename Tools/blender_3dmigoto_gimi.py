@@ -1663,6 +1663,7 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
                             for vertexf in vertex_group:
                                 export_Outline.setdefault(vertexf, wSum)
                                 IteratedValues.add(vertexf)
+                    print("Optimize Outline: " + obj.name.lower() + "; Completed            ")
 
                     for poly in mesh.polygons:
                         face = []
@@ -1671,7 +1672,6 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
                             face.append(indexed_vertices.setdefault(HashableVertex(vertex), len(indexed_vertices)))           
                         if ib is not None:
                             ib.append(face)
-                    print("Optimize Outline: " + obj.name.lower() + "; Completed            ")
 
                 else:
                 
