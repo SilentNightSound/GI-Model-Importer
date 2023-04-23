@@ -1523,7 +1523,7 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
                     Pos_Close_Vertices = {}
                     Face_Normals = {}
                     Numpy_Position = {}
-                    if detect_edges && toggle_rounding_outline:
+                    if detect_edges and toggle_rounding_outline:
                         i_nedd = min(precision(nearest_edge_distance), decimal_rounding_outline) - 1
                         i_nedd_increment =  10**(-i_nedd)
                     
@@ -1558,7 +1558,7 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
                         for vertex in values:
                             Precalculated_Outline_data.setdefault('Same_Vertex', {}).setdefault(vertex, set(values))
 
-                    if detect_edges && toggle_rounding_outline:
+                    if detect_edges and toggle_rounding_outline:
                         print("Optimize Outline: " + obj.name.lower() + "; Edge detection       ", end='\r')
                         Precalculated_Outline_data.setdefault('RepositionLocal', set())
 
@@ -1603,7 +1603,7 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
                                         if not v_closest_pos in vertex_group:
 
                                             o1, o2, o3 = verts_obj[v_closest_pos].undeformed_co
-                                            if p1n >= o1 >= p1nn && p2n >= o2 >= p2nn && p3n >= o3 >= p3nn:
+                                            if p1n >= o1 >= p1nn and p2n >= o2 >= p2nn and p3n >= o3 >= p3nn:
                                                 for x in vertex_group:
                                                     Precalculated_Outline_data.get('Same_Vertex').get(x).add(v_closest_pos)
 
@@ -1622,7 +1622,7 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
                     for key, vertex_group in Precalculated_Outline_data.get('Same_Vertex').items():
                         if key in IteratedValues: continue
 
-                        if not calculate_all_faces && len(vertex_group) == 1: continue
+                        if not calculate_all_faces and len(vertex_group) == 1: continue
                         
                         FacesConnectedbySameVertex = list(Precalculated_Outline_data.get('Connected_Faces_bySameVertex').get(key))
                         ConnectedWeightedNormal = numpy.empty(shape=(len(FacesConnectedbySameVertex), 3))
@@ -1657,7 +1657,7 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
                         wSum = unit_vector(numpy.sum(ConnectedWeightedNormal,axis=0)).tolist()
 
                         if wSum != [0,0,0]:
-                            if RepositionLocal && key in RepositionLocal:
+                            if RepositionLocal and key in RepositionLocal:
                                 export_Outline.setdefault(key, wSum)
                                 continue
                             for vertexf in vertex_group:
