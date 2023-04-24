@@ -1104,15 +1104,8 @@ def blender_vertex_to_3dmigoto_vertex(mesh, obj, blender_loop_vertex, layout, te
     return vertex
 
 def unit_vector(vector):
-    a = numpy.linalg.norm(vector)
-    if  a == 0:
-        return numpy.array([0,0,0])
-    return vector / a
-
-def angle_between(v1, v2):
-    v1_u = unit_vector(v1)
-    v2_u = unit_vector(v2)
-    return numpy.arccos(numpy.clip(numpy.dot(v1_u, v2_u), -1.0, 1.0))
+    a = numpy.linalg.norm(vector, axis=max(len(vector.shape)-1,0), keepdims=True)
+    return numpy.divide(vector, a, out=numpy.zeros_like(vector), where= a!=0)
 
 def antiparallel_search(ConnectedFaceNormals):
     for fn1 in ConnectedFaceNormals:
@@ -1625,34 +1618,41 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
                         if not calculate_all_faces and len(vertex_group) == 1: continue
                         
                         FacesConnectedbySameVertex = list(Precalculated_Outline_data.get('Connected_Faces_bySameVertex').get(key))
-                        ConnectedWeightedNormal = numpy.empty(shape=(len(FacesConnectedbySameVertex), 3))
+                        ConnectedWeightedNormal = numpy.empty(shape=(len(FacesConnectedbySameVertex),3))
 
-                        i = 0
+                        if angle_weighted:
+                            VectorMatrix0 = numpy.empty_like(ConnectedWeightedNormal)
+                            VectorMatrix1 = numpy.empty_like(ConnectedWeightedNormal)
+                        
                         if overlapping_faces:
                             ConnectedFaceNormals = [Face_Normals.get(x) for x in FacesConnectedbySameVertex]
                             if antiparallel_search(ConnectedFaceNormals): continue
 
+                        i = 0
                         for facei in FacesConnectedbySameVertex:
                             face = mesh.polygons[facei]
                             vlist = face.vertices
                             face_index = face.index
                             
                             vert0p = set(vlist) & vertex_group
-                            
-                            for vert0 in vert0p:
-                                if angle_weighted:
-                                    v0 = -Numpy_Position.get(vert0)
+
+                            if angle_weighted:
+                                for vert0 in vert0p:
+                                    v0 = Numpy_Position.get(vert0)
                                     vn = [Numpy_Position.get(x) for x in vlist if x != vert0]
-                                    angle0 = angle_between(numpy.add(vn[0],v0), numpy.add(vn[1],v0))
-                                    
-                                    ConnectedWeightedNormal[i] = numpy.multiply(Face_Normals.get(face_index), angle0) 
-                                else:
-                                    ConnectedWeightedNormal[i] = Face_Normals.get(face_index)
+                                    VectorMatrix0[i] = vn[0]-v0
+                                    VectorMatrix1[i] = vn[1]-v0   
+                            ConnectedWeightedNormal[i] = Face_Normals.get(face_index) 
 
                             influence_restriction = len(vert0p)
                             if  influence_restriction > 1:
                                 numpy.multiply(ConnectedWeightedNormal[i], 0.5**(1-influence_restriction))
                             i += 1
+
+                        if angle_weighted:
+                            angle = numpy.arccos(numpy.clip(numpy.einsum('ij, ij->i',\
+                                    unit_vector(VectorMatrix0), unit_vector(VectorMatrix1)), -1.0, 1.0))
+                            ConnectedWeightedNormal *= angle[:,None]
 
                         wSum = unit_vector(numpy.sum(ConnectedWeightedNormal,axis=0)).tolist()
 
