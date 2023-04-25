@@ -1108,11 +1108,8 @@ def unit_vector(vector):
     return numpy.divide(vector, a, out=numpy.zeros_like(vector), where= a!=0)
 
 def antiparallel_search(ConnectedFaceNormals):
-    for fn1 in ConnectedFaceNormals:
-        for fn2 in ConnectedFaceNormals:
-            if numpy.dot(fn1,fn2) == -1:
-                return True
-    return False
+    a = numpy.einsum('ij,kj->ik' ,ConnectedFaceNormals, ConnectedFaceNormals)
+    return numpy.any((a>-1.000001)&(a< -0.999999))
 
 def precision(x): 
     return -int(numpy.floor(numpy.log10(x)))
@@ -1626,7 +1623,9 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
                             VectorMatrix1 = numpy.empty(shape=(row,3))
                         
                         if overlapping_faces:
-                            ConnectedFaceNormals = [Face_Normals.get(x) for x in FacesConnectedbySameVertex]
+                            ConnectedFaceNormals = numpy.empty(shape=(row,3))
+                            for i_normal, x in enumerate(FacesConnectedbySameVertex):
+                                ConnectedFaceNormals1[i_normal] = Face_Normals.get(x)
                             if antiparallel_search(ConnectedFaceNormals): continue
 
                         i = 0
