@@ -1625,7 +1625,7 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
                         if overlapping_faces:
                             ConnectedFaceNormals = numpy.empty(shape=(row,3))
                             for i_normal, x in enumerate(FacesConnectedbySameVertex):
-                                ConnectedFaceNormals1[i_normal] = Face_Normals.get(x)
+                                ConnectedFaceNormals[i_normal] = Face_Normals.get(x)
                             if antiparallel_search(ConnectedFaceNormals): continue
 
                         i = 0
