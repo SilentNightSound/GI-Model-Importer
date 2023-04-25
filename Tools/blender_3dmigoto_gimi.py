@@ -1618,11 +1618,12 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
                         if not calculate_all_faces and len(vertex_group) == 1: continue
                         
                         FacesConnectedbySameVertex = list(Precalculated_Outline_data.get('Connected_Faces_bySameVertex').get(key))
-                        ConnectedWeightedNormal = numpy.empty(shape=(len(FacesConnectedbySameVertex),3))
+                        row = len(FacesConnectedbySameVertex)
+                        ConnectedWeightedNormal = numpy.empty(shape=(row,3))
 
                         if angle_weighted:
-                            VectorMatrix0 = numpy.empty_like(ConnectedWeightedNormal)
-                            VectorMatrix1 = numpy.empty_like(ConnectedWeightedNormal)
+                            VectorMatrix0 = numpy.empty(shape=(row,3))
+                            VectorMatrix1 = numpy.empty(shape=(row,3))
                         
                         if overlapping_faces:
                             ConnectedFaceNormals = [Face_Normals.get(x) for x in FacesConnectedbySameVertex]
