@@ -1109,7 +1109,7 @@ def unit_vector(vector):
 
 def antiparallel_search(ConnectedFaceNormals):
     a = numpy.einsum('ij,kj->ik' ,ConnectedFaceNormals, ConnectedFaceNormals)
-    return numpy.any((a>-1.000001)&(a< -0.999999))
+    return numpy.any((a>-1.0000001)&(a< -0.9999999))
 
 def precision(x): 
     return -int(numpy.floor(numpy.log10(x)))
@@ -2378,7 +2378,7 @@ class Export3DMigotoGenshin(bpy.types.Operator, ExportHelper):
 
     calculate_all_faces : BoolProperty(
         name="Calculate outline for all faces",
-        description="If you have any flat shaded internal faces or if you just need to fix outline for all faces, turn on this option for better outlines. Slow",
+        description="Calculate outline for all faces, which is especially useful if you have any flat shaded internal faces. Slow",
         default=False,
     )
 
@@ -2387,7 +2387,6 @@ class Export3DMigotoGenshin(bpy.types.Operator, ExportHelper):
         description="Expand grouping for edge vertices within this radial distance to close holes in the edge outline. Requires rounding",
         default=0.001,
         soft_min=0,
-        precision=4,
     )
     
     def draw(self, context):
