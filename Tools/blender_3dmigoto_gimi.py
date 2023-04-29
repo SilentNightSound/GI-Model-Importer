@@ -1109,7 +1109,7 @@ def unit_vector(vector):
 
 def antiparallel_search(ConnectedFaceNormals):
     a = numpy.einsum('ij,kj->ik' ,ConnectedFaceNormals, ConnectedFaceNormals)
-    return numpy.any((a>-1.0000001)&(a< -0.9999999))
+    return numpy.any((a>-1.000001)&(a<-0.999999))
 
 def precision(x): 
     return -int(numpy.floor(numpy.log10(x)))
