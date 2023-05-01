@@ -1104,22 +1104,12 @@ def blender_vertex_to_3dmigoto_vertex(mesh, obj, blender_loop_vertex, layout, te
     return vertex
 
 def unit_vector(vector):
-    a = numpy.linalg.norm(vector)
-    if  a == 0:
-        return numpy.array([0,0,0])
-    return vector / a
-
-def angle_between(v1, v2):
-    v1_u = unit_vector(v1)
-    v2_u = unit_vector(v2)
-    return numpy.arccos(numpy.clip(numpy.dot(v1_u, v2_u), -1.0, 1.0))
+    a = numpy.linalg.norm(vector, axis=max(len(vector.shape)-1,0), keepdims=True)
+    return numpy.divide(vector, a, out=numpy.zeros_like(vector), where= a!=0)
 
 def antiparallel_search(ConnectedFaceNormals):
-    for fn1 in ConnectedFaceNormals:
-        for fn2 in ConnectedFaceNormals:
-            if numpy.dot(fn1,fn2) == -1:
-                return True
-    return False
+    a = numpy.einsum('ij,kj->ik', ConnectedFaceNormals, ConnectedFaceNormals)
+    return numpy.any((a>-1.000001)&(a<-0.999999))
 
 def precision(x): 
     return -int(numpy.floor(numpy.log10(x)))
@@ -1625,36 +1615,46 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
                         if not calculate_all_faces and len(vertex_group) == 1: continue
                         
                         FacesConnectedbySameVertex = list(Precalculated_Outline_data.get('Connected_Faces_bySameVertex').get(key))
-                        ConnectedWeightedNormal = numpy.empty(len(FacesConnectedbySameVertex), dtype=object)
+                        row = len(FacesConnectedbySameVertex)
+                        ConnectedWeightedNormal = numpy.empty(shape=(row,3))
 
-                        i = 0
+                        if angle_weighted:
+                            VectorMatrix0 = numpy.empty(shape=(row,3))
+                            VectorMatrix1 = numpy.empty(shape=(row,3))
+                        
                         if overlapping_faces:
-                            ConnectedFaceNormals = [Face_Normals.get(x) for x in FacesConnectedbySameVertex]
+                            ConnectedFaceNormals = numpy.empty(shape=(row,3))
+                            for i_normal, x in enumerate(FacesConnectedbySameVertex):
+                                ConnectedFaceNormals[i_normal] = Face_Normals.get(x)
                             if antiparallel_search(ConnectedFaceNormals): continue
 
+                        i = 0
                         for facei in FacesConnectedbySameVertex:
                             face = mesh.polygons[facei]
-                            vlist = set(face.vertices)
+                            vlist = face.vertices
                             face_index = face.index
                             
-                            vert0p = vlist & vertex_group
-                            
-                            for vert0 in vert0p:
-                                if angle_weighted:
+                            vert0p = set(vlist) & vertex_group
+
+                            if angle_weighted:
+                                for vert0 in vert0p:
                                     v0 = Numpy_Position.get(vert0)
                                     vn = [Numpy_Position.get(x) for x in vlist if x != vert0]
-                                    angle0 = angle_between(numpy.add(vn[0],-v0), numpy.add(vn[1],-v0))
-                                    
-                                    ConnectedWeightedNormal[i] = numpy.multiply(Face_Normals.get(face_index), angle0) 
-                                else:
-                                    ConnectedWeightedNormal[i] = Face_Normals.get(face_index)
+                                    VectorMatrix0[i] = vn[0]-v0
+                                    VectorMatrix1[i] = vn[1]-v0   
+                            ConnectedWeightedNormal[i] = Face_Normals.get(face_index) 
 
                             influence_restriction = len(vert0p)
                             if  influence_restriction > 1:
                                 numpy.multiply(ConnectedWeightedNormal[i], 0.5**(1-influence_restriction))
                             i += 1
 
-                        wSum = unit_vector(numpy.sum(ConnectedWeightedNormal)).tolist()
+                        if angle_weighted:
+                            angle = numpy.arccos(numpy.clip(numpy.einsum('ij, ij->i',\
+                                    unit_vector(VectorMatrix0), unit_vector(VectorMatrix1)), -1.0, 1.0))
+                            ConnectedWeightedNormal *= angle[:,None]
+
+                        wSum = unit_vector(numpy.sum(ConnectedWeightedNormal,axis=0)).tolist()
 
                         if wSum != [0,0,0]:
                             if RepositionLocal and key in RepositionLocal:
@@ -1663,6 +1663,7 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
                             for vertexf in vertex_group:
                                 export_Outline.setdefault(vertexf, wSum)
                                 IteratedValues.add(vertexf)
+                    print("Optimize Outline: " + obj.name.lower() + "; Completed            ")
 
                     for poly in mesh.polygons:
                         face = []
@@ -1671,7 +1672,6 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
                             face.append(indexed_vertices.setdefault(HashableVertex(vertex), len(indexed_vertices)))           
                         if ib is not None:
                             ib.append(face)
-                    print("Optimize Outline: " + obj.name.lower() + "; Completed            ")
 
                 else:
                 
@@ -2360,7 +2360,7 @@ class Export3DMigotoGenshin(bpy.types.Operator, ExportHelper):
 
     angle_weighted : BoolProperty(
         name="Weight by angle",
-        description="Calculate angles to improve accuracy of outlines",
+        description="Calculate angles to improve accuracy of outlines. Slow",
         default=False,
     )
 
@@ -2372,13 +2372,13 @@ class Export3DMigotoGenshin(bpy.types.Operator, ExportHelper):
 
     detect_edges : BoolProperty(
         name="Calculate edges",
-        description="Calculate for disconnected edges when rounding, closing holes in the edge outline. Slow",
+        description="Calculate for disconnected edges when rounding, closing holes in the edge outline",
         default=False,
     )
 
     calculate_all_faces : BoolProperty(
         name="Calculate outline for all faces",
-        description="If you have any flat shaded internal faces or if you just need to fix outline for all faces, turn on this option for better outlines. Slow",
+        description="Calculate outline for all faces, which is especially useful if you have any flat shaded internal faces. Slow",
         default=False,
     )
 
@@ -2387,7 +2387,6 @@ class Export3DMigotoGenshin(bpy.types.Operator, ExportHelper):
         description="Expand grouping for edge vertices within this radial distance to close holes in the edge outline. Requires rounding",
         default=0.001,
         soft_min=0,
-        precision=4,
     )
     
     def draw(self, context):
@@ -2408,12 +2407,12 @@ class Export3DMigotoGenshin(bpy.types.Operator, ExportHelper):
         if self.outline_optimization:
             col.prop(self, 'toggle_rounding_outline', text='Vertex Position Rounding', toggle=True, icon="SHADING_WIRE")
             col.prop(self, 'decimal_rounding_outline')
-            col.prop(self, 'angle_weighted')
-            col.prop(self, 'overlapping_faces')
             if self.toggle_rounding_outline:
                 col.prop(self, 'detect_edges')
             if self.detect_edges and self.toggle_rounding_outline:
                 col.prop(self, 'nearest_edge_distance')
+            col.prop(self, 'overlapping_faces')
+            col.prop(self, 'angle_weighted')
             col.prop(self, 'calculate_all_faces')
 
     def execute(self, context):
