@@ -1196,12 +1196,7 @@ def blender_vertex_to_3dmigoto_vertex_outline(mesh, obj, blender_loop_vertex, la
             vertex[elem.name] = elem.pad(list(blender_loop_vertex.normal), 0.0)
         elif elem.name.startswith('TANGENT'):
             
-            tangent_value = export_Outline.get(blender_loop_vertex.vertex_index)
-
-            if tangent_value:
-                vertex[elem.name] = elem.pad(tangent_value, blender_loop_vertex.bitangent_sign)
-            else:
-                vertex[elem.name] = elem.pad(list(blender_loop_vertex.normal), blender_loop_vertex.bitangent_sign)
+            vertex[elem.name] = elem.pad(export_Outline.get(blender_loop_vertex.vertex_index, list(blender_loop_vertex.normal)), blender_loop_vertex.bitangent_sign)
 
         elif elem.name.startswith('BINORMAL'):
 
