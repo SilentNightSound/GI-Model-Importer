@@ -1582,11 +1582,10 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
                                                 for x in vertex_group:
                                                     Precalculated_Outline_data.get('Same_Vertex').get(x).add(v_closest_pos)
 
+                    Connected_Faces_bySameVertex = {}
                     for key, value in Precalculated_Outline_data.get('Same_Vertex').items():
-                        
                         for vertex in value:
-                            Precalculated_Outline_data.setdefault('Connected_Faces_bySameVertex', {}).setdefault(key, set()) \
-                            .update(Precalculated_Outline_data.get('Connected_Faces').get(vertex))
+                            Connected_Faces_bySameVertex.setdefault(key, set()).update(Precalculated_Outline_data.get('Connected_Faces').get(vertex))
 
                     ################# CALCULATIONS #####################
 
@@ -1599,7 +1598,7 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
 
                         if not calculate_all_faces and len(vertex_group) == 1: continue
                         
-                        FacesConnectedbySameVertex = list(Precalculated_Outline_data.get('Connected_Faces_bySameVertex').get(key))
+                        FacesConnectedbySameVertex = list(Connected_Faces_bySameVertex.get(key))
                         row = len(FacesConnectedbySameVertex)
                         ConnectedWeightedNormal = numpy.empty(shape=(row,3))
 
