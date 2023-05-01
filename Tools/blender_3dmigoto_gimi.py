@@ -1108,7 +1108,7 @@ def unit_vector(vector):
     return numpy.divide(vector, a, out=numpy.zeros_like(vector), where= a!=0)
 
 def antiparallel_search(ConnectedFaceNormals):
-    a = numpy.einsum('ij,kj->ik' ,ConnectedFaceNormals, ConnectedFaceNormals)
+    a = numpy.einsum('ij,kj->ik', ConnectedFaceNormals, ConnectedFaceNormals)
     return numpy.any((a>-1.000001)&(a<-0.999999))
 
 def precision(x): 
