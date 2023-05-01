@@ -1116,7 +1116,7 @@ def precision(x):
 
 def recursive_connections(Over2_connected_points):
     for entry, connectedpointentry in Over2_connected_points.items():
-        if len(set(connectedpointentry) & Over2_connected_points.keys()) > 1:
+        if len(connectedpointentry & Over2_connected_points.keys()) > 1:
             continue
         else:
             Over2_connected_points.pop(entry)
@@ -1127,42 +1127,35 @@ def recursive_connections(Over2_connected_points):
     
 def checkEnclosedFacesVertex(ConnectedFaces, vg_set, Precalculated_Outline_data):
     
-    Main_connected_points = {} # {point: {connected points}}
+    Main_connected_points = {}
         # connected points non-same vertex
     for face in ConnectedFaces:
-        non_vg_points = []
-        for point in face:
-            if point not in vg_set:
-                non_vg_points.append(point)
+        non_vg_points = [p for p in face if p not in vg_set]
         if len(non_vg_points) > 1:
             for point in non_vg_points:
                 Main_connected_points.setdefault(point, []).extend([x for x in non_vg_points if x != point])
         # connected points same vertex
     New_Main_connect = {}
-    keys_connectM = Main_connected_points.keys()
-    for entry, setvalue in Main_connected_points.items():
-        for val in setvalue:
-            ivspv = Precalculated_Outline_data.get('Same_Vertex').get(val)
-            intersect_sidevertex = ivspv & keys_connectM
-            for i in intersect_sidevertex:
-                New_Main_connect.setdefault(entry, []).append(i)
+    for entry, value in Main_connected_points.items():
+        for val in value:
+            ivspv = Precalculated_Outline_data.get('Same_Vertex').get(val)-{val}
+            intersect_sidevertex = ivspv & Main_connected_points.keys()
+            if intersect_sidevertex:
+                New_Main_connect.setdefault(entry, []).extend(list(intersect_sidevertex))
         # connected points same vertex reverse connection
     for key, value in New_Main_connect.items():
-        Main_connected_points.setdefault(key, []).extend(value)
+        Main_connected_points.get(key).extend(value)
         for val in value:
-            Main_connected_points.setdefault(val, []).append(key)
-    
-    Over2_connected_points = {}
+            Main_connected_points.get(val).append(key)
         # exclude for only 2 way paths 
-    for entry, setvalue in Main_connected_points.items():         
-        if len(setvalue) > 1:
-            Over2_connected_points.setdefault(entry, []).extend(setvalue)
+    Over2_connected_points = {k: set(v) for k, v in Main_connected_points.items() if len(v) > 1}
 
     return recursive_connections(Over2_connected_points)
 
 def blender_vertex_to_3dmigoto_vertex_outline(mesh, obj, blender_loop_vertex, layout, texcoords, export_Outline):
     blender_vertex = mesh.vertices[blender_loop_vertex.vertex_index]
     pos = list(blender_vertex.undeformed_co)
+    blp_normal = list(blender_loop_vertex.normal)
     vertex = {}
     seen_offsets = set()
 
@@ -1193,13 +1186,10 @@ def blender_vertex_to_3dmigoto_vertex_outline(mesh, obj, blender_loop_vertex, la
                 except KeyError:
                     raise Fatal("ERROR: Unable to find COLOR property. Ensure the model you are exporting has a color attribute (of type Face Corner/Byte Color) called COLOR")
         elif elem.name == 'NORMAL':
-            vertex[elem.name] = elem.pad(list(blender_loop_vertex.normal), 0.0)
+            vertex[elem.name] = elem.pad(blp_normal, 0.0)
         elif elem.name.startswith('TANGENT'):
-            
-            vertex[elem.name] = elem.pad(export_Outline.get(blender_loop_vertex.vertex_index, list(blender_loop_vertex.normal)), blender_loop_vertex.bitangent_sign)
-
+            vertex[elem.name] = elem.pad(export_Outline.get(blender_loop_vertex.vertex_index, blp_normal), blender_loop_vertex.bitangent_sign)
         elif elem.name.startswith('BINORMAL'):
-
             pass
         elif elem.name.startswith('BLENDINDICES'):
             i = elem.SemanticIndex * 4
