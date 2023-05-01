@@ -1496,6 +1496,7 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
                     verts_obj = mesh.vertices
                     Pos_Same_Vertices = {}
                     Pos_Close_Vertices = {}
+                    Face_Verts = {}
                     Face_Normals = {}
                     Numpy_Position = {}
                     if detect_edges and toggle_rounding_outline:
@@ -1507,6 +1508,7 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
                         i_poly = poly.index
                         face_vertices = poly.vertices
                         facenormal = numpy.array(poly.normal)
+                        Face_Verts.setdefault(i_poly, face_vertices)
                         Face_Normals.setdefault(i_poly, facenormal)
 
                         for vert in face_vertices:
@@ -1540,7 +1542,7 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
                         for vertex_group in Pos_Same_Vertices.values():
                             FacesConnected = []
                             for x in vertex_group: FacesConnected.extend(Precalculated_Outline_data.get('Connected_Faces').get(x))
-                            ConnectedFaces = [mesh.polygons[x].vertices for x in FacesConnected]
+                            ConnectedFaces = [Face_Verts.get(x) for x in FacesConnected]
                             
                             if not checkEnclosedFacesVertex(ConnectedFaces, vertex_group, Precalculated_Outline_data):
                                 for vertex in vertex_group: break
@@ -1614,9 +1616,7 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
 
                         i = 0
                         for facei in FacesConnectedbySameVertex:
-                            face = mesh.polygons[facei]
-                            vlist = face.vertices
-                            face_index = face.index
+                            vlist = Face_Verts.get(facei)
                             
                             vert0p = set(vlist) & vertex_group
 
@@ -1626,7 +1626,7 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
                                     vn = [Numpy_Position.get(x) for x in vlist if x != vert0]
                                     VectorMatrix0[i] = vn[0]-v0
                                     VectorMatrix1[i] = vn[1]-v0   
-                            ConnectedWeightedNormal[i] = Face_Normals.get(face_index) 
+                            ConnectedWeightedNormal[i] = Face_Normals.get(facei) 
 
                             influence_restriction = len(vert0p)
                             if  influence_restriction > 1:
