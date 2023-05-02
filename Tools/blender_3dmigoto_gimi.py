@@ -1116,9 +1116,7 @@ def precision(x):
 
 def recursive_connections(Over2_connected_points):
     for entry, connectedpointentry in Over2_connected_points.items():
-        if len(connectedpointentry & Over2_connected_points.keys()) > 1:
-            continue
-        else:
+        if len(connectedpointentry & Over2_connected_points.keys()) < 2:
             Over2_connected_points.pop(entry)
             if len(Over2_connected_points) < 3:
                 return False
@@ -1602,11 +1600,6 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
                         
                         FacesConnectedbySameVertex = list(Connected_Faces_bySameVertex.get(key))
                         row = len(FacesConnectedbySameVertex)
-                        ConnectedWeightedNormal = numpy.empty(shape=(row,3))
-
-                        if angle_weighted:
-                            VectorMatrix0 = numpy.empty(shape=(row,3))
-                            VectorMatrix1 = numpy.empty(shape=(row,3))
                         
                         if overlapping_faces:
                             ConnectedFaceNormals = numpy.empty(shape=(row,3))
@@ -1614,6 +1607,11 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
                                 ConnectedFaceNormals[i_normal] = Face_Normals.get(x)
                             if antiparallel_search(ConnectedFaceNormals): continue
 
+                        if angle_weighted:
+                            VectorMatrix0 = numpy.empty(shape=(row,3))
+                            VectorMatrix1 = numpy.empty(shape=(row,3))
+
+                        ConnectedWeightedNormal = numpy.empty(shape=(row,3))
                         i = 0
                         for facei in FacesConnectedbySameVertex:
                             vlist = Face_Verts.get(facei)
