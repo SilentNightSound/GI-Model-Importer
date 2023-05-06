@@ -1116,9 +1116,7 @@ def precision(x):
 
 def recursive_connections(Over2_connected_points):
     for entry, connectedpointentry in Over2_connected_points.items():
-        if len(set(connectedpointentry) & Over2_connected_points.keys()) > 1:
-            continue
-        else:
+        if len(connectedpointentry & Over2_connected_points.keys()) < 2:
             Over2_connected_points.pop(entry)
             if len(Over2_connected_points) < 3:
                 return False
@@ -1127,42 +1125,35 @@ def recursive_connections(Over2_connected_points):
     
 def checkEnclosedFacesVertex(ConnectedFaces, vg_set, Precalculated_Outline_data):
     
-    Main_connected_points = {} # {point: {connected points}}
+    Main_connected_points = {}
         # connected points non-same vertex
     for face in ConnectedFaces:
-        non_vg_points = []
-        for point in face:
-            if point not in vg_set:
-                non_vg_points.append(point)
+        non_vg_points = [p for p in face if p not in vg_set]
         if len(non_vg_points) > 1:
             for point in non_vg_points:
                 Main_connected_points.setdefault(point, []).extend([x for x in non_vg_points if x != point])
         # connected points same vertex
     New_Main_connect = {}
-    keys_connectM = Main_connected_points.keys()
-    for entry, setvalue in Main_connected_points.items():
-        for val in setvalue:
-            ivspv = Precalculated_Outline_data.get('Same_Vertex').get(val)
-            intersect_sidevertex = ivspv & keys_connectM
-            for i in intersect_sidevertex:
-                New_Main_connect.setdefault(entry, []).append(i)
+    for entry, value in Main_connected_points.items():
+        for val in value:
+            ivspv = Precalculated_Outline_data.get('Same_Vertex').get(val)-{val}
+            intersect_sidevertex = ivspv & Main_connected_points.keys()
+            if intersect_sidevertex:
+                New_Main_connect.setdefault(entry, []).extend(list(intersect_sidevertex))
         # connected points same vertex reverse connection
     for key, value in New_Main_connect.items():
-        Main_connected_points.setdefault(key, []).extend(value)
+        Main_connected_points.get(key).extend(value)
         for val in value:
-            Main_connected_points.setdefault(val, []).append(key)
-    
-    Over2_connected_points = {}
+            Main_connected_points.get(val).append(key)
         # exclude for only 2 way paths 
-    for entry, setvalue in Main_connected_points.items():         
-        if len(setvalue) > 1:
-            Over2_connected_points.setdefault(entry, []).extend(setvalue)
+    Over2_connected_points = {k: set(v) for k, v in Main_connected_points.items() if len(v) > 1}
 
     return recursive_connections(Over2_connected_points)
 
 def blender_vertex_to_3dmigoto_vertex_outline(mesh, obj, blender_loop_vertex, layout, texcoords, export_Outline):
     blender_vertex = mesh.vertices[blender_loop_vertex.vertex_index]
     pos = list(blender_vertex.undeformed_co)
+    blp_normal = list(blender_loop_vertex.normal)
     vertex = {}
     seen_offsets = set()
 
@@ -1193,13 +1184,10 @@ def blender_vertex_to_3dmigoto_vertex_outline(mesh, obj, blender_loop_vertex, la
                 except KeyError:
                     raise Fatal("ERROR: Unable to find COLOR property. Ensure the model you are exporting has a color attribute (of type Face Corner/Byte Color) called COLOR")
         elif elem.name == 'NORMAL':
-            vertex[elem.name] = elem.pad(list(blender_loop_vertex.normal), 0.0)
+            vertex[elem.name] = elem.pad(blp_normal, 0.0)
         elif elem.name.startswith('TANGENT'):
-            
-            vertex[elem.name] = elem.pad(export_Outline.get(blender_loop_vertex.vertex_index, list(blender_loop_vertex.normal)), blender_loop_vertex.bitangent_sign)
-
+            vertex[elem.name] = elem.pad(export_Outline.get(blender_loop_vertex.vertex_index, blp_normal), blender_loop_vertex.bitangent_sign)
         elif elem.name.startswith('BINORMAL'):
-
             pass
         elif elem.name.startswith('BLENDINDICES'):
             i = elem.SemanticIndex * 4
@@ -1506,6 +1494,7 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
                     verts_obj = mesh.vertices
                     Pos_Same_Vertices = {}
                     Pos_Close_Vertices = {}
+                    Face_Verts = {}
                     Face_Normals = {}
                     Numpy_Position = {}
                     if detect_edges and toggle_rounding_outline:
@@ -1517,6 +1506,7 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
                         i_poly = poly.index
                         face_vertices = poly.vertices
                         facenormal = numpy.array(poly.normal)
+                        Face_Verts.setdefault(i_poly, face_vertices)
                         Face_Normals.setdefault(i_poly, facenormal)
 
                         for vert in face_vertices:
@@ -1550,7 +1540,7 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
                         for vertex_group in Pos_Same_Vertices.values():
                             FacesConnected = []
                             for x in vertex_group: FacesConnected.extend(Precalculated_Outline_data.get('Connected_Faces').get(x))
-                            ConnectedFaces = [mesh.polygons[x].vertices for x in FacesConnected]
+                            ConnectedFaces = [Face_Verts.get(x) for x in FacesConnected]
                             
                             if not checkEnclosedFacesVertex(ConnectedFaces, vertex_group, Precalculated_Outline_data):
                                 for vertex in vertex_group: break
@@ -1592,11 +1582,10 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
                                                 for x in vertex_group:
                                                     Precalculated_Outline_data.get('Same_Vertex').get(x).add(v_closest_pos)
 
+                    Connected_Faces_bySameVertex = {}
                     for key, value in Precalculated_Outline_data.get('Same_Vertex').items():
-                        
                         for vertex in value:
-                            Precalculated_Outline_data.setdefault('Connected_Faces_bySameVertex', {}).setdefault(key, set()) \
-                            .update(Precalculated_Outline_data.get('Connected_Faces').get(vertex))
+                            Connected_Faces_bySameVertex.setdefault(key, set()).update(Precalculated_Outline_data.get('Connected_Faces').get(vertex))
 
                     ################# CALCULATIONS #####################
 
@@ -1609,13 +1598,8 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
 
                         if not calculate_all_faces and len(vertex_group) == 1: continue
                         
-                        FacesConnectedbySameVertex = list(Precalculated_Outline_data.get('Connected_Faces_bySameVertex').get(key))
+                        FacesConnectedbySameVertex = list(Connected_Faces_bySameVertex.get(key))
                         row = len(FacesConnectedbySameVertex)
-                        ConnectedWeightedNormal = numpy.empty(shape=(row,3))
-
-                        if angle_weighted:
-                            VectorMatrix0 = numpy.empty(shape=(row,3))
-                            VectorMatrix1 = numpy.empty(shape=(row,3))
                         
                         if overlapping_faces:
                             ConnectedFaceNormals = numpy.empty(shape=(row,3))
@@ -1623,11 +1607,14 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
                                 ConnectedFaceNormals[i_normal] = Face_Normals.get(x)
                             if antiparallel_search(ConnectedFaceNormals): continue
 
+                        if angle_weighted:
+                            VectorMatrix0 = numpy.empty(shape=(row,3))
+                            VectorMatrix1 = numpy.empty(shape=(row,3))
+
+                        ConnectedWeightedNormal = numpy.empty(shape=(row,3))
                         i = 0
                         for facei in FacesConnectedbySameVertex:
-                            face = mesh.polygons[facei]
-                            vlist = face.vertices
-                            face_index = face.index
+                            vlist = Face_Verts.get(facei)
                             
                             vert0p = set(vlist) & vertex_group
 
@@ -1637,7 +1624,7 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
                                     vn = [Numpy_Position.get(x) for x in vlist if x != vert0]
                                     VectorMatrix0[i] = vn[0]-v0
                                     VectorMatrix1[i] = vn[1]-v0   
-                            ConnectedWeightedNormal[i] = Face_Normals.get(face_index) 
+                            ConnectedWeightedNormal[i] = Face_Normals.get(facei) 
 
                             influence_restriction = len(vert0p)
                             if  influence_restriction > 1:
@@ -2355,13 +2342,13 @@ class Export3DMigotoGenshin(bpy.types.Operator, ExportHelper):
 
     angle_weighted : BoolProperty(
         name="Weight by angle",
-        description="Calculate angles to improve accuracy of outlines. Slow",
+        description="Optional: calculate angles to improve accuracy of outlines. Slow",
         default=False,
     )
 
     overlapping_faces : BoolProperty(
         name="Ignore overlapping faces",
-        description="Detect and ignore overlapping faces to avoid buggy outlines. Recommended if you have overlaps",
+        description="Detect and ignore overlapping/antiparallel faces to avoid buggy outlines",
         default=False,
     )
 
@@ -2373,7 +2360,7 @@ class Export3DMigotoGenshin(bpy.types.Operator, ExportHelper):
 
     calculate_all_faces : BoolProperty(
         name="Calculate outline for all faces",
-        description="Calculate outline for all faces, which is especially useful if you have any flat shaded internal faces. Slow",
+        description="Calculate outline for all faces, which is especially useful if you have any flat shaded non-edge faces. Slow",
         default=False,
     )
 
