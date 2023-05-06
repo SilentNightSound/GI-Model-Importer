@@ -87,7 +87,7 @@ def main():
                 with open(os.path.join(f"{args.name}Mod", f"{current_name}{current_object}.ib"), "wb") as f:
                     f.write(ib)
                 ib_override_ini += f"[TextureOverride{current_name}{current_object}]\nhash = {component['ib']}\nmatch_first_index = {component['object_indexes'][i]}\nib = Resource{current_name}{current_object}IB\n"
-                ib_res_ini += f"[Resource{current_name}{current_object}IB]\ntype = Buffer\nformat = DXGI_FORMAT_R16_UINT\nfilename = {current_name}{current_object}.ib\n\n"
+                ib_res_ini += f"[Resource{current_name}{current_object}IB]\ntype = Buffer\nformat = DXGI_FORMAT_R32_UINT\nfilename = {current_name}{current_object}.ib\n\n"
 
                 if len(position)%position_stride != 0:
                     print("ERROR: VB buffer length does not match stride")
@@ -287,8 +287,8 @@ def collect_ib(folder, name, classification, offset):
         data = bytearray(data)
         i = 0
         while i < len(data):
-            ib += struct.pack('1H', struct.unpack('1H', data[i:i+2])[0]+offset)
-            i += 2
+            ib += struct.pack('1I', struct.unpack('1I', data[i:i+4])[0]+offset)
+            i += 4
     return ib
 
 

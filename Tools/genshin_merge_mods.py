@@ -3,7 +3,8 @@
 #   Takoyaki#0697 (for demonstrating principle and creating the first proof of concept)
 #   HazrateGolabi#1364 (for implementing the code to limit toggles to the on-screen character)
 
-# V2.2 of Mod Merger/Toggle Creator Script
+#   HummyR#8131, Modder4869#4818 (3.0+ Character Shader Fix)
+# V3.0 of Mod Merger/Toggle Creator Script
 
 # Merges multiple mods into one, which can be toggled in-game by pressing a key
 
@@ -29,14 +30,12 @@ def main():
     parser.add_argument("-k", "--key", type=str, default="", help="Key to press to switch mods")
     parser.add_argument("-c", "--compress",  action="store_true", help="Makes the output mods as small as possible (warning: difficult to reverse, have backups)")
     parser.add_argument("-a", "--active", action="store_true",  default=True, help="Only active character gets swapped when swapping)")
-    parser.add_argument("-d", "--disable", action="store_true", help="Last slot will be the original model)")
+    parser.add_argument("-ref", "--reflection", action="store_true", help="Applies reflection fix for 3.0+ characters")
 
     args = parser.parse_args()
-    disable_mod_flag = 0
+
     print("\nGenshin Mod Merger/Toggle Creator Script\n")
-    if args.disable:
-        print("Last slot is chosen to be the default UN-Modded original model")
-        disable_mod_flag = 1
+
     if args.active:
         print("Setting to swap only the active(on-screen) character")
 
@@ -82,19 +81,29 @@ def main():
 
     constants =    "; Constants ---------------------------\n\n"
     overrides =    "; Overrides ---------------------------\n\n"
+    shader    =    "; Shader ------------------------------\n\n"
     commands  =    "; CommandList -------------------------\n\n"
     resources =    "; Resources ---------------------------\n\n"
 
     swapvar = "swapvar"
     constants += f"[Constants]\nglobal persist ${swapvar} = 0\n"
     if args.active:
-        constants += f"global $ActiveCharacter = 0\n"
+        constants += f"global $active\n"
+    if args.reflection:
+        constants += f"global $reflection\n"
+    constants += "global $creditinfo = 0\n"
     constants += f"\n[KeySwap]\n"
     if args.active:
-        constants += f"condition = $ActiveCharacter == 1\n"
-    constants += f"key = {key}\ntype = cycle\n${swapvar} = {','.join([str(x) for x in range(len(ini_files) + disable_mod_flag)])}\n\n"
+        constants += f"condition = $active == 1\n"
+    constants += f"key = {key}\ntype = cycle\n${swapvar} = {','.join([str(x) for x in range(len(ini_files))])}\n$creditinfo = 0\n\n"
+    if args.active or args.reflection:
+        constants += f"[Present]\n"
     if args.active:
-        constants += f"[Present]\npost $ActiveCharacter = 0\n\n"
+        constants += f"post $active = 0\n"
+    if args.reflection:
+        constants += f"post $reflection = 0\n"
+
+
 
     print("Parsing ini sections")
     all_mod_data = []
@@ -109,9 +118,28 @@ def main():
                 all_mod_data.append(mod_data)
         ini_group += 1
 
+    if [x for x in all_mod_data if "name" in x and x["name"].lower() == "creditinfo"]:
+        constants += "run = CommandListCreditInfo\n\n"
+    else:
+        constants += "\n"
+
+    if [x for x in all_mod_data if "name" in x and x["name"].lower() == "transparency"]:
+        shader += """[CustomShaderTransparency]
+blend = ADD BLEND_FACTOR INV_BLEND_FACTOR
+blend_factor[0] = 0.5
+blend_factor[1] = 0.5
+blend_factor[2] = 0.5
+blend_factor[3] = 1
+handling = skip
+drawindexed = auto
+
+"""
+
     print("Calculating overrides and resources")
     command_data = {}
     seen_hashes = {}
+    reflection = {}
+    n = 1
     for i in range(len(all_mod_data)):
         # Overrides. Since we need these to generate the command lists later, need to store the data
         if "hash" in all_mod_data[i]:
@@ -127,16 +155,23 @@ def main():
                 # These are custom commands GIMI implements, they do not need a corresponding command list
                 if "VertexLimitRaise" not in all_mod_data[i]["name"]:
                     overrides += f"run = CommandList{all_mod_data[i]['name']}\n"
+                if index != -1 and args.reflection:
+                    overrides += f"ResourceRef{all_mod_data[i]['name']}Diffuse = reference ps-t1\nResourceRef{all_mod_data[i]['name']}LightMap = reference ps-t2\n$reflection = {n}\n"
+                    reflection[all_mod_data[i]['name']] = f"ResourceRef{all_mod_data[i]['name']}Diffuse,ResourceRef{all_mod_data[i]['name']}LightMap,{n}"
+                    n+=1
                 if args.active:
                     if "Position" in all_mod_data[i]["name"]:
-                        overrides += f'$ActiveCharacter = 1\n'
+                        overrides += f"$active = 1\n"
+
                 overrides += "\n"
             # Otherwise, we have seen the hash before and we just need to append it to the commandlist
             else:
                 command_data[(all_mod_data[i]["hash"], index)].append(all_mod_data[i])
-
+        elif "header" in all_mod_data[i] and "CommandList" in all_mod_data[i]["header"]:
+            command_data.setdefault((all_mod_data[i]["name"],0),[]).append(all_mod_data[i])
         # Resources
-        elif "filename" in all_mod_data[i]:
+        elif "filename" in all_mod_data[i] or "type" in all_mod_data[i]:
+
             resources += f"[{all_mod_data[i]['header']}{all_mod_data[i]['name']}.{all_mod_data[i]['ini_group']}]\n"
             for command in all_mod_data[i]:
                 if command in ["header", "name", "location", "ini_group"]:
@@ -154,8 +189,47 @@ def main():
                     resources += f"{command} = {all_mod_data[i][command]}\n"
             resources += "\n"
 
+    if args.reflection:
+        print("Character Shader Fix")
+        refresources = ''
+        CommandPart = ['ReflectionTexture', 'Outline']
+        shadercode = """
+[ShaderRegexCharReflection]
+shader_model = ps_5_0
+run = CommandListReflectionTexture
+[ShaderRegexCharReflection.pattern]
+discard_n\w+ r\d\.\w+\\n
+lt r\d\.\w+, l\(0\.010000\), r\d\.\w+\\n
+and r\d\.\w+, r\d\.\w+, r\d\.\w+\\n
+
+[ShaderRegexCharOutline]
+shader_model = ps_5_0
+run = CommandListOutline
+[ShaderRegexCharOutline.pattern]
+mov o0\.w, l\(0\)\\n
+mov o1\.xyz, r0\.xyzx\\n
+        """
+        shader += f"{shadercode}\n"
+        for i in range(len(CommandPart)):
+            ref  = f"[CommandList{CommandPart[i]}]\n"
+            ref += f"if $reflection != 0\n\tif "
+            for x in reflection:
+                r = reflection[x].split(",")
+                ref += f"$reflection == {r[2]}\n"
+                ps = [['ps-t0','ps-t1'],['ps-t1','ps-t2']]
+                ref += f"\t\t{ps[i][0]} = copy {r[0]}\n\t\t{ps[i][1]} = copy {r[1]}\n"
+                ref += f"\telse if "
+                if i == 0:
+                    refresources += f"[{r[0]}]\n[{r[1]}]\n"
+            ref = ref.rsplit("else if",1)[0] + "endif\n"
+            ref += f"drawindexed=auto\n"
+            ref += f"$reflection = 0\n"
+            ref += f"endif\n\n"
+            commands += ref
 
     print("Constructing command lists")
+    tabs = 1
+
     for hash, index in command_data:
         if "VertexLimitRaise" in command_data[(hash, index)][0]["name"]:
             continue
@@ -165,20 +239,48 @@ def main():
             for command in model:
                 if command in ["header", "name", "hash", "match_first_index", "location", "ini_group"]:
                     continue
-                commands += f"\t{command} = {model[command]}"
-                if command[:2] in ["vb", "ib", "ps", "vs", "th"]:
-                    commands += f".{model['ini_group']}"
+
+                if command == "endif":
+                    tabs -= 1
+                    for i in range(tabs):
+                        commands += "\t"
+                    commands += f"{command}"
+                elif "else if" in command:
+                    tabs -= 1
+                    for i in range(tabs):
+                        commands += "\t"
+                    commands += f"{command} = {model[command]}"
+                    tabs += 1
+                else:
+                    for i in range(tabs):
+                        commands += "\t"
+                    if command[:2] == "if" or command[:7] == "else if":
+                        commands += f"{command} == {model[command]}"
+                    else:
+                        commands += f"{command} = {model[command]}"
+                    if command[:2] == "if":
+                        tabs += 1
+                    elif (command[:2] in ["vb", "ib", "ps", "vs", "th"] or "Resource" in model[command]) and model[command].lower() != "null":
+                        commands += f".{model['ini_group']}"
                 commands += "\n"
             commands += "else if "
         commands = commands.rsplit("else if",1)[0] + "endif\n\n"
 
     print("Printing results")
     result = f"; Merged Mod: {', '.join([x for x in ini_files])}\n\n"
+    if args.reflection:
+        result += f"{refresources}\n"
     result += constants
+    result += shader
     result += overrides
     result += commands
     result += resources
-    result += "\n\n; .ini generated by GIMI (Genshin-Impact-Model-Importer) mod merger script\n"
+    if args.reflection:
+        result += "\n\n; For fixing green reflections and broken outlines colors on 3.0+ characters\n"
+    else:
+        result += "\n\n"
+    result += "; .ini generated by GIMI (Genshin-Impact-Model-Importer) mod merger script\n"
+
     result += "; If you have any issues or find any bugs, please open a ticket at https://github.com/SilentNightSound/GI-Model-Importer/issues or contact SilentNightSound#7430 on discord"
 
     with open(args.name, "w", encoding="utf-8") as f:
@@ -257,21 +359,34 @@ def get_user_order(ini_files):
 # Parses a section from the .ini file
 def parse_section(section):
     mod_data = {}
-    recognized_header = ("[TextureOverride", "[ShaderOverride", "[Resource")
+    recognized_header = ("[TextureOverride", "[ShaderOverride", "[Resource", "[Constants", "[Present", "[CommandList", "[CustomShader")
     for line in section.splitlines():
         if not line.strip() or line[0] == ";":  # comments and empty lines
             continue
 
-        # [] lines
+        # Headers
         for header in recognized_header:
             if header in line:
+                # I give up on trying to merge the reflection fix, it's way too much work. Just re-apply after merging
+                if "CommandListReflectionTexture" in line or "CommandListOutline" in line:
+                    return {}
                 mod_data["header"] = header[1:]
                 mod_data["name"] = line.split(header)[1][:-1]
                 break
-
-        # All other lines
-        if "=" in line:
+        # Conditionals
+        if "==" in line:
+            key, data = line.split("==",1)
+            mod_data[key.strip()] = data.strip()
+        elif "endif" in line:
+            key, data = "endif", ""
+            mod_data[key.strip()] = data.strip()
+        # Properties
+        elif "=" in line:
             key, data = line.split("=")
+            # See note on reflection fix above
+            if "CharacterIB" in key or "ResourceRef" in key:
+                continue
+
             mod_data[key.strip()] = data.strip()
 
     return mod_data

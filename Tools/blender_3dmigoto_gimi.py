@@ -2,7 +2,12 @@
 
 # Original plugin by DarkStarSword (https://github.com/DarkStarSword/3d-fixes/blob/master/blender_3dmigoto.py)
 # Updated to support 3.0 by MicroKnightmare from the DOA modding discord
+
+####### AGMG Discord Contributors #######
+
 # Modified by SilentNightSound#7430 to add Genshin support and some more Genshin-specific features
+# QOL feature (ignoring hidden meshes while exporting) added by HazrateGolabi#1364
+# HummyR#8131
 
 # bl_info seems to be parsed as text outside of the normal module loading by
 # Blender, meaning we can't dynamically set the Blender version to indicate the
@@ -961,7 +966,10 @@ def import_3dmigoto_vb_ib(operator, context, paths, flip_texcoord_v=True, axis_f
     if ib is not None:
         import_faces_from_ib(mesh, ib)
         # Attach the index buffer layout to the object for later exporting.
-        obj['3DMigoto:IBFormat'] = ib.format
+        if ib.format == "DXGI_FORMAT_R16_UINT":
+            obj['3DMigoto:IBFormat'] = "DXGI_FORMAT_R32_UINT"
+        else:
+            obj['3DMigoto:IBFormat'] = ib.format
         obj['3DMigoto:FirstIndex'] = ib.first
     else:
         import_faces_from_vb(mesh, vb)
@@ -1008,6 +1016,7 @@ def mesh_triangulate(me):
 
 def blender_vertex_to_3dmigoto_vertex(mesh, obj, blender_loop_vertex, layout, texcoords):
     blender_vertex = mesh.vertices[blender_loop_vertex.vertex_index]
+    pos = list(blender_vertex.undeformed_co)
     vertex = {}
     seen_offsets = set()
 
@@ -1025,23 +1034,26 @@ def blender_vertex_to_3dmigoto_vertex(mesh, obj, blender_loop_vertex, layout, te
 
         if elem.name == 'POSITION':
             if 'POSITION.w' in mesh.vertex_layers_float:
-                vertex[elem.name] = list(blender_vertex.undeformed_co) + \
-                                        [mesh.vertex_layers_float['POSITION.w'].data[blender_loop_vertex.vertex_index].value]
+                vertex[elem.name] = pos + [mesh.vertex_layers_float['POSITION.w'].data[blender_loop_vertex.vertex_index].value]
             else:
-                vertex[elem.name] = elem.pad(list(blender_vertex.undeformed_co), 1.0)
+                vertex[elem.name] = elem.pad(pos, 1.0)
         elif elem.name.startswith('COLOR'):
             if elem.name in mesh.vertex_colors:
                 vertex[elem.name] = elem.clip(list(mesh.vertex_colors[elem.name].data[blender_loop_vertex.index].color))
             else:
-                vertex[elem.name] = list(mesh.vertex_colors[elem.name+'.RGB'].data[blender_loop_vertex.index].color)[:3] + \
-                                        [mesh.vertex_colors[elem.name+'.A'].data[blender_loop_vertex.index].color[0]]
+                try:
+                    vertex[elem.name] = list(mesh.vertex_colors[elem.name+'.RGB'].data[blender_loop_vertex.index].color)[:3] + \
+                                            [mesh.vertex_colors[elem.name+'.A'].data[blender_loop_vertex.index].color[0]]
+                except KeyError:
+                    raise Fatal("ERROR: Unable to find COLOR property. Ensure the model you are exporting has a color attribute (of type Face Corner/Byte Color) called COLOR")
         elif elem.name == 'NORMAL':
             vertex[elem.name] = elem.pad(list(blender_loop_vertex.normal), 0.0)
         elif elem.name.startswith('TANGENT'):
             # DOAXVV has +1/-1 in the 4th component. Not positive what this is,
             # but guessing maybe the bitangent sign? Not even sure it is used...
             # FIXME: Other games
-            vertex[elem.name] = elem.pad(list(blender_loop_vertex.tangent), blender_loop_vertex.bitangent_sign)
+                #temporarily set tangent to normal for Anime Game since blender doesnt wanna import tangent
+            vertex[elem.name] = elem.pad(list(blender_loop_vertex.normal), blender_loop_vertex.bitangent_sign)
         elif elem.name.startswith('BINORMAL'):
             # Some DOA6 meshes (skirts) use BINORMAL, but I'm not certain it is
             # actually the binormal. These meshes are weird though, since they
@@ -1091,6 +1103,124 @@ def blender_vertex_to_3dmigoto_vertex(mesh, obj, blender_loop_vertex, layout, te
 
     return vertex
 
+def unit_vector(vector):
+    a = numpy.linalg.norm(vector, axis=max(len(vector.shape)-1,0), keepdims=True)
+    return numpy.divide(vector, a, out=numpy.zeros_like(vector), where= a!=0)
+
+def antiparallel_search(ConnectedFaceNormals):
+    a = numpy.einsum('ij,kj->ik', ConnectedFaceNormals, ConnectedFaceNormals)
+    return numpy.any((a>-1.000001)&(a<-0.999999))
+
+def precision(x): 
+    return -int(numpy.floor(numpy.log10(x)))
+
+def recursive_connections(Over2_connected_points):
+    for entry, connectedpointentry in Over2_connected_points.items():
+        if len(connectedpointentry & Over2_connected_points.keys()) < 2:
+            Over2_connected_points.pop(entry)
+            if len(Over2_connected_points) < 3:
+                return False
+            return recursive_connections(Over2_connected_points)
+    return True
+    
+def checkEnclosedFacesVertex(ConnectedFaces, vg_set, Precalculated_Outline_data):
+    
+    Main_connected_points = {}
+        # connected points non-same vertex
+    for face in ConnectedFaces:
+        non_vg_points = [p for p in face if p not in vg_set]
+        if len(non_vg_points) > 1:
+            for point in non_vg_points:
+                Main_connected_points.setdefault(point, []).extend([x for x in non_vg_points if x != point])
+        # connected points same vertex
+    New_Main_connect = {}
+    for entry, value in Main_connected_points.items():
+        for val in value:
+            ivspv = Precalculated_Outline_data.get('Same_Vertex').get(val)-{val}
+            intersect_sidevertex = ivspv & Main_connected_points.keys()
+            if intersect_sidevertex:
+                New_Main_connect.setdefault(entry, []).extend(list(intersect_sidevertex))
+        # connected points same vertex reverse connection
+    for key, value in New_Main_connect.items():
+        Main_connected_points.get(key).extend(value)
+        for val in value:
+            Main_connected_points.get(val).append(key)
+        # exclude for only 2 way paths 
+    Over2_connected_points = {k: set(v) for k, v in Main_connected_points.items() if len(v) > 1}
+
+    return recursive_connections(Over2_connected_points)
+
+def blender_vertex_to_3dmigoto_vertex_outline(mesh, obj, blender_loop_vertex, layout, texcoords, export_Outline):
+    blender_vertex = mesh.vertices[blender_loop_vertex.vertex_index]
+    pos = list(blender_vertex.undeformed_co)
+    blp_normal = list(blender_loop_vertex.normal)
+    vertex = {}
+    seen_offsets = set()
+
+    # TODO: Warn if vertex is in too many vertex groups for this layout,
+    # ignoring groups with weight=0.0
+    vertex_groups = sorted(blender_vertex.groups, key=lambda x: x.weight, reverse=True)
+
+    for elem in layout:
+        if elem.InputSlotClass != 'per-vertex':
+            continue
+
+        if (elem.InputSlot, elem.AlignedByteOffset) in seen_offsets:
+            continue
+        seen_offsets.add((elem.InputSlot, elem.AlignedByteOffset))
+
+        if elem.name == 'POSITION':
+            if 'POSITION.w' in mesh.vertex_layers_float:
+                vertex[elem.name] = pos + [mesh.vertex_layers_float['POSITION.w'].data[blender_loop_vertex.vertex_index].value]
+            else:
+                vertex[elem.name] = elem.pad(pos, 1.0)
+        elif elem.name.startswith('COLOR'):
+            if elem.name in mesh.vertex_colors:
+                vertex[elem.name] = elem.clip(list(mesh.vertex_colors[elem.name].data[blender_loop_vertex.index].color))
+            else:
+                try:
+                    vertex[elem.name] = list(mesh.vertex_colors[elem.name+'.RGB'].data[blender_loop_vertex.index].color)[:3] + \
+                                            [mesh.vertex_colors[elem.name+'.A'].data[blender_loop_vertex.index].color[0]]
+                except KeyError:
+                    raise Fatal("ERROR: Unable to find COLOR property. Ensure the model you are exporting has a color attribute (of type Face Corner/Byte Color) called COLOR")
+        elif elem.name == 'NORMAL':
+            vertex[elem.name] = elem.pad(blp_normal, 0.0)
+        elif elem.name.startswith('TANGENT'):
+            vertex[elem.name] = elem.pad(export_Outline.get(blender_loop_vertex.vertex_index, blp_normal), blender_loop_vertex.bitangent_sign)
+        elif elem.name.startswith('BINORMAL'):
+            pass
+        elif elem.name.startswith('BLENDINDICES'):
+            i = elem.SemanticIndex * 4
+            vertex[elem.name] = elem.pad([ x.group for x in vertex_groups[i:i+4] ], 0)
+        elif elem.name.startswith('BLENDWEIGHT'):
+            # TODO: Warn if vertex is in too many vertex groups for this layout
+            i = elem.SemanticIndex * 4
+            vertex[elem.name] = elem.pad([ x.weight for x in vertex_groups[i:i+4] ], 0.0)
+        elif elem.name.startswith('TEXCOORD') and elem.is_float():
+            # FIXME: Handle texcoords of other dimensions
+            uvs = []
+            for uv_name in ('%s.xy' % elem.name, '%s.zw' % elem.name):
+                if uv_name in texcoords:
+                    uvs += list(texcoords[uv_name][blender_loop_vertex.index])
+
+            vertex[elem.name] = uvs
+        else:
+            # Unhandled semantics are saved in vertex layers
+            data = []
+            for component in 'xyzw':
+                layer_name = '%s.%s' % (elem.name, component)
+                if layer_name in mesh.vertex_layers_int:
+                    data.append(mesh.vertex_layers_int[layer_name].data[blender_loop_vertex.vertex_index].value)
+                elif layer_name in mesh.vertex_layers_float:
+                    data.append(mesh.vertex_layers_float[layer_name].data[blender_loop_vertex.vertex_index].value)
+            if data:
+                vertex[elem.name] = data
+
+        if elem.name not in vertex:
+            print('NOTICE: Unhandled vertex element: %s' % elem.name)
+
+    return vertex
+
 def write_fmt_file(f, vb, ib):
     f.write('stride: %i\n' % vb.layout.stride)
     f.write('topology: %s\n' % vb.topology)
@@ -1115,7 +1245,11 @@ def export_3dmigoto(operator, context, vb_path, ib_path, fmt_path):
     indices = [ l.vertex_index for l in mesh.loops ]
     faces = [ indices[i:i+3] for i in range(0, len(indices), 3) ]
     try:
-        ib_format = obj['3DMigoto:IBFormat']
+        if obj['3DMigoto:IBFormat'] == "DXGI_FORMAT_R16_UINT":
+            ib_format = "DXGI_FORMAT_R32_UINT"
+        else:
+            ib_format = obj['3DMigoto:IBFormat']
+
     except KeyError:
         ib = None
         raise Fatal('FIXME: Add capability to export without an index buffer')
@@ -1189,14 +1323,14 @@ def export_3dmigoto(operator, context, vb_path, ib_path, fmt_path):
     write_fmt_file(open(fmt_path, 'w'), vb, ib)
 
 
-def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fmt_path, use_original_tangents):
+def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fmt_path, use_foldername, ignore_hidden, only_selected, no_ramps, delete_intermediate, credit, Outline_Properties):
     scene = bpy.context.scene
 
     # Quick sanity check
     # If we cannot find any objects in the scene with or any files in the folder with the given name, default to using
     #   the folder name
-    if not [obj for obj in scene.objects if object_name.lower() in obj.name.lower()] \
-            or not [file for file in os.listdir(os.path.dirname(vb_path)) if object_name.lower() in file.lower()]:
+    if use_foldername or (not [obj for obj in scene.objects if object_name.lower() in obj.name.lower()] \
+            or not [file for file in os.listdir(os.path.dirname(vb_path)) if object_name.lower() in file.lower()]):
         object_name = os.path.basename(os.path.dirname(vb_path))
         if not [obj for obj in scene.objects if object_name.lower() in obj.name.lower()] \
             or not [file for file in os.listdir(os.path.dirname(vb_path)) if object_name.lower() in file.lower()]:
@@ -1225,8 +1359,17 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
         relevant_objects = ["" for i in range(len(base_classifications) + 8)]
         # Surprisingly annoying to extend this to n objects thanks to the choice of using Extra2, Extra3, etc.
         # Iterate through scene objects, looking for ones that match the specified character name and object type
-        for obj in scene.objects:
+
+        if only_selected:
+            selected_objects = [obj for obj in bpy.context.selected_objects]
+        else:
+            selected_objects = scene.objects
+
+        for obj in selected_objects:
             print(obj.name.lower())
+            #Ignore all hidden meshes while searching if ignore_hidden flag is set
+            if ignore_hidden and not obj.visible_get():
+                continue
             for i, c in enumerate(base_classifications):
                 if f"{current_name}{c}".lower() in obj.name.lower():
                     # Even though we have found an object, since the final classification can be extended need to check
@@ -1264,7 +1407,10 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
             ib_path  = os.path.join(os.path.dirname(ib_path), current_name + classification + ".ib")
             fmt_path = os.path.join(os.path.dirname(fmt_path), current_name + classification + ".fmt")
 
-            stride = obj['3DMigoto:VBStride']
+            try:
+                stride = obj['3DMigoto:VBStride']
+            except KeyError:
+                raise Fatal("ERROR: Unable to find 3DMigoto:VBStride property, double check the object you are exporting has the custom 3dmigoto properties")
             layout = InputLayout(obj['3DMigoto:VBLayout'], stride=stride)
             if hasattr(context, "evaluated_depsgraph_get"): # 2.80
                 mesh = obj.evaluated_get(context.evaluated_depsgraph_get()).to_mesh()
@@ -1272,93 +1418,285 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
                 mesh = obj.to_mesh(context.scene, True, 'PREVIEW', calc_tessface=False)
             mesh_triangulate(mesh)
 
-            indices = [ l.vertex_index for l in mesh.loops ]
-            faces = [ indices[i:i+3] for i in range(0, len(indices), 3) ]
             try:
-                ib_format = obj['3DMigoto:IBFormat']
+                if obj['3DMigoto:IBFormat'] == "DXGI_FORMAT_R16_UINT":
+                    ib_format = "DXGI_FORMAT_R32_UINT"
+                else:
+                    ib_format = obj['3DMigoto:IBFormat']
             except KeyError:
                 ib = None
                 raise Fatal('FIXME: Add capability to export without an index buffer')
             else:
                 ib = IndexBuffer(ib_format)
 
-            # Calculates tangents and makes loop normals valid (still with our
-            # custom normal data from import time):
-            mesh.calc_tangents()
+            if len(mesh.polygons) == 0:
+                open(vb_path, 'w').close()
+                open(ib_path, 'w').close()
+                vb = VertexBuffer(layout=layout)
+                write_fmt_file(open(fmt_path, 'w'), vb, ib)
 
-            texcoord_layers = {}
-            count = 0
-            for uv_layer in mesh.uv_layers:
-                texcoords = {}
-                uvname = uv_layer.name
-                if "TEXCOORD" not in uv_layer.name:
-                    if count == 0:
-                        uvname = "TEXCOORD.xy"
-                    else:
-                        uvname = f"TEXCOORD{count}.xy"
+            else:
+
+                indices = [ l.vertex_index for l in mesh.loops ]
+                faces = [ indices[i:i+3] for i in range(0, len(indices), 3) ]
+
+                # Calculates tangents and makes loop normals valid (still with our
+                # custom normal data from import time):
                 try:
-                    flip_texcoord_v = obj['3DMigoto:' + uvname]['flip_v']
-                    if flip_texcoord_v:
-                        flip_uv = lambda uv: (uv[0], 1.0 - uv[1])
-                    else:
+                    mesh.calc_tangents()
+                except RuntimeError:
+                    raise Fatal ("ERROR: Unable to find UV map. Double check UV map exists and is called TEXCOORD.xy")
+
+
+                texcoord_layers = {}
+                count = 0
+                for uv_layer in mesh.uv_layers:
+                    texcoords = {}
+                    uvname = uv_layer.name
+                    if "TEXCOORD" not in uv_layer.name:
+                        if count == 0:
+                            uvname = "TEXCOORD.xy"
+                        else:
+                            uvname = f"TEXCOORD{count}.xy"
+                    try:
+                        flip_texcoord_v = obj['3DMigoto:' + uvname]['flip_v']
+                        if flip_texcoord_v:
+                            flip_uv = lambda uv: (uv[0], 1.0 - uv[1])
+                        else:
+                            flip_uv = lambda uv: uv
+                    except KeyError:
                         flip_uv = lambda uv: uv
-                except KeyError:
-                    flip_uv = lambda uv: uv
 
-                for l in mesh.loops:
-                    uv = flip_uv(uv_layer.data[l.index].uv)
-                    texcoords[l.index] = uv
-                texcoord_layers[uvname] = texcoords
-                count += 1
+                    for l in mesh.loops:
+                        uv = flip_uv(uv_layer.data[l.index].uv)
+                        texcoords[l.index] = uv
+                    texcoord_layers[uvname] = texcoords
+                    count += 1
 
-            # Blender's vertices have unique positions, but may have multiple
-            # normals, tangents, UV coordinates, etc - these are stored in the
-            # loops. To export back to DX we need these combined together such that
-            # a vertex is a unique set of all attributes, but we don't want to
-            # completely blow this out - we still want to reuse identical vertices
-            # via the index buffer. There might be a convenience function in
-            # Blender to do this, but it's easy enough to do this ourselves
-            indexed_vertices = collections.OrderedDict()
-            for poly in mesh.polygons:
-                face = []
-                for blender_lvertex in mesh.loops[poly.loop_start:poly.loop_start + poly.loop_total]:
-                    vertex = blender_vertex_to_3dmigoto_vertex(mesh, obj, blender_lvertex, layout, texcoord_layers)
-                    face.append(indexed_vertices.setdefault(HashableVertex(vertex), len(indexed_vertices)))
+                # Blender's vertices have unique positions, but may have multiple
+                # normals, tangents, UV coordinates, etc - these are stored in the
+                # loops. To export back to DX we need these combined together such that
+                # a vertex is a unique set of all attributes, but we don't want to
+                # completely blow this out - we still want to reuse identical vertices
+                # via the index buffer. There might be a convenience function in
+                # Blender to do this, but it's easy enough to do this ourselves
+
+                indexed_vertices = collections.OrderedDict()
+                Precalculated_Outline_data = {}
+                export_Outline = {}
+                outline_optimization, toggle_rounding_outline, decimal_rounding_outline, angle_weighted, overlapping_faces, detect_edges, calculate_all_faces, nearest_edge_distance = Outline_Properties
+
+                if outline_optimization:
+                    print("Optimize Outline: " + obj.name.lower() + "; Initialize data sets         ", end='\r')
+
+                    ################# PRE-DICTIONARY #####################
+
+                    verts_obj = mesh.vertices
+                    Pos_Same_Vertices = {}
+                    Pos_Close_Vertices = {}
+                    Face_Verts = {}
+                    Face_Normals = {}
+                    Numpy_Position = {}
+                    if detect_edges and toggle_rounding_outline:
+                        i_nedd = min(precision(nearest_edge_distance), decimal_rounding_outline) - 1
+                        i_nedd_increment =  10**(-i_nedd)
+                    
+                    searched_vertex_pos = set()
+                    for poly in mesh.polygons:
+                        i_poly = poly.index
+                        face_vertices = poly.vertices
+                        facenormal = numpy.array(poly.normal)
+                        Face_Verts.setdefault(i_poly, face_vertices)
+                        Face_Normals.setdefault(i_poly, facenormal)
+
+                        for vert in face_vertices:
+                            Precalculated_Outline_data.setdefault('Connected_Faces', {}).setdefault(vert, []).append(i_poly)
+                            if vert in searched_vertex_pos: continue
+
+                            searched_vertex_pos.add(vert)
+                            vert_obj = verts_obj[vert]
+                            vert_position = vert_obj.undeformed_co
+                            
+                            if toggle_rounding_outline:
+                                Pos_Same_Vertices.setdefault(tuple(round(coord, decimal_rounding_outline) for coord in vert_position), {vert}).add(vert)
+                                
+                                if detect_edges:
+                                    Pos_Close_Vertices.setdefault(tuple(round(coord, i_nedd) for coord in vert_position), {vert}).add(vert)
+                            else:
+                                Pos_Same_Vertices.setdefault(tuple(vert_position), {vert}).add(vert)
+
+                            if angle_weighted:
+                                numpy_pos = numpy.array(vert_position)
+                                Numpy_Position.setdefault(vert, numpy_pos)
+
+                    for values in Pos_Same_Vertices.values():
+                        for vertex in values:
+                            Precalculated_Outline_data.setdefault('Same_Vertex', {}).setdefault(vertex, set(values))
+
+                    if detect_edges and toggle_rounding_outline:
+                        print("Optimize Outline: " + obj.name.lower() + "; Edge detection       ", end='\r')
+                        Precalculated_Outline_data.setdefault('RepositionLocal', set())
+
+                        for vertex_group in Pos_Same_Vertices.values():
+                            FacesConnected = []
+                            for x in vertex_group: FacesConnected.extend(Precalculated_Outline_data.get('Connected_Faces').get(x))
+                            ConnectedFaces = [Face_Verts.get(x) for x in FacesConnected]
+                            
+                            if not checkEnclosedFacesVertex(ConnectedFaces, vertex_group, Precalculated_Outline_data):
+                                for vertex in vertex_group: break
+
+                                p1, p2, p3 = verts_obj[vertex].undeformed_co
+                                p1n = p1+nearest_edge_distance
+                                p1nn = p1-nearest_edge_distance
+                                p2n = p2+nearest_edge_distance
+                                p2nn = p2-nearest_edge_distance
+                                p3n = p3+nearest_edge_distance
+                                p3nn = p3-nearest_edge_distance
+
+                                coord = [[round(p1n, i_nedd), round(p1nn, i_nedd)],\
+                                         [round(p2n, i_nedd), round(p2nn, i_nedd)],\
+                                         [round(p3n, i_nedd), round(p3nn, i_nedd)]]
+
+                                for i in range(3):
+                                    z, n = coord[i]
+                                    zndifference = int((z - n)/i_nedd_increment)
+                                    if zndifference > 1: 
+                                        for r in range(zndifference - 1):
+                                            coord[i].append(z - r*i_nedd_increment)
+
+                                closest_group = set()
+                                for pos1 in coord[0]:
+                                    for pos2 in coord[1]:
+                                        for pos3 in coord[2]:
+                                            try: closest_group.update(Pos_Close_Vertices.get(tuple([pos1, pos2, pos3])))
+                                            except: continue
+
+                                if len(closest_group) != 1:
+                                    for x in vertex_group: Precalculated_Outline_data.get('RepositionLocal').add(x)
+                                                
+                                    for v_closest_pos in closest_group:
+                                        if not v_closest_pos in vertex_group:
+
+                                            o1, o2, o3 = verts_obj[v_closest_pos].undeformed_co
+                                            if p1n >= o1 >= p1nn and p2n >= o2 >= p2nn and p3n >= o3 >= p3nn:
+                                                for x in vertex_group:
+                                                    Precalculated_Outline_data.get('Same_Vertex').get(x).add(v_closest_pos)
+
+                    Connected_Faces_bySameVertex = {}
+                    for key, value in Precalculated_Outline_data.get('Same_Vertex').items():
+                        for vertex in value:
+                            Connected_Faces_bySameVertex.setdefault(key, set()).update(Precalculated_Outline_data.get('Connected_Faces').get(vertex))
+
+                    ################# CALCULATIONS #####################
+
+                    RepositionLocal = Precalculated_Outline_data.get('RepositionLocal')
+                    IteratedValues = set()
+                    print("Optimize Outline: " + obj.name.lower() + "; Calculation          ", end='\r')
+
+                    for key, vertex_group in Precalculated_Outline_data.get('Same_Vertex').items():
+                        if key in IteratedValues: continue
+
+                        if not calculate_all_faces and len(vertex_group) == 1: continue
+                        
+                        FacesConnectedbySameVertex = list(Connected_Faces_bySameVertex.get(key))
+                        row = len(FacesConnectedbySameVertex)
+                        
+                        if overlapping_faces:
+                            ConnectedFaceNormals = numpy.empty(shape=(row,3))
+                            for i_normal, x in enumerate(FacesConnectedbySameVertex):
+                                ConnectedFaceNormals[i_normal] = Face_Normals.get(x)
+                            if antiparallel_search(ConnectedFaceNormals): continue
+
+                        if angle_weighted:
+                            VectorMatrix0 = numpy.empty(shape=(row,3))
+                            VectorMatrix1 = numpy.empty(shape=(row,3))
+
+                        ConnectedWeightedNormal = numpy.empty(shape=(row,3))
+                        i = 0
+                        for facei in FacesConnectedbySameVertex:
+                            vlist = Face_Verts.get(facei)
+                            
+                            vert0p = set(vlist) & vertex_group
+
+                            if angle_weighted:
+                                for vert0 in vert0p:
+                                    v0 = Numpy_Position.get(vert0)
+                                    vn = [Numpy_Position.get(x) for x in vlist if x != vert0]
+                                    VectorMatrix0[i] = vn[0]-v0
+                                    VectorMatrix1[i] = vn[1]-v0   
+                            ConnectedWeightedNormal[i] = Face_Normals.get(facei) 
+
+                            influence_restriction = len(vert0p)
+                            if  influence_restriction > 1:
+                                numpy.multiply(ConnectedWeightedNormal[i], 0.5**(1-influence_restriction))
+                            i += 1
+
+                        if angle_weighted:
+                            angle = numpy.arccos(numpy.clip(numpy.einsum('ij, ij->i',\
+                                    unit_vector(VectorMatrix0), unit_vector(VectorMatrix1)), -1.0, 1.0))
+                            ConnectedWeightedNormal *= angle[:,None]
+
+                        wSum = unit_vector(numpy.sum(ConnectedWeightedNormal,axis=0)).tolist()
+
+                        if wSum != [0,0,0]:
+                            if RepositionLocal and key in RepositionLocal:
+                                export_Outline.setdefault(key, wSum)
+                                continue
+                            for vertexf in vertex_group:
+                                export_Outline.setdefault(vertexf, wSum)
+                                IteratedValues.add(vertexf)
+                    print("Optimize Outline: " + obj.name.lower() + "; Completed            ")
+
+                    for poly in mesh.polygons:
+                        face = []
+                        for blender_lvertex in mesh.loops[poly.loop_start:poly.loop_start + poly.loop_total]:
+                            vertex = blender_vertex_to_3dmigoto_vertex_outline(mesh, obj, blender_lvertex, layout, texcoord_layers, export_Outline)
+                            face.append(indexed_vertices.setdefault(HashableVertex(vertex), len(indexed_vertices)))           
+                        if ib is not None:
+                            ib.append(face)
+
+                else:
+                
+                    for poly in mesh.polygons:
+                        face = []
+                        for blender_lvertex in mesh.loops[poly.loop_start:poly.loop_start + poly.loop_total]:
+                            vertex = blender_vertex_to_3dmigoto_vertex(mesh, obj, blender_lvertex, layout, texcoord_layers)
+                            face.append(indexed_vertices.setdefault(HashableVertex(vertex), len(indexed_vertices)))
+                        if ib is not None:
+                            ib.append(face)
+
+                vb = VertexBuffer(layout=layout)
+                for vertex in indexed_vertices:
+                    vb.append(vertex)
+
+                vgmaps = {k[15:]:keys_to_ints(v) for k,v in obj.items() if k.startswith('3DMigoto:VGMap:')}
+
+                if '' not in vgmaps:
+                    vb.write(open(vb_path, 'wb'), operator=operator)
+
+                base, ext = os.path.splitext(vb_path)
+                for (suffix, vgmap) in vgmaps.items():
+                    path = vb_path
+                    if suffix:
+                        path = '%s-%s%s' % (base, suffix, ext)
+                    vgmap_path = os.path.splitext(path)[0] + '.vgmap'
+                    print('Exporting %s...' % path)
+                    vb.remap_blendindices(obj, vgmap)
+                    vb.write(open(path, 'wb'), operator=operator)
+                    vb.revert_blendindices_remap()
+                    sorted_vgmap = collections.OrderedDict(sorted(vgmap.items(), key=lambda x:x[1]))
+                    json.dump(sorted_vgmap, open(vgmap_path, 'w'), indent=2)
+
                 if ib is not None:
-                    ib.append(face)
+                    ib.write(open(ib_path, 'wb'), operator=operator)
 
-            vb = VertexBuffer(layout=layout)
-            for vertex in indexed_vertices:
-                vb.append(vertex)
+                # Write format reference file
+                write_fmt_file(open(fmt_path, 'w'), vb, ib)
 
-            vgmaps = {k[15:]:keys_to_ints(v) for k,v in obj.items() if k.startswith('3DMigoto:VGMap:')}
-
-            if '' not in vgmaps:
-                vb.write(open(vb_path, 'wb'), operator=operator)
-
-            base, ext = os.path.splitext(vb_path)
-            for (suffix, vgmap) in vgmaps.items():
-                path = vb_path
-                if suffix:
-                    path = '%s-%s%s' % (base, suffix, ext)
-                vgmap_path = os.path.splitext(path)[0] + '.vgmap'
-                print('Exporting %s...' % path)
-                vb.remap_blendindices(obj, vgmap)
-                vb.write(open(path, 'wb'), operator=operator)
-                vb.revert_blendindices_remap()
-                sorted_vgmap = collections.OrderedDict(sorted(vgmap.items(), key=lambda x:x[1]))
-                json.dump(sorted_vgmap, open(vgmap_path, 'w'), indent=2)
-
-            if ib is not None:
-                ib.write(open(ib_path, 'wb'), operator=operator)
-
-            # Write format reference file
-            write_fmt_file(open(fmt_path, 'w'), vb, ib)
-
-    generate_mod_folder(os.path.dirname(vb_path), object_name, use_original_tangents)
+    generate_mod_folder(os.path.dirname(vb_path), object_name, no_ramps, delete_intermediate, credit)
 
 
-def generate_mod_folder(path, character_name, use_original_tangents):
+def generate_mod_folder(path, character_name, no_ramps, delete_intermediate, credit):
 
     parent_folder = os.path.join(path, "../")
 
@@ -1409,7 +1747,10 @@ def generate_mod_folder(path, character_name, use_original_tangents):
                 # This is the path for components which have blend data (characters, complex weapons, etc.)
                 if component["blend_vb"]:
                     print("Splitting VB by buffer type, merging body parts")
-                    x, y, z = collect_vb(path, current_name, current_object, stride)
+                    try:
+                        x, y, z = collect_vb(path, current_name, current_object, stride)
+                    except:
+                        raise Fatal(f"ERROR: Unable to find {current_name} {current_object} when exporting. Double check the object exists and is named correctly")
                     position += x
                     blend += y
                     texcoord += z
@@ -1421,13 +1762,26 @@ def generate_mod_folder(path, character_name, use_original_tangents):
                     position += collect_vb_single(path, current_name, current_object, stride)
                     position_stride = stride
 
+                if delete_intermediate:
+                    os.remove(os.path.join(path, f"{current_name}{current_object}.vb"))
+
                 print("Collecting IB")
                 print(current_name, current_object, offset)
                 ib = collect_ib(path, current_name, current_object, offset)
+
+                if delete_intermediate:
+                    os.remove(os.path.join(path, f"{current_name}{current_object}.ib"))
+
                 with open(os.path.join(parent_folder, f"{character_name}Mod", f"{current_name}{current_object}.ib"), "wb") as f:
                     f.write(ib)
-                ib_override_ini += f"[TextureOverride{current_name}{current_object}]\nhash = {component['ib']}\nmatch_first_index = {component['object_indexes'][i]}\nib = Resource{current_name}{current_object}IB\n"
-                ib_res_ini += f"[Resource{current_name}{current_object}IB]\ntype = Buffer\nformat = DXGI_FORMAT_R16_UINT\nfilename = {current_name}{current_object}.ib\n\n"
+                if ib:
+                    ib_override_ini += f"[TextureOverride{current_name}{current_object}]\nhash = {component['ib']}\nmatch_first_index = {component['object_indexes'][i]}\nib = Resource{current_name}{current_object}IB\n"
+                else:
+                    ib_override_ini += f"[TextureOverride{current_name}{current_object}]\nhash = {component['ib']}\nmatch_first_index = {component['object_indexes'][i]}\nib = null\n"
+                ib_res_ini += f"[Resource{current_name}{current_object}IB]\ntype = Buffer\nformat = DXGI_FORMAT_R32_UINT\nfilename = {current_name}{current_object}.ib\n\n"
+
+                if delete_intermediate:
+                    os.remove(os.path.join(path, f"{current_name}{current_object}.fmt"))
 
                 if len(position) % position_stride != 0:
                     print("ERROR: VB buffer length does not match stride")
@@ -1451,58 +1805,13 @@ def generate_mod_folder(path, character_name, use_original_tangents):
                     tex_res_ini += f"[Resource{current_name}{current_object}{texture[0]}]\nfilename = {current_name}{current_object}{texture[0]}{texture[1]}\n\n"
                 else:
                     for j, texture in enumerate(texture_hashes):
+                        if no_ramps and texture[0] in ["ShadowRamp", "MetalMap", "DiffuseGuide"]:
+                            continue
                         shutil.copy(os.path.join(path, f"{current_name}{current_object}{texture[0]}{texture[1]}"),
                                     os.path.join(parent_folder, f"{character_name}Mod",f"{current_name}{current_object}{texture[0]}{texture[1]}"))
                         ib_override_ini += f"ps-t{j} = Resource{current_name}{current_object}{texture[0]}\n"
                         tex_res_ini += f"[Resource{current_name}{current_object}{texture[0]}]\nfilename = {current_name}{current_object}{texture[0]}{texture[1]}\n\n"
                 ib_override_ini += "\n"
-
-            if use_original_tangents:
-                print("Replacing tangents with closest originals")
-                head_file = [x for x in os.listdir(path) if f"{current_name}{current_object}-vb0" in x]
-                if not head_file:
-                    raise Fatal("ERROR: unable to find original file for tangent data. Exiting")
-                head_file = head_file[0]
-                with open(os.path.join(path, head_file), "r") as f:
-                    data = f.readlines()
-                    raw_points = [x.split(":")[1].strip().split(", ") for x in data if "+000 POSITION:" in x]
-                    tangents = [x.split(":")[1].strip().split(", ") for x in data if "+024 TANGENT:" in x]
-                    if len(raw_points[0]) == 3:
-                        points = [(float(x), float(y), float(z)) for x, y, z in raw_points]
-                    else:
-                        points = [(float(x), float(y), float(z)) for x, y, z, _ in raw_points]
-                    tangents = [(float(x), float(y), float(z), float(a)) for x, y, z, a in tangents]
-                    lookup = {}
-                    for x, y in zip(points, tangents):
-                        lookup[x] = y
-
-                    tree = KDTree(points, 3)
-
-                    i = 0
-                    while i < len(position):
-                        if len(raw_points[0]) == 3:
-                            x, y, z = struct.unpack("f", position[i:i + 4])[0], \
-                                      struct.unpack("f", position[i + 4:i + 8])[0], \
-                                      struct.unpack("f", position[i + 8:i + 12])[0]
-                            result = tree.get_nearest((x, y, z))[1]
-                            tx, ty, tz, ta = [struct.pack("f", a) for a in lookup[result]]
-                            position[i + 24:i + 28] = tx
-                            position[i + 28:i + 32] = ty
-                            position[i + 32:i + 36] = tz
-                            position[i + 36:i + 40] = ta
-                            i += 40
-                        else:
-                            x, y, z = struct.unpack("e", position[i:i + 2])[0], \
-                                      struct.unpack("e", position[i + 2:i + 4])[0], \
-                                      struct.unpack("e", position[i + 4:i + 6])[0]
-                            result = tree.get_nearest((x, y, z))[1]
-                            tx, ty, tz, ta = [(int(a * 255)).to_bytes(1, byteorder="big") for a in lookup[result]]
-
-                            position[i + 24:i + 25] = tx
-                            position[i + 25:i + 26] = ty
-                            position[i + 26:i + 27] = tz
-                            position[i + 27:i + 28] = ta
-                            i += 28
 
             if component["blend_vb"]:
                 print("Writing merged buffer files")
@@ -1513,7 +1822,10 @@ def generate_mod_folder(path, character_name, use_original_tangents):
                     g.write(blend)
                     h.write(texcoord)
 
-                vb_override_ini += f"[TextureOverride{current_name}Position]\nhash = {component['position_vb']}\nvb0 = Resource{current_name}Position\n\n"
+                vb_override_ini += f"[TextureOverride{current_name}Position]\nhash = {component['position_vb']}\nvb0 = Resource{current_name}Position\n"
+                if credit:
+                    vb_override_ini += "$active = 1\n"
+                vb_override_ini += "\n"
                 vb_override_ini += f"[TextureOverride{current_name}Blend]\nhash = {component['blend_vb']}\nvb1 = Resource{current_name}Blend\nhandling = skip\ndraw = {len(position) // 40},0 \n\n"
                 vb_override_ini += f"[TextureOverride{current_name}Texcoord]\nhash = {component['texcoord_vb']}\nvb1 = Resource{current_name}Texcoord\n\n"
                 vb_override_ini += f"[TextureOverride{current_name}VertexLimitRaise]\nhash = {component['draw_vb']}\n\n"
@@ -1524,7 +1836,10 @@ def generate_mod_folder(path, character_name, use_original_tangents):
             else:
                 with open(os.path.join(parent_folder, f"{character_name}Mod", f"{current_name}.buf"), "wb") as f:
                     f.write(position)
-                vb_override_ini += f"[TextureOverride{current_name}]\nhash = {component['draw_vb']}\nvb0 = Resource{current_name}\n\n"
+                vb_override_ini += f"[TextureOverride{current_name}]\nhash = {component['draw_vb']}\nvb0 = Resource{current_name}\n"
+                if credit:
+                    vb_override_ini += "$active = 1\n"
+                vb_override_ini += "\n"
                 vb_res_ini += f"[Resource{current_name}]\ntype = Buffer\nstride = {stride}\nfilename = {current_name}.buf\n\n"
 
 
@@ -1555,6 +1870,8 @@ def generate_mod_folder(path, character_name, use_original_tangents):
                     tex_res_ini += f"[Resource{current_name}{current_object}{texture[0]}]\nfilename = {current_name}{current_object}{texture[0]}{texture[1]}\n\n"
                 else:
                     for j, texture in enumerate(texture_hashes):
+                        if no_ramps and texture[0] in ["ShadowRamp", "MetalMap", "DiffuseGuide"]:
+                            continue
                         ib_override_ini += f"[TextureOverride{current_name}{current_object}{texture[0]}]\nhash = {texture[2]}\n"
                         shutil.copy(os.path.join(path, f"{current_name}{current_object}{texture[0]}{texture[1]}"),
                                     os.path.join(parent_folder, f"{character_name}Mod",f"{current_name}{current_object}{texture[0]}{texture[1]}"))
@@ -1562,10 +1879,25 @@ def generate_mod_folder(path, character_name, use_original_tangents):
                         tex_res_ini += f"[Resource{current_name}{current_object}{texture[0]}]\nfilename = {current_name}{current_object}{texture[0]}{texture[1]}\n\n"
                 ib_override_ini += "\n"
 
+    constant_ini = ""
+    command_ini = ""
+    other_res = ""
+    if credit:
+        constant_ini += f"[Constants]\nglobal $active = 0\nglobal $creditinfo = 0\n\n[Present]\npost $active = 0\nrun = CommandListCreditInfo\n\n"
+        command_ini += "[CommandListCreditInfo]\nif $creditinfo == 0 && $active == 1\n" \
+                       "\tpre Resource\\ShaderFixes\\help.ini\\Notification = ResourceCreditInfo\n" \
+                       "\tpre run = CustomShader\\ShaderFixes\\help.ini\\FormatText\n" \
+                       "\tpre $\\ShaderFixes\\help.ini\\notification_timeout = time + 5.0\n" \
+                       "\t$creditinfo = 1\n" \
+                       "endif\n\n"
+        other_res += f'[ResourceCreditInfo]\ntype = Buffer\ndata = "Created by {credit}"\n\n'
+
     print("Generating .ini file")
     ini_data = f"; {character_name}\n\n"
+    ini_data += f"; Constants -------------------------\n\n" + constant_ini
     ini_data += f"; Overrides -------------------------\n\n" + vb_override_ini + ib_override_ini
-    ini_data += f"; Resources -------------------------\n\n" + vb_res_ini + ib_res_ini + tex_res_ini
+    ini_data += f"; CommandList -----------------------\n\n" + command_ini
+    ini_data += f"; Resources -------------------------\n\n" + vb_res_ini + ib_res_ini + tex_res_ini + other_res
     ini_data += f"\n; .ini generated by GIMI (Genshin-Impact-Model-Importer)\n" \
         f"; If you have any issues or find any bugs, please open a ticket at https://github.com/SilentNightSound/GI-Model-Importer/issues or contact SilentNightSound#7430 on discord"
 
@@ -1574,145 +1906,6 @@ def generate_mod_folder(path, character_name, use_original_tangents):
         f.write(ini_data)
 
     print("All operations completed, exiting")
-
-
-# https://github.com/Vectorized/Python-KD-Tree
-# A brute force solution for finding the original tangents is O(n^2), and isn't good enough since n can get quite
-#   high in many models (upwards of a minute calculation time in some cases)
-class KDTree(object):
-    """
-    Usage:
-    1. Make the KD-Tree:
-        `kd_tree = KDTree(points, dim)`
-    2. You can then use `get_knn` for k nearest neighbors or
-       `get_nearest` for the nearest neighbor
-    points are be a list of points: [[0, 1, 2], [12.3, 4.5, 2.3], ...]
-    """
-
-    def __init__(self, points, dim, dist_sq_func=None):
-        """Makes the KD-Tree for fast lookup.
-        Parameters
-        ----------
-        points : list<point>
-            A list of points.
-        dim : int
-            The dimension of the points.
-        dist_sq_func : function(point, point), optional
-            A function that returns the squared Euclidean distance
-            between the two points.
-            If omitted, it uses the default implementation.
-        """
-
-        if dist_sq_func is None:
-            dist_sq_func = lambda a, b: sum((x - b[i]) ** 2
-                                            for i, x in enumerate(a))
-
-        def make(points, i=0):
-            if len(points) > 1:
-                points.sort(key=lambda x: x[i])
-                i = (i + 1) % dim
-                m = len(points) >> 1
-                return [make(points[:m], i), make(points[m + 1:], i),
-                        points[m]]
-            if len(points) == 1:
-                return [None, None, points[0]]
-
-        def add_point(node, point, i=0):
-            if node is not None:
-                dx = node[2][i] - point[i]
-                for j, c in ((0, dx >= 0), (1, dx < 0)):
-                    if c and node[j] is None:
-                        node[j] = [None, None, point]
-                    elif c:
-                        add_point(node[j], point, (i + 1) % dim)
-
-        import heapq
-        def get_knn(node, point, k, return_dist_sq, heap, i=0, tiebreaker=1):
-            if node is not None:
-                dist_sq = dist_sq_func(point, node[2])
-                dx = node[2][i] - point[i]
-                if len(heap) < k:
-                    heapq.heappush(heap, (-dist_sq, tiebreaker, node[2]))
-                elif dist_sq < -heap[0][0]:
-                    heapq.heappushpop(heap, (-dist_sq, tiebreaker, node[2]))
-                i = (i + 1) % dim
-                # Goes into the left branch, then the right branch if needed
-                for b in (dx < 0, dx >= 0)[:1 + (dx * dx < -heap[0][0])]:
-                    get_knn(node[b], point, k, return_dist_sq,
-                            heap, i, (tiebreaker << 1) | b)
-            if tiebreaker == 1:
-                return [(-h[0], h[2]) if return_dist_sq else h[2]
-                        for h in sorted(heap)][::-1]
-
-        def walk(node):
-            if node is not None:
-                for j in 0, 1:
-                    for x in walk(node[j]):
-                        yield x
-                yield node[2]
-
-        self._add_point = add_point
-        self._get_knn = get_knn
-        self._root = make(points)
-        self._walk = walk
-
-    def __iter__(self):
-        return self._walk(self._root)
-
-    def add_point(self, point):
-        """Adds a point to the kd-tree.
-
-        Parameters
-        ----------
-        point : array-like
-            The point.
-        """
-        if self._root is None:
-            self._root = [None, None, point]
-        else:
-            self._add_point(self._root, point)
-
-    def get_knn(self, point, k, return_dist_sq=True):
-        """Returns k nearest neighbors.
-        Parameters
-        ----------
-        point : array-like
-            The point.
-        k: int
-            The number of nearest neighbors.
-        return_dist_sq : boolean
-            Whether to return the squared Euclidean distances.
-        Returns
-        -------
-        list<array-like>
-            The nearest neighbors.
-            If `return_dist_sq` is true, the return will be:
-                [(dist_sq, point), ...]
-            else:
-                [point, ...]
-        """
-        return self._get_knn(self._root, point, k, return_dist_sq, [])
-
-    def get_nearest(self, point, return_dist_sq=True):
-        """Returns the nearest neighbor.
-        Parameters
-        ----------
-        point : array-like
-            The point.
-        return_dist_sq : boolean
-            Whether to return the squared Euclidean distance.
-        Returns
-        -------
-        array-like
-            The nearest neighbor.
-            If the tree is empty, returns `None`.
-            If `return_dist_sq` is true, the return will be:
-                (dist_sq, point)
-            else:
-                point
-        """
-        l = self._get_knn(self._root, point, 1, return_dist_sq, [])
-        return l[0] if len(l) else None
 
 
 def load_hashes(path, name, hashfile):
@@ -1739,7 +1932,7 @@ def create_mod_folder(parent_folder, name):
     else:
         print(f"WARNING: Everything currently in the {name}Mod folder will be overwritten - make sure any important files are backed up. Press any button to continue")
 
-def collect_vb(folder, name, classification, stride, ignore_tangent=True):
+def collect_vb(folder, name, classification, stride): 
     position = bytearray()
     blend = bytearray()
     texcoord = bytearray()
@@ -1748,16 +1941,8 @@ def collect_vb(folder, name, classification, stride, ignore_tangent=True):
         data = bytearray(data)
         i = 0
         while i < len(data):
-            # This gave me a lot of trouble - the "tangent" the game uses doesn't seem to be any sort of tangent I'm
-            #   familiar with. In fact, it has a lot more in common with the normal
-            # Setting this equal to the normal gives significantly better results in most cases than using the tangent
-            #   calculated by blender
             import binascii
-            if ignore_tangent:
-                position += data[i:i + 24]
-                position += data[i+12:i+24] + bytearray(struct.pack("f", 1))
-            else:
-                position += data[i:i+40]
+            position += data[i:i+40]
             blend += data[i+40:i+72]
             texcoord += data[i+72:i+stride]
             i += stride
@@ -1771,22 +1956,19 @@ def collect_ib(folder, name, classification, offset):
         data = bytearray(data)
         i = 0
         while i < len(data):
-            ib += struct.pack('1H', struct.unpack('1H', data[i:i+2])[0]+offset)
-            i += 2
+            ib += struct.pack('1I', struct.unpack('1I', data[i:i+4])[0]+offset)
+            i += 4
     return ib
 
 
-def collect_vb_single(folder, name, classification, stride, ignore_tangent=True):
+def collect_vb_single(folder, name, classification, stride): 
     result = bytearray()
     with open(os.path.join(folder, f"{name}{classification}.vb"), "rb") as f:
         data = f.read()
         data = bytearray(data)
         i = 0
         while i < len(data):
-            if ignore_tangent:
-                result += data[i:i + stride - 4] + data[i+8:i+12]
-            else:
-                result += data[i:i+stride]
+            result += data[i:i+stride]
             i += stride
     return result
 
@@ -2096,6 +2278,7 @@ class Export3DMigotoGenshin(bpy.types.Operator, ExportHelper):
     """Export a mesh for re-injection into a game with 3DMigoto"""
     bl_idname = "export_mesh_genshin.migoto"
     bl_label = "Export Genshin mod folder"
+    bl_options = {'PRESET', 'UNDO'}
 
     filename_ext = '.vb'
     filter_glob : StringProperty(
@@ -2103,11 +2286,116 @@ class Export3DMigotoGenshin(bpy.types.Operator, ExportHelper):
             options={'HIDDEN'},
             )
 
-    use_original_tangents : BoolProperty(
-        name="Use original tangents",
-        description="Experimental. Use the tangents from the original .vb instead of the ones Blender calculates. Can fix outline issues",
+    use_foldername : BoolProperty(
+        name="Use foldername when exporting",
+        description="Sets the export name equal to the foldername you are exporting to. Keep true unless you have changed the names",
+        default=True,
+    )
+
+    ignore_hidden : BoolProperty(
+        name="Ignore hidden objects",
+        description="Does not use objects in the Blender window that are hidden while exporting mods",
+        default=True,
+    )
+
+    only_selected : BoolProperty(
+        name="Only export selected",
+        description="Uses only the selected objects when deciding which meshes to export",
         default=False,
     )
+
+    no_ramps : BoolProperty(
+        name="Ignore shadow ramps/metal maps/diffuse guide",
+        description="Skips exporting shadow ramps, metal maps and diffuse guides",
+        default=True,
+    )
+
+    delete_intermediate : BoolProperty(
+        name="Delete intermediate files",
+        description="Deletes the intermediate vb/ib files after a successful export to reduce clutter",
+        default=True,
+    )
+
+    credit : StringProperty(
+        name="Credit",
+        description="Name that pops up on screen when mod is loaded. If left blank, will result in no pop up",
+        default='',
+    )
+    
+    outline_optimization : BoolProperty(
+        name="Outline Optimization",
+        description="Recalculate outlines. Recommended for final export. Check more options below to improve quality",
+        default=False,
+    )
+    
+    toggle_rounding_outline : BoolProperty(
+        name="Round vertex positions",
+        description="Rounding of vertex positions to specify which are the overlapping vertices",
+        default=True,
+    ) 
+    
+    decimal_rounding_outline : bpy.props.IntProperty(
+        name="Decimals:",
+        description="Rounding of vertex positions to specify which are the overlapping vertices",
+        default=3,
+    )
+
+    angle_weighted : BoolProperty(
+        name="Weight by angle",
+        description="Optional: calculate angles to improve accuracy of outlines. Slow",
+        default=False,
+    )
+
+    overlapping_faces : BoolProperty(
+        name="Ignore overlapping faces",
+        description="Detect and ignore overlapping/antiparallel faces to avoid buggy outlines",
+        default=False,
+    )
+
+    detect_edges : BoolProperty(
+        name="Calculate edges",
+        description="Calculate for disconnected edges when rounding, closing holes in the edge outline",
+        default=False,
+    )
+
+    calculate_all_faces : BoolProperty(
+        name="Calculate outline for all faces",
+        description="Calculate outline for all faces, which is especially useful if you have any flat shaded non-edge faces. Slow",
+        default=False,
+    )
+
+    nearest_edge_distance : bpy.props.FloatProperty(
+        name="Distance:",
+        description="Expand grouping for edge vertices within this radial distance to close holes in the edge outline. Requires rounding",
+        default=0.001,
+        soft_min=0,
+    )
+    
+    def draw(self, context):
+        layout = self.layout
+        col = layout.column(align=True)
+        
+        col.prop(self, 'use_foldername')
+        col.prop(self, 'ignore_hidden')
+        col.prop(self, 'only_selected')
+        col.prop(self, 'no_ramps')
+        col.prop(self, 'delete_intermediate')
+        col.prop(self, 'credit')
+        layout.separator()
+        
+        col = layout.column(align=True)
+        col.prop(self, 'outline_optimization')
+        
+        if self.outline_optimization:
+            col.prop(self, 'toggle_rounding_outline', text='Vertex Position Rounding', toggle=True, icon="SHADING_WIRE")
+            col.prop(self, 'decimal_rounding_outline')
+            if self.toggle_rounding_outline:
+                col.prop(self, 'detect_edges')
+            if self.detect_edges and self.toggle_rounding_outline:
+                col.prop(self, 'nearest_edge_distance')
+            col.prop(self, 'overlapping_faces')
+            col.prop(self, 'angle_weighted')
+            col.prop(self, 'calculate_all_faces')
 
     def execute(self, context):
         try:
@@ -2117,8 +2405,8 @@ class Export3DMigotoGenshin(bpy.types.Operator, ExportHelper):
             object_name = os.path.splitext(os.path.basename(self.filepath))[0]
 
             # FIXME: ExportHelper will check for overwriting vb_path, but not ib_path
-
-            export_3dmigoto_genshin(self, context, object_name, vb_path, ib_path, fmt_path, self.use_original_tangents)
+            Outline_Properties = (self.outline_optimization, self.toggle_rounding_outline, self.decimal_rounding_outline, self.angle_weighted, self.overlapping_faces, self.detect_edges, self.calculate_all_faces, self.nearest_edge_distance)
+            export_3dmigoto_genshin(self, context, object_name, vb_path, ib_path, fmt_path, self.use_foldername, self.ignore_hidden, self.only_selected, self.no_ramps, self.delete_intermediate, self.credit, Outline_Properties)
         except Fatal as e:
             self.report({'ERROR'}, str(e))
         return {'FINISHED'}
