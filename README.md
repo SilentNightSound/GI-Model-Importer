@@ -21,7 +21,7 @@ Model files for the importer are located at [GI-Model-Importer-Assets](https://g
    - "3dmigoto-GIMI-for-development.zip" is a development version intended for creating mods which has all features turned on (including the green text at the top and bottom of the screen) but is slower
    - "3dmigoto-GIMI-for-playing-mods.zip" is a version of the program indended for playing mods which has development features turned off (no green text) but is faster
 
-2. Depending on the location of your Genshin Impact .exe file, you may need to change this line in the d3dx.ini file to point to your own installation (the Genshin game .exe, not the Genshin launcher .exe - the one you want is usually located in the Genshin Impact Game folder). If changing it to your path doesn't work, try using `target = GenshinImpact.exe`:
+2. (for V6 GIMI and below; v7 and above does this automatically and you can skip this step) Depending on the location of your Genshin Impact .exe file, you may need to change this line in the d3dx.ini file to point to your own installation (the Genshin game .exe, not the Genshin launcher .exe - the one you want is usually located in the Genshin Impact Game folder). If changing it to your path doesn't work, try using `target = GenshinImpact.exe`:
 
 <img src="https://user-images.githubusercontent.com/107697535/174322200-b1afea95-53f5-4add-be89-698f85503908.png" width="800"/>
 
