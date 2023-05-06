@@ -31,6 +31,8 @@ def main():
     for vertex in destination_vertices:
         nearest_source = source_vertices[tree.get_nearest(vertex)[1]]
         for group, weight in destination_vertices[vertex]:
+            if weight == 0:
+                continue
             nearest_source_group, smallest_distance = nearest_group(weight, nearest_source)
             # I originally recorded both the sum and count to do an averaged weighting, but just using the count
             #    alone gives better results in most cases
