@@ -21,7 +21,7 @@ I highly recommend these videos as an introduction to modding with 3Dmigoto: htt
 2. Select the files from the Data folder of the https://github.com/SilentNightSound/GI-Model-Importer-Assets repo for the model you want (all models have at least a head, but some also have a body, dress and extra component). Leave all options as default and press Import
 
 3. Perform modifications you want to the model, with the following restrictions/notes:
-   - Vertices are limited to around 64k
+   - Vertices are limited to around 64k(v7 and above upgraded to 400k)
    - Models must contain all the original vertex groups, colors and custom properties - if using a custom model, make sure it matches up with the original and that there are no gaps in the vertex groups.
    - It is possible to connect the texture maps to the object in Blender, but you will likely have to convert the .dds to a .png in order for Blender to recognize it and then later convert back to .dds
 

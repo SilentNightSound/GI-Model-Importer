@@ -2,25 +2,25 @@
 
 GIMI 工具的常见问题列表。
 
-#### 在尝试本页面上的任何内容之前，请确保你使用的是最新版本的插件、字符数据和程序。我看到的大多数问题都是来自使用旧版本工具的人。
+#### 在尝试本页面上的任何内容之前，请确保你使用的是最新版本的插件、人物数据和程序。我看到的大多数问题都是因为使用旧版本工具。
 
 ## 安装问题
 
 三个最常见的问题是：
 
-- 仔细检查你在 d3dx.ini 文件中的 Genshin.exe/Yuanshen.exe 位置是否正确，游戏文件夹中有两个 exe 程序，一个是启动器，一个是用于游戏本身，你需要的是后者
-- 如果绿色文本没有显示出来，请确保你使用的是开发版本。精简版没有绿色文本
+- 仔细检查你在 d3dx.ini 文件中的 Genshin.exe/Yuanshen.exe 位置是否正确(V7 及以上版本可以跳过这个步骤)，游戏文件夹中有两个 exe 程序，一个是启动器，一个是用于游戏本身，你需要的是后者
+- 如果绿色文本没有显示出来，请确保你使用的是开发者版本。精简版没有绿色文本
 - 确保你是以管理员身份运行 GIMI 加载器和原神
 
 如果 3dmigoto 加载器的控制台窗口在游戏加载后关闭，这没有问题，这是预期的行为。
 
-如果你得到一个类似“无法验证 3dmigoto 是否成功加载”的消息，这并不意味着该程序未能注入，只是加载器无法判断。如果它在游戏中看起来是正常的，你可以关闭这个窗口而没有问题（事实上，你应该这样做，因为让这个窗口打开会导致计算机速度减慢）。
+如果你得到一个类似“Unable to verify if 3dmigoto successfully loaded”的消息，这并不意味着该程序未能注入，只是加载器无法判断。如果它在游戏中看起来是正常的，你可以关闭这个窗口（事实上，你应该这样做，因为让这个窗口打开会导致计算机速度减慢）。
 
 ![image](https://user-images.githubusercontent.com/107697535/181086591-24f5be97-b6b0-4483-b694-2bc258c0d9e9.png)
 
-3dmigoto 可以和其他类型的原神修改工具或加载器一起运行 - 只要先运行 3dmigoto 加载器，然后再运行你的其他程序。
+3dmigoto 可以和其他类型的原神修改工具或加载器一起运行——只要先运行 3dmigoto 加载器，然后再运行你的其他程序。
 
-我偶尔注意到一个问题，即使一切设置正确，3dmigoto 也无法注入 - 在这些情况下，重新尝试注入就能解决这个问题。
+我偶尔注意到一个问题，即使一切设置正确，3dmigoto 也无法注入——在这些情况下，重新尝试注入就能解决这个问题。
 
 ## 模型导入问题
 
@@ -42,7 +42,7 @@ GIMI 工具的常见问题列表。
 - 你在场景中导出的对象没有一个是完全空的（需要在所有对象上至少有一个面，可以把它缩小来隐藏它）。
 - 所有的对象都有 3dmigoto 的自定义属性，要么是通过与最初使用该插件导入的对象合并，要么是通过使用自定义属性转移脚本。(https://github.com/SilentNightSound/GI-Model-Importer/blob/main/Tools/custom_property_transfer_script.txt)
 - UV 图被命名为 TEXCOORD.xy、TEXCOORD1.xy、TEXCOORD2.xy......等等，直到模型的原始编号为止。
-- 该模型有顶点颜色，颜色组件被称为 COLOR
+- 该模型有顶点色，颜色组件被称为 COLOR
 
 现在，说说最常见的问题。你可以通过打开控制台窗口来获得更多关于导出时出现问题的细节：
 
@@ -68,7 +68,7 @@ GIMI 工具的常见问题列表。
 
 ![image](https://user-images.githubusercontent.com/107697535/181121492-9d1e4bdd-7cb0-46ee-bceb-8621e92577fd.png)
 
-- ### 这个问题是由于你使用的模型有超过 64k 的顶点。要么删除部分，要么使用 decimate
+- ### 这个问题是由于你使用的模型有超过 64k 的顶点。要么删除部分，要么使用精简
 
 ![image](https://user-images.githubusercontent.com/107697535/181123500-2afc4794-e982-4d95-8a42-c4e914341d30.png)
 
@@ -82,17 +82,17 @@ GIMI 工具的常见问题列表。
 
 ## 游戏中的模型问题
 
-这是故障排除中最棘手的部分 - 在将模型导入游戏时，有很多很多事情会出错。我将尝试涵盖一些最常见的问题类别
+这是故障排除中最棘手的部分——在将模型导入游戏时，有很多很多东西会出错。我将尝试涵盖一些最常见的问题类别
 
 - ### 模型无法全部加载
 
-确保 3dmigoto 确实在运行，并且你已经把 mod 放在正确的 mod 文件夹中。还要确保在游戏中按下 F10 键，重新加载 mods。最后，如果所有其他方法都失败了，试着清空你的 ShaderCache 和 ShaderFixes 文件夹，因为这些有时会导致加载 mods 时出现问题。
+确保 3dmigoto 确实在运行，并且你已经把 mod 放在正确的 Mods 文件夹中。还要确保在游戏中按下 F10 键，重新加载 mods。最后，如果所有其他方法都失败了，试着清空你的 ShaderCache 和 ShaderFixes 文件夹，因为这些有时会导致加载 mods 时出现问题。
 
 - ### 模型加载，但一些部分没有被绘制出来
 
 <img src="https://user-images.githubusercontent.com/107697535/181122972-385a6fef-e925-4f80-8469-65be168ef678.png" width="300"/>
 
-这是由于模型上的顶点限制。任何带有混合权重/顶点组的东西都有一个怪癖，顶点限制实际上需要在 3dmigoto dll 中提高，以便它能正常工作。我提高了大多数角色的顶点限制，但漏掉了一些 - 仍在研究为所有对象设置顶点限制的方法。
+这是由于模型上的顶点限制。任何带有混合权重/顶点组的东西都有一个奇怪的地方，顶点限制实际上需要在 3dmigoto dll 中提高，以便它能正常工作。我提高了大多数角色的顶点限制，但漏掉了一些——仍在研究为所有对象设置顶点限制的方法。
 
 - ### 大量关于 mod 冲突的警告
 
@@ -132,7 +132,7 @@ GIMI 工具的常见问题列表。
 
 <img src="https://user-images.githubusercontent.com/107697535/181132663-e1dd363a-51e3-488b-8c4c-09a35fcfc00a.png" width="150"/> ![image](https://user-images.githubusercontent.com/107697535/181132608-84c4082c-1d0a-44c8-94ed-f06a3f62c014.png)
 
-仍然是顶点组的问题 - 仔细检查上述内容，并确保该部分的新模型的重量与原模型的重量相一致
+仍然是顶点组的问题——仔细检查上述内容，并确保该部分的新模型的重量与原模型的重量相一致
 
 - ### 纹理不正确
 
@@ -155,9 +155,9 @@ GIMI 工具的常见问题列表。
 
 ![image](https://user-images.githubusercontent.com/107697535/181130423-54b0b03a-3f8f-4b66-99f8-36a98bca16ee.png) <img src="https://user-images.githubusercontent.com/107697535/181130493-1efae42a-2a48-4e69-807e-7865776fda9b.png" width="150"/>
 
-这是由于一个不正确的顶点 COLOR 值造成的，有三种方法可以解决：
+这是由于一个不正确的顶点色值造成的，有三种方法可以解决：
 
-1. 从模型的某个部分复制 COLOR 数据，该部分在原件上有正确的轮廓。（详见https://youtu.be/z2nvJzkwHHQ?t=475）
+1. 从模型的某个部分复制顶点色数据，该部分在原件上有正确的轮廓。（详见https://youtu.be/z2nvJzkwHHQ?t=475）
 2. 用这个脚本改变轮廓的厚度：https://github.com/SilentNightSound/GI-Model-Importer/blob/main/Tools/genshin_set_outlines.py （放置在 mod 文件夹中，使用 cmd 或者 powershell 命令输入：`python .\genshin_set_outlines.py --thickness t` 其中 t 是 0-255 的数字，代表轮廓的粗细，0 是没有轮廓，255 是轮廓最大值，大部分游戏使用的值是 80-130，但你应该试验下多少数值才是最适合你的模型）
 3. 使用这个脚本删除轮廓: https://github.com/SilentNightSound/GI-Model-Importer/blob/main/Tools/genshin_remove_outlines.py
 
