@@ -4,9 +4,9 @@
 
 这个教程描述了从角色网格中删除一个对象（莫娜的帽子）的全过程。
 
-在 3Dmigoto 之前，没有办法干净地删除她的帽子 - 它没有独特的着色器，所以不能在 SpecialK 中删除；它在 unity 对象层次中也不是一个独特的对象，所以不能用 Melon 删除；与它相连的骨骼也与莫娜的头发相连，意味着任何试图改变骨骼结构的行为都会导致头发被破坏。
+在 3Dmigoto 之前，没有办法干净地删除她的帽子——它没有独特的着色器，所以不能在 SpecialK 中删除；它在 unity 对象层次中也不是一个独特的对象，所以不能用 Melon 删除；与它相连的骨骼也与莫娜的头发相连，意味着任何试图改变骨骼结构的行为都会导致头发被破坏。
 
-以下的说明通常可以应用于移除网格的任何部分，不过在某些情况下，模型下面会有一个洞（特别是对于较大的物体） - 关于如何修补网格洞的教程以后会加。
+以下的说明通常可以应用于移除网格的任何部分，不过在某些情况下，模型下面会有一个洞（特别是对于较大的物体）——关于如何修补网格洞的教程以后会加。
 
 1. 确保你已安装了 3DMigoto 和 3DMigoto Blender 插件 （请看 [README](../CN_README.md)）
 2. 从[此库](https://github.com/SilentNightSound/GI-Model-Importer-Assets)下载莫娜角色文件。文件夹应该像下图：
@@ -17,11 +17,11 @@
 
 <img src="https://user-images.githubusercontent.com/107697535/174457627-5b52357a-0983-4dd5-bf64-301ada192a07.png" width="800"/>
 
-4. 去到角色文件夹并选中所有的 .txt 文件。将所有设置保留为默认，然后按导入。
+4. 进入角色文件夹并选中所有的 .txt 文件。将所有设置保留为默认，然后按导入。
 
 <img src="https://user-images.githubusercontent.com/107697535/174457693-c5fa6ef1-799a-471a-ba2d-7ecc55decc8f.png" width="800"/>
 
-5. 如果没出错，你应该能看到莫娜的模型被导入到视口中。它由两个对象组成，头部和身体。
+5. 如果没出错，你应该能看到莫娜的模型被导入到场景中。它由两个对象组成，头部和身体。
 
 <img src="https://user-images.githubusercontent.com/107697535/174457712-3499f864-50cb-4b18-b01e-bf88a5d8fd5e.png" width="800"/>
 
@@ -31,7 +31,7 @@
 
 <img src="https://user-images.githubusercontent.com/107697535/174457765-c59e3e10-0187-4578-9b0b-21dd47d316e7.png" width="800"/>
 
-7. 现在已经把莫娜的帽子去掉了，我们要导出模型。确保有一个名为 "MonaHead" 的对象和一个名为 "MonaBody "的对象（还有一个名为 "CharExtra" 的对象，用于有第三部分的角色 - 莫娜只有两部分）。导出的选项在 File->Export->Exports Genshin Mod folder。去到你加载原始数据的角色文件夹，并将模型导出为 "Mona.vb"
+7. 现在已经把莫娜的帽子去掉了，我们要导出模型。确保有一个名为 "MonaHead" 的对象和一个名为 "MonaBody "的对象（还有一个名为 "CharExtra" 的对象，用于有第三部分的角色——莫娜只有两部分）。导出的选项在 File->Export->Exports Genshin Mod folder。进入加载原始数据的角色文件夹，并将模型导出为 "Mona.vb"
 
 <img src="https://user-images.githubusercontent.com/107697535/175569818-4d150043-555c-41a7-90ca-3d0e05c1c3f5.png" width="800"/>
 
@@ -53,9 +53,9 @@
 
 <img src="https://user-images.githubusercontent.com/107697535/174458194-426f8602-31d5-416a-96ed-d58ecdcee39d.png" width="800"/>
 
-我们可以再做一些改进。注意到莫娜的头发在帽子的位置有阴影 - 这是由她头部的 lightmap 控制的。角色文件夹中包括这个文件 MonaHeadLightMap.dds，我们可以修改它来进一步改善效果。
+我们可以再做一些改进。注意到莫娜的头发在帽子的位置有阴影——这是由她头部的 光照图控制的。角色文件夹中包括这个文件 MonaHeadLightMap.dds，我们可以修改它来进一步改善效果。
 
-11. 为了编辑 dds 纹理，我们使用 Paint.net 的[DDS 插件](https://forums.getpaint.net/topic/111731-dds-filetype-plus-04-11-2022/)和任何允许我们编辑 alpha 层的插件 [Alpha Mask Import](https://forums.getpaint.net/topic/1854-alpha-mask-import-plugin-20/) 或 [Modify Channels](https://forums.getpaint.net/topic/110805-modify-channels-v111-2022-03-07/) - 我将在本教程中使用前者，关于后者的例子，请参见 [GI_Assets](https://github.com/zeroruka/GI_Assets/wiki/Creating-Skins)。
+11. 为了编辑 dds 纹理，我们使用 Paint.net 的[DDS 插件](https://forums.getpaint.net/topic/111731-dds-filetype-plus-04-11-2022/)和任何允许我们编辑 alpha 层的插件 [Alpha Mask Import](https://forums.getpaint.net/topic/1854-alpha-mask-import-plugin-20/) 或 [Modify Channels](https://forums.getpaint.net/topic/110805-modify-channels-v111-2022-03-07/)——我将在本教程中使用前者，关于后者的例子，请参见 [GI_Assets](https://github.com/zeroruka/GI_Assets/wiki/Creating-Skins)。
 
 12. 打开 MonaHeadLightMap.dds，我们可以通过点击 Effects->Alpha Mask 并确保所有选项都未被选中，然后按 OK 键来移除透明层：
 
@@ -73,7 +73,7 @@
 
 <img src="https://user-images.githubusercontent.com/107697535/175790958-5530e001-655b-4966-9e03-23be7dd93c7d.png" width="800"/>
 
-- 注意：此步骤会导致部分材质效果消失（比如神之眼的亮光），因为我们正在反转整个图像的透明通道 - 如果你想在重新应用时保留原始效果，请参阅 https://www.youtube.com/watch?v=1y8oZ1TFZtg ，了解使用蒙版选择性地将反转应用于图像的一部分的例子（教程是针对 Special K，但 3dmigoto 功能相同），或者你可用 [Modify Channels](https://forums.getpaint.net/topic/110805-modify-channels-v111-2022-03-07/) 插件。
+- 注意：此步骤会导致部分材质效果消失（比如神之眼的亮光），因为我们正在反转整个图像的透明通道——如果你想在重新应用时保留原始效果，请参阅 https://www.youtube.com/watch?v=1y8oZ1TFZtg ，了解使用蒙版选择性地将反转应用于图像的一部分的例子（教程是针对 Special K，但 3dmigoto 功能相同），或者你可用 [Modify Channels](https://forums.getpaint.net/topic/110805-modify-channels-v111-2022-03-07/) 插件。
 
 15. 将图保存为 .dds，确保使用 "BC7（Linear，DX 11+）"并设置 Generate Mip Maps（注意：导出时 lightmap 需要使用 BC7 Linear，Diffuse 使用 BC7 SRGB）
 

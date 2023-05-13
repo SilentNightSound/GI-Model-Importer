@@ -10,7 +10,7 @@ A list of common issues and frequently asked questions for the GIMI tools.
 
 Three most common issues are:
 
-- Double check you have the correct Genshin game .exe location in the d3dx.ini file. Genshin has two .exe, one for the launcher and one for the game itself - you want the latter
+- Double check you have the correct Genshin game .exe location in the d3dx.ini file(v7 and above can skip this step). Genshin has two .exe, one for the launcher and one for the game itself - you want the latter
 - If the green text is not showing up, make sure you are using the Development version. The for-playing version does not have green text 
 - Make sure you are running both the GIMI loader and Genshin as administrator
 
