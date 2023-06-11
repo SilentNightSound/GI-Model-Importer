@@ -1518,12 +1518,12 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
                             vert_position = vert_obj.undeformed_co
                             
                             if toggle_rounding_outline:
-                                Pos_Same_Vertices.setdefault(tuple(round(coord, decimal_rounding_outline) for coord in vert_position), {vert}).add(vert)
+                                Pos_Same_Vertices.setdefault(tuple(round(coord, decimal_rounding_outline) for coord in vert_position), set()).add(vert)
                                 
                                 if detect_edges:
-                                    Pos_Close_Vertices.setdefault(tuple(round(coord, i_nedd) for coord in vert_position), {vert}).add(vert)
+                                    Pos_Close_Vertices.setdefault(tuple(round(coord, i_nedd) for coord in vert_position), set()).add(vert)
                             else:
-                                Pos_Same_Vertices.setdefault(tuple(vert_position), {vert}).add(vert)
+                                Pos_Same_Vertices.setdefault(tuple(vert_position), set()).add(vert)
 
                             if angle_weighted:
                                 numpy_pos = numpy.array(vert_position)
@@ -1568,7 +1568,7 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
                                 for pos1 in coord[0]:
                                     for pos2 in coord[1]:
                                         for pos3 in coord[2]:
-                                            try: closest_group.update(Pos_Close_Vertices.get(tuple([pos1, pos2, pos3])))
+                                            try: closest_group.update(Pos_Close_Vertices.get((pos1, pos2, pos3)))
                                             except: continue
 
                                 if len(closest_group) != 1:
