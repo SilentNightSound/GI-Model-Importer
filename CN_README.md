@@ -1,4 +1,4 @@
-[EN](README.md) | 中文
+[EN](README.md) | 简体中文 | [繁體中文](ZH_README.md)
 
 # Genshin-Impact-Model-Importer (GIMI)
 
