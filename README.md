@@ -1,4 +1,4 @@
-EN | [中文](CN_README.md)
+EN | [简体中文](CN_README.md) | [繁體中文](ZH_README.md)
 
 # Genshin-Impact-Model-Importer (GIMI)
 Tools and instructions for importing custom models into Genshin Impact.
