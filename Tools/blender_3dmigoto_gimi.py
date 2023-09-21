@@ -14,7 +14,7 @@
 # addon supports both Blender 2.79 and 2.80. It will still work on 2.79, just
 # with a warning.
 bl_info = {
-    "name": "3DMigoto",
+    "name": "3DMigoto-GIMI",
     "blender": (2, 80, 0),
     "author": "Ian Munsie (darkstarsword@gmail.com), SilentNightSound#7430",
     "location": "File > Import-Export",
@@ -2771,22 +2771,22 @@ class DeleteNonNumericVertexGroups(bpy.types.Operator):
         return {'FINISHED'}
 
 def menu_func_import_fa(self, context):
-    self.layout.operator(Import3DMigotoFrameAnalysis.bl_idname, text="3DMigoto frame analysis dump (vb.txt + ib.txt)")
+    self.layout.operator(Import3DMigotoFrameAnalysis.bl_idname, text="3DMigoto-GI frame analysis dump (vb.txt + ib.txt)")
 
 def menu_func_import_raw(self, context):
-    self.layout.operator(Import3DMigotoRaw.bl_idname, text="3DMigoto raw buffers (.vb + .ib)")
+    self.layout.operator(Import3DMigotoRaw.bl_idname, text="3DMigoto-GI raw buffers (.vb + .ib)")
 
 def menu_func_import_pose(self, context):
-    self.layout.operator(Import3DMigotoPose.bl_idname, text="3DMigoto pose (.txt)")
+    self.layout.operator(Import3DMigotoPose.bl_idname, text="3DMigoto-GI pose (.txt)")
 
 def menu_func_export(self, context):
-    self.layout.operator(Export3DMigoto.bl_idname, text="3DMigoto raw buffers (.vb + .ib)")
+    self.layout.operator(Export3DMigoto.bl_idname, text="3DMigoto-GI raw buffers (.vb + .ib)")
 
 def menu_func_export_genshin(self, context):
     self.layout.operator(Export3DMigotoGenshin.bl_idname, text="Exports Genshin Mod Folder")
 
 def menu_func_apply_vgmap(self, context):
-    self.layout.operator(ApplyVGMap.bl_idname, text="Apply 3DMigoto vertex group map to current object (.vgmap)")
+    self.layout.operator(ApplyVGMap.bl_idname, text="Apply 3DMigoto-GI vertex group map to current object (.vgmap)")
 
 register_classes = (
     Import3DMigotoFrameAnalysis,
