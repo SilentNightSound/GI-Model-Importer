@@ -77,6 +77,10 @@ def main():
         while not key or len(key) != 1:
             print("\nKey not recognized, must be a single letter\n")
             key = input()
+        # If the user enters " " as the key, it would give errors in the render and pass the verification done earlier
+        if key.strip() == 0:
+            # set direction arrows to move between skins
+            ke = "right\nback = left"
         key = key.lower()
 
     constants =    "; Constants ---------------------------\n\n"
