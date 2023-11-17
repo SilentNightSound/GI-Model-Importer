@@ -80,7 +80,7 @@ def main():
         # If the user enters " " as the key, it would give errors in the render and pass the verification done earlier
         if key.strip() == 0:
             # set direction arrows to move between skins
-            ke = "right\nback = left"
+            key = "right\nback = left"
         key = key.lower()
 
     constants =    "; Constants ---------------------------\n\n"
