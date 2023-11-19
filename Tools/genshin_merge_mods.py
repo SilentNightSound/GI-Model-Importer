@@ -149,16 +149,19 @@ drawindexed = auto
             # First time we have seen this hash, need to add it to overrides
             if (all_mod_data[i]["hash"], index) not in command_data:
                 command_data[(all_mod_data[i]["hash"], index)] = [all_mod_data[i]]
-                overrides += f"[{all_mod_data[i]['header']}{all_mod_data[i]['name']}]\nhash = {all_mod_data[i]['hash']}\n"
+                if "header" in all_mod_data[i] and 'name' in all_mod_data[i]:
+                    overrides += f"[{all_mod_data[i]['header']}{all_mod_data[i]['name']}]"
+                overrides += f"\nhash = {all_mod_data[i]['hash']}\n"
                 if index != -1:
                     overrides += f"match_first_index = {index}\n"
                 # These are custom commands GIMI implements, they do not need a corresponding command list
-                if "VertexLimitRaise" not in all_mod_data[i]["name"]:
-                    overrides += f"run = CommandList{all_mod_data[i]['name']}\n"
-                if index != -1 and args.reflection:
-                    overrides += f"ResourceRef{all_mod_data[i]['name']}Diffuse = reference ps-t1\nResourceRef{all_mod_data[i]['name']}LightMap = reference ps-t2\n$reflection = {n}\n"
-                    reflection[all_mod_data[i]['name']] = f"ResourceRef{all_mod_data[i]['name']}Diffuse,ResourceRef{all_mod_data[i]['name']}LightMap,{n}"
-                    n+=1
+                if "name" in all_mod_data[i]:
+                    if "VertexLimitRaise" not in all_mod_data[i]["name"]:
+                        overrides += f"run = CommandList{all_mod_data[i]['name']}\n"
+                    if index != -1 and args.reflection:
+                        overrides += f"ResourceRef{all_mod_data[i]['name']}Diffuse = reference ps-t1\nResourceRef{all_mod_data[i]['name']}LightMap = reference ps-t2\n$reflection = {n}\n"
+                        reflection[all_mod_data[i]['name']] = f"ResourceRef{all_mod_data[i]['name']}Diffuse,ResourceRef{all_mod_data[i]['name']}LightMap,{n}"
+                        n+=1
                 if args.active:
                     if "Position" in all_mod_data[i]["name"]:
                         overrides += f"$active = 1\n"
@@ -171,8 +174,8 @@ drawindexed = auto
             command_data.setdefault((all_mod_data[i]["name"],0),[]).append(all_mod_data[i])
         # Resources
         elif "filename" in all_mod_data[i] or "type" in all_mod_data[i]:
-
-            resources += f"[{all_mod_data[i]['header']}{all_mod_data[i]['name']}.{all_mod_data[i]['ini_group']}]\n"
+            if "header" in all_mod_data[i] and 'name' in all_mod_data[i]:
+                resources += f"[{all_mod_data[i]['header']}{all_mod_data[i]['name']}.{all_mod_data[i]['ini_group']}]\n"
             for command in all_mod_data[i]:
                 if command in ["header", "name", "location", "ini_group"]:
                     continue
@@ -382,7 +385,7 @@ def parse_section(section):
             mod_data[key.strip()] = data.strip()
         # Properties
         elif "=" in line:
-            key, data = line.split("=")
+            key, data = line.split("=", 1)
             # See note on reflection fix above
             if "CharacterIB" in key or "ResourceRef" in key:
                 continue
