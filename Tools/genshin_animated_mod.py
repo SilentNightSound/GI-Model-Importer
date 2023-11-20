@@ -1,5 +1,5 @@
 # This is an edited version of the merge mod script to make animated mods (edit by bygourou)
-# Save earch frames of the animation as a mod and run this script to merge them into one
+# Save each frames of the animation as a mod and run this script to merge them into one
 # The mods will swap automatically which makes it an animation
 
 
