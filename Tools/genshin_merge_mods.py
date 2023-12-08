@@ -20,6 +20,11 @@ import os
 import re
 import argparse
 import hashlib
+import sys
+
+import logging #debugging
+logging.basicConfig(level=logging.DEBUG)
+
 
 def main():
     parser = argparse.ArgumentParser(description="Generates a merged mod from several mod folders")
@@ -140,7 +145,12 @@ drawindexed = auto
     seen_hashes = {}
     reflection = {}
     n = 1
+    skip = None
     for i in range(len(all_mod_data)):
+        if skip == int(all_mod_data[i]['ini_group']):
+            continue
+        else:
+            skip = None
         # Overrides. Since we need these to generate the command lists later, need to store the data
         if "hash" in all_mod_data[i]:
             index = -1
@@ -177,6 +187,16 @@ drawindexed = auto
                 if command in ["header", "name", "location", "ini_group"]:
                     continue
                 if command == "filename":
+                    if not os.path.isfile(f"{all_mod_data[i]['location']}\\{all_mod_data[i][command]}"):
+                        print(f'\nWARNING: Missing file: "{all_mod_data[i]["location"]}\\{all_mod_data[i][command]}".\nWould you like to force it anyways and continue or skip this .ini ({ini_files[all_mod_data[i]["ini_group"]]})?')
+                        response = input('(Y/N | Skip): ')
+                        if response.lower() == "y":
+                            continue
+                        elif response.lower() == "skip":
+                            skip = all_mod_data[i]['ini_group']
+                            break
+                        else:
+                            raise(KeyboardInterrupt)
                     with open(f"{all_mod_data[i]['location']}\\{all_mod_data[i][command]}", "rb") as f:
                         sha1 = hashlib.sha1(f.read()).hexdigest()
                     if sha1 in seen_hashes and args.compress:
@@ -289,7 +309,13 @@ mov o1\.xyz, r0\.xyzx\\n
     if not args.store:
         print("Cleanup and disabling ini")
         for file in ini_files:
-            os.rename(file, os.path.join(os.path.dirname(file), "DISABLED") + os.path.basename(file))
+            ini_name = os.path.join(os.path.dirname(file), "DISABLED") + os.path.basename(file)
+            if os.path.isfile(ini_name):
+                for i in range(sys.maxsize):
+                    if not os.path.isfile(f'{os.path.dirname(file)}\\DISABLED_Backup_{f"{os.path.basename(file)}" if i == 0 else f"{os.path.splitext(os.path.basename(file))[0]} ({i}){os.path.splitext(ini_name)[1]}"}'):
+                        os.rename(ini_name, f'{os.path.dirname(file)}\\DISABLED_Backup_{f"{os.path.basename(file)}" if i == 0 else f"{os.path.splitext(os.path.basename(file))[0]} ({i}){os.path.splitext(ini_name)[1]}"}')
+                        break
+            os.rename(file, ini_name)
 
 
     print("All operations completed")
