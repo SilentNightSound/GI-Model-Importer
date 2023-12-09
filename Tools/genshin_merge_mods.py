@@ -21,7 +21,7 @@ import re
 import argparse
 import hashlib
 import sys
-
+import traceback
 
 def main():
     parser = argparse.ArgumentParser(description="Generates a merged mod from several mod folders")
@@ -74,11 +74,31 @@ def main():
     if args.key:
         key = args.key
     else:
-        print("\nPlease enter the key that will be used to cycle mods (can also enter this with -k flag, or set later in .ini). Key must be a single letter\n")
-        key = input()
-        while not key or len(key) != 1:
-            print("\nKey not recognized, must be a single letter\n")
+        print("\nPlease enter the key that will be used to cycle mods (can also enter this with -k flag, or set later in .ini)")
+        print("Key must be a single letter. You can also assign a second key after a slash (key1 / key2) to cycle backwards\nPress ENTER to use the default keys (default is right/left keys)")
+        while True:
             key = input()
+            if key == '' or key == ' ':
+                key = 'vk_right\nback = vk_left'
+                break
+            else:
+                if len(key) == 1:
+                    break
+                key = key.split('/', 1)
+                if len(key) == 2:
+                    if len(key[0]) != 1:
+                        if key[0].endswith(' '):
+                            key[0] = key[0][:-1]
+                    if len(key[1]) != 1:
+                        if key[1].startswith(' '):
+                            key[1] = key[1][1:]
+                    if len(key[0]) == 1 and len(key[1]) == 1:
+                        if not key[0] == ' ' and not key[1] == ' ':
+                            if not key[0] == key[1]:
+                                key = f'{key[0]}\nback = {key[1]}'
+                                break
+            print("\nKey not recognized, must be a single letter\n")
+
         key = key.lower()
 
     constants =    "; Constants ---------------------------\n\n"
@@ -427,6 +447,13 @@ def parse_section(section):
 
     return mod_data
 
+def handle_traceback(exc_type, exc_value, exc_tb):
+    traceback.print_exception(exc_type, exc_value, exc_tb)
+    os.system('pause')
+    sys.exit(-1)
+
+sys.excepthook = handle_traceback
 
 if __name__ == "__main__":
     main()
+    os.system('pause')
