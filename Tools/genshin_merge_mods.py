@@ -22,9 +22,6 @@ import argparse
 import hashlib
 import sys
 
-import logging #debugging
-logging.basicConfig(level=logging.DEBUG)
-
 
 def main():
     parser = argparse.ArgumentParser(description="Generates a merged mod from several mod folders")
@@ -321,17 +318,30 @@ mov o1\.xyz, r0\.xyzx\\n
     print("All operations completed")
 
 
+def atoi(text):
+    return int(text) if text.isdigit() else text
+
+def natural_keys(text):
+    '''
+    alist.sort(key=natural_keys) sorts in human order
+    http://nedbatchelder.com/blog/200712/human_sorting.html
+    https://stackoverflow.com/questions/5967500/how-to-correctly-sort-a-string-with-a-number-inside
+    '''
+    return [ atoi(c) for c in re.split(r'(\d+)', text) ]
+
 # Collects all .ini files from current folder and subfolders
 def collect_ini(path, ignore):
     ini_files = []
     for root, dir, files in os.walk(path):
         if "disabled" in root.lower():
             continue
+        dir.sort(key=natural_keys)
         for file in files:
             if "disabled" in file.lower() or ignore.lower() in file.lower():
                 continue
             if os.path.splitext(file)[1] == ".ini":
-                ini_files.append(os.path.join(root, file))
+                if not file == 'desktop.ini':
+                    ini_files.append(os.path.join(root, file))
     return ini_files
 
 # Re-enables disabled ini files
