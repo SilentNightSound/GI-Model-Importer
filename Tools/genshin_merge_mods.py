@@ -23,6 +23,7 @@ import hashlib
 import sys
 import traceback
 
+
 def main():
     parser = argparse.ArgumentParser(description="Generates a merged mod from several mod folders")
     parser.add_argument("-r", "--root", type=str,  default=".",  help="Location to use to create mod")
@@ -33,6 +34,7 @@ def main():
     parser.add_argument("-c", "--compress",  action="store_true", help="Makes the output mods as small as possible (warning: difficult to reverse, have backups)")
     parser.add_argument("-a", "--active", action="store_true",  default=True, help="Only active character gets swapped when swapping)")
     parser.add_argument("-ref", "--reflection", action="store_true", help="Applies reflection fix for 3.0+ characters")
+    parser.add_argument("-w", "--weapon", action="store_true", help="Use to merge weapons")
 
     args = parser.parse_args()
 
@@ -106,26 +108,8 @@ def main():
     shader    =    "; Shader ------------------------------\n\n"
     commands  =    "; CommandList -------------------------\n\n"
     resources =    "; Resources ---------------------------\n\n"
-
     swapvar = "swapvar"
-    constants += f"[Constants]\nglobal persist ${swapvar} = 0\n"
-    if args.active:
-        constants += f"global $active\n"
-    if args.reflection:
-        constants += f"global $reflection\n"
-    constants += "global $creditinfo = 0\n"
-    constants += f"\n[KeySwap]\n"
-    if args.active:
-        constants += f"condition = $active == 1\n"
-    constants += f"key = {key}\ntype = cycle\n${swapvar} = {','.join([str(x) for x in range(len(ini_files))])}\n$creditinfo = 0\n\n"
-    if args.active or args.reflection:
-        constants += f"[Present]\n"
-    if args.active:
-        constants += f"post $active = 0\n"
-    if args.reflection:
-        constants += f"post $reflection = 0\n"
-
-
+    
 
     print("Parsing ini sections")
     all_mod_data = []
@@ -140,10 +124,6 @@ def main():
                 all_mod_data.append(mod_data)
         ini_group += 1
 
-    if [x for x in all_mod_data if "name" in x and x["name"].lower() == "creditinfo"]:
-        constants += "run = CommandListCreditInfo\n\n"
-    else:
-        constants += "\n"
 
     if [x for x in all_mod_data if "name" in x and x["name"].lower() == "transparency"]:
         shader += """[CustomShaderTransparency]
@@ -163,11 +143,27 @@ drawindexed = auto
     reflection = {}
     n = 1
     skip = None
+    dont_skip = None
+    merged_weapon = False
+    dont_disable = []
+    swapvars = []
     for i in range(len(all_mod_data)):
         if skip == int(all_mod_data[i]['ini_group']):
             continue
         else:
             skip = None
+
+        skip_inis = ['glider', 'icon'] # TODO: Option to merge them with a choosen mod?
+        if not dont_skip == all_mod_data[i]['ini_group'] and any(x in f'{os.path.basename(os.path.dirname(ini_files[all_mod_data[i]["ini_group"]]))}\\{os.path.basename(ini_files[all_mod_data[i]["ini_group"]])}'.lower() for x in skip_inis):
+            print(f'\nFound a possible glider/icon .ini ({os.path.basename(os.path.dirname(ini_files[all_mod_data[i]["ini_group"]]))}\\{os.path.basename(ini_files[all_mod_data[i]["ini_group"]])}), would you like to skip it?')
+            choice = input('(Y/N): ')
+            if choice.lower() == 'y':
+                skip = int(all_mod_data[i]['ini_group'])
+                dont_disable.append(ini_files[all_mod_data[i]['ini_group']])
+                continue
+            else:
+                dont_skip = all_mod_data[i]['ini_group']
+            
         # Overrides. Since we need these to generate the command lists later, need to store the data
         if "hash" in all_mod_data[i]:
             index = -1
@@ -189,6 +185,10 @@ drawindexed = auto
                 if args.active:
                     if "Position" in all_mod_data[i]["name"]:
                         overrides += f"$active = 1\n"
+                if args.weapon:
+                    if "TextureOverride" in all_mod_data[i]["header"] and not merged_weapon:
+                        overrides += "$active = 1\n"
+                        merged_weapon = True
 
                 overrides += "\n"
             # Otherwise, we have seen the hash before and we just need to append it to the commandlist
@@ -198,7 +198,6 @@ drawindexed = auto
             command_data.setdefault((all_mod_data[i]["name"],0),[]).append(all_mod_data[i])
         # Resources
         elif "filename" in all_mod_data[i] or "type" in all_mod_data[i]:
-
             resources += f"[{all_mod_data[i]['header']}{all_mod_data[i]['name']}.{all_mod_data[i]['ini_group']}]\n"
             for command in all_mod_data[i]:
                 if command in ["header", "name", "location", "ini_group"]:
@@ -206,10 +205,10 @@ drawindexed = auto
                 if command == "filename":
                     if not os.path.isfile(f"{all_mod_data[i]['location']}\\{all_mod_data[i][command]}"):
                         print(f'\nWARNING: Missing file: "{all_mod_data[i]["location"]}\\{all_mod_data[i][command]}".\nWould you like to force it anyways and continue or skip this .ini ({ini_files[all_mod_data[i]["ini_group"]]})?')
-                        response = input('(Y/N | Skip): ')
-                        if response.lower() == "y":
+                        choice = input('(Y/N | Skip): ')
+                        if choice.lower() == "y":
                             continue
-                        elif response.lower() == "skip":
+                        elif choice.lower() == "skip":
                             skip = all_mod_data[i]['ini_group']
                             break
                         else:
@@ -224,6 +223,10 @@ drawindexed = auto
                         resources += f"{command} = {all_mod_data[i]['location']}\\{all_mod_data[i][command]}\n"
                 else:
                     resources += f"{command} = {all_mod_data[i][command]}\n"
+
+            if not all_mod_data[i]['ini_group'] in swapvars and not skip:
+                swapvars.append(all_mod_data[i]['ini_group'])
+            
             resources += "\n"
 
     if args.reflection:
@@ -304,7 +307,29 @@ mov o1\.xyz, r0\.xyzx\\n
         commands = commands.rsplit("else if",1)[0] + "endif\n\n"
 
     print("Printing results")
-    result = f"; Merged Mod: {', '.join([x for x in ini_files])}\n\n"
+    constants += f"[Constants]\nglobal persist ${swapvar} = 0\n"
+    if args.active:
+        constants += f"global $active\n"
+    if args.reflection:
+        constants += f"global $reflection\n"
+    constants += "global $creditinfo = 0\n"
+    constants += f"\n[KeySwap]\n"
+    if args.active:
+        constants += f"condition = $active == 1\n"
+    constants += f"key = {key}\ntype = cycle\n${swapvar} = {','.join([str(x) for x in swapvars])}\n$creditinfo = 0\n\n"
+    if args.active or args.reflection:
+        constants += f"[Present]\n"
+    if args.active:
+        constants += f"post $active = 0\n"
+    if args.reflection:
+        constants += f"post $reflection = 0\n"
+        
+    if [x for x in all_mod_data if "name" in x and x["name"].lower() == "creditinfo"]:
+        constants += "run = CommandListCreditInfo\n\n"
+    else:
+        constants += "\n"
+        
+    result = f"; Merged Mod: {', '.join([ini_files[x] for x in swapvars])}\n\n"
     if args.reflection:
         result += f"{refresources}\n"
     result += constants
@@ -324,8 +349,10 @@ mov o1\.xyz, r0\.xyzx\\n
         f.write(result)
 
     if not args.store:
-        print("Cleanup and disabling ini")
+        print("Cleanup and disabling ini") # FIX: it doesn't disable inis that wasn't included on get_user_order?
         for file in ini_files:
+            if file in dont_disable:
+                continue
             ini_name = os.path.join(os.path.dirname(file), "DISABLED") + os.path.basename(file)
             if os.path.isfile(ini_name):
                 for i in range(sys.maxsize):
@@ -365,7 +392,7 @@ def collect_ini(path, ignore):
     return ini_files
 
 # Re-enables disabled ini files
-def enable_ini(path):
+def enable_ini(path): # FIX: Error if the subfolder of a .ini is disabled
     for root, dir, files in os.walk(path):
         for file in files:
             if os.path.splitext(file)[1] == ".ini" and ("disabled" in root.lower() or "disabled" in file.lower()):
