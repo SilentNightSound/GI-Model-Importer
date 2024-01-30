@@ -321,9 +321,14 @@ def enable_ini(path):
     for root, dir, files in os.walk(path):
         for file in files:
             if os.path.splitext(file)[1] == ".ini" and ("disabled" in root.lower() or "disabled" in file.lower()):
-                print(f"\tRe-enabling {os.path.join(root, file)}")
-                new_path = re.compile("disabled", re.IGNORECASE).sub("", os.path.join(root, file))
-                os.rename(os.path.join(root, file), new_path)
+                path = os.path.join(root, file)
+                print(f"\tRe-enabling {path}")
+                new_path = re.compile("disabled", re.IGNORECASE).sub("", path)
+                # If enabled ini already exists -> Replace
+                if (os.path.exists(new_path)):
+                    os.replace(path, new_path)
+                else: # Rename if not
+                    os.rename(path, new_path)
 
 
 # Gets the user's preferred order to merge mod files
