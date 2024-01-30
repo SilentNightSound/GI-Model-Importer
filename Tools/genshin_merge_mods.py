@@ -171,20 +171,28 @@ drawindexed = auto
             command_data.setdefault((all_mod_data[i]["name"],0),[]).append(all_mod_data[i])
         # Resources
         elif "filename" in all_mod_data[i] or "type" in all_mod_data[i]:
-
+            
             resources += f"[{all_mod_data[i]['header']}{all_mod_data[i]['name']}.{all_mod_data[i]['ini_group']}]\n"
             for command in all_mod_data[i]:
                 if command in ["header", "name", "location", "ini_group"]:
                     continue
                 if command == "filename":
-                    with open(f"{all_mod_data[i]['location']}\\{all_mod_data[i][command]}", "rb") as f:
-                        sha1 = hashlib.sha1(f.read()).hexdigest()
-                    if sha1 in seen_hashes and args.compress:
-                        resources += f"{command} = {seen_hashes[sha1]}\n"
-                        os.remove(f"{all_mod_data[i]['location']}\\{all_mod_data[i][command]}")
+                    # File might not exists because of Skin Variant lacking this element
+                    # Maybe a design decision of the mod maker (example: no Kuki Mask)
+                    filePath = f"{all_mod_data[i]['location']}\\{all_mod_data[i][command]}"
+                    if os.path.exists(filePath):
+                        with open(filePath, "rb") as f:
+                            sha1 = hashlib.sha1(f.read()).hexdigest()
+                        if sha1 in seen_hashes and args.compress:
+                            resources += f"{command} = {seen_hashes[sha1]}\n"
+                            os.remove(filePath)
+                        else:
+                            seen_hashes[sha1] = filePath
+                            resources += f"{command} = {filePath}\n"
                     else:
-                        seen_hashes[sha1] = f"{all_mod_data[i]['location']}\\{all_mod_data[i][command]}"
-                        resources += f"{command} = {all_mod_data[i]['location']}\\{all_mod_data[i][command]}\n"
+                        # Maybe you can skip this Resource, but in any case I'm afraid it can break anything
+                        # So I keep it in the final .ini
+                        resources += f"{command} = {filePath}\n"
                 else:
                     resources += f"{command} = {all_mod_data[i][command]}\n"
             resources += "\n"
