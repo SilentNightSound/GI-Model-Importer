@@ -1323,7 +1323,7 @@ def export_3dmigoto(operator, context, vb_path, ib_path, fmt_path):
     write_fmt_file(open(fmt_path, 'w'), vb, ib)
 
 
-def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fmt_path, use_foldername, ignore_hidden, only_selected, no_ramps, delete_intermediate, credit, Outline_Properties):
+def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fmt_path, use_foldername, ignore_hidden, only_selected, no_ramps, delete_intermediate, credit, write_export_indices, duplicate_ib_files, Outline_Properties):
     scene = bpy.context.scene
 
     # Quick sanity check
@@ -1772,21 +1772,24 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
     with open(os.path.join(os.path.dirname(vb_path), f"{object_name}ExportIndices.json"), "w") as f:
         json.dump(export_index_data, f, ensure_ascii=False, indent=4)
 
-    generate_mod_folder(os.path.dirname(vb_path), object_name, no_ramps, delete_intermediate, credit)
+    generate_mod_folder(os.path.dirname(vb_path), object_name, no_ramps, delete_intermediate, credit, write_export_indices, duplicate_ib_files)
 
 
-def generate_mod_folder(path, character_name, no_ramps, delete_intermediate, credit):
+def generate_mod_folder(path, character_name, no_ramps, delete_intermediate, credit, write_export_indices, duplicate_ib_files):
 
     parent_folder = os.path.join(path, "../")
 
     char_hash = load_hashes(path, character_name, "hash.json")
     create_mod_folder(parent_folder, character_name)
 
-    # Copy export indices to mod folder so it can be used to edit mods
-    os.replace(os.path.join(path, f"{character_name}ExportIndices.json"), os.path.join(parent_folder, f"{character_name}Mod", f"{character_name}ExportIndices.json"))
-    # Make folder to contain unmodified ib files for mods that edit ib to toggle parts
-    if not os.path.isdir(os.path.join(parent_folder, f"{character_name}Mod", f"BaseFiles")):
-        os.mkdir(os.path.join(parent_folder, f"{character_name}Mod", f"BaseFiles"))
+    if write_export_indices:
+        # Copy export indices to mod folder so it can be used to edit mods
+        os.replace(os.path.join(path, f"{character_name}ExportIndices.json"), os.path.join(parent_folder, f"{character_name}Mod", f"{character_name}ExportIndices.json"))
+
+    if duplicate_ib_files:
+        # Make folder to contain unmodified ib files for mods that edit ib to toggle parts
+        if not os.path.isdir(os.path.join(parent_folder, f"{character_name}Mod", f"BaseFiles")):
+            os.mkdir(os.path.join(parent_folder, f"{character_name}Mod", f"BaseFiles"))
 
     # Previous version had all these hardcoded at the end; now, we dynamically assemble the ini file as we add components
     vb_override_ini = ""
@@ -1859,8 +1862,9 @@ def generate_mod_folder(path, character_name, no_ramps, delete_intermediate, cre
 
                 with open(os.path.join(parent_folder, f"{character_name}Mod", f"{current_name}{current_object}.ib"), "wb") as f:
                     f.write(ib)
-                with open(os.path.join(parent_folder, f"{character_name}Mod", "BaseFiles", f"{current_name}{current_object}.ib"), "wb") as f:
-                    f.write(ib)
+                if duplicate_ib_files:
+                    with open(os.path.join(parent_folder, f"{character_name}Mod", "BaseFiles", f"{current_name}{current_object}.ib"), "wb") as f:
+                        f.write(ib)
                 if ib:
                     ib_override_ini += f"[TextureOverride{current_name}{current_object}]\nhash = {component['ib']}\nmatch_first_index = {component['object_indexes'][i]}\nib = Resource{current_name}{current_object}IB\n"
                 else:
@@ -2457,6 +2461,18 @@ class Export3DMigotoGenshin(bpy.types.Operator, ExportHelper):
         default=0.001,
         soft_min=0,
     )
+
+    write_export_indices : BoolProperty(
+        name="Write Export Indices File",
+        description="Writes a file containing vertex and face indices of each mesh before being merged",
+        default=False,
+    )
+
+    duplicate_ib_files : BoolProperty(
+        name="Duplicate Index Buffer Files",
+        description="Copies index buffer files to a folder called Base_Files which is helpful for mods that modify index buffer files",
+        default=False,
+    )
     
     def draw(self, context):
         layout = self.layout
@@ -2468,6 +2484,8 @@ class Export3DMigotoGenshin(bpy.types.Operator, ExportHelper):
         col.prop(self, 'no_ramps')
         col.prop(self, 'delete_intermediate')
         col.prop(self, 'credit')
+        col.prop(self, 'write_export_indices')
+        col.prop(self, 'duplicate_ib_files')
         layout.separator()
         
         col = layout.column(align=True)
@@ -2493,7 +2511,7 @@ class Export3DMigotoGenshin(bpy.types.Operator, ExportHelper):
 
             # FIXME: ExportHelper will check for overwriting vb_path, but not ib_path
             Outline_Properties = (self.outline_optimization, self.toggle_rounding_outline, self.decimal_rounding_outline, self.angle_weighted, self.overlapping_faces, self.detect_edges, self.calculate_all_faces, self.nearest_edge_distance)
-            export_3dmigoto_genshin(self, context, object_name, vb_path, ib_path, fmt_path, self.use_foldername, self.ignore_hidden, self.only_selected, self.no_ramps, self.delete_intermediate, self.credit, Outline_Properties)
+            export_3dmigoto_genshin(self, context, object_name, vb_path, ib_path, fmt_path, self.use_foldername, self.ignore_hidden, self.only_selected, self.no_ramps, self.delete_intermediate, self.credit, self.write_export_indices, self.duplicate_ib_files, Outline_Properties)
         except Fatal as e:
             self.report({'ERROR'}, str(e))
         return {'FINISHED'}
