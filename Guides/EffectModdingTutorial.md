@@ -311,7 +311,7 @@ endif
 [CustomShaderDilucFlame]
 ps = 4d4da8a4cbe1149a-ps_replace.txt
 handling = skip
-drawindexed = auto
+draw = from_caller
 ```
 
 This will usually work, but 3dmigoto sometimes does not properly compile the `hlsl` if done this way leading to errors. Also, it will not work with `asm`. But the pros are that the shader can be bundled together in the mod folder with the rest of the mod, and it will not interfere if another mod tries to modify the same shader.
@@ -574,7 +574,7 @@ else
 endif
 ps = 4c99fec14dca7797-ps_replace.txt
 handling = skip
-drawindexed = auto
+draw = from_caller
 ```
 
 This will mostly work, but there is an glitch in the compilation here that will cause the pillar to leave a residue for ~1 second after disappearing:
