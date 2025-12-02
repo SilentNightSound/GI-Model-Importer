@@ -304,41 +304,45 @@ If your goal is to continuously shift the colors to make a rainbow effect howeve
 
 Next, we demonstrate how we can use use two glow maps simultaneously. We will add a second dot that is flashing twice as fast as the first one.
 
-[VIDEO]
+https://github.com/user-attachments/assets/10157072-53d7-4994-9879-6a322e45be0c
+
+(Note: the residue that appears briefly is due to dds compression issues. See addendum for ways to minimize this effect) 
 
 All of the animation parameters and glowmaps have secondary versions that end with "2" but otherwise function the same as the ones with "1". So we can set the second dot with:
+
 ```
-Resource\RabbitFX\Glowmap2 = ref ResourceSingleDotCorner
+Resource\RabbitFX\Glowmap2 = ref ResourceDoubleDot
 
 $\RabbitFX\Brightness = 5.0
-$\RabbitFX\Time2 = (time/0.5)%1
+$\RabbitFX\Time2 = time%1
 $\RabbitFX\Radius2 = 0.25
 $\RabbitFX\cutout2 = 1
 ```
 
 We also need to update the fx map - the green channel controls Glowmap2 (and functions the same way as Glowmap1):
 
-[IMAGE]
+<p align="center">
+<img width="250" alt="BasicExample5" src="https://github.com/user-attachments/assets/29860a1d-7f15-4d5e-937e-28be7b8fbab7" />
+</p>
 
-
-The reason we need to use a second glowmap here is becase we want the two dots to flash at different speeds. If they were the same speed, we could just add the dot to the first glowmap. Note that the library is currently limited to a max of two independent glowmaps - while adding a third dot that blinks with a different speed to the first two isn't impossible, it's not as simple since there is no glowmap3 and would require some very creative coding. I recommend trying to limit any animations to at most two independent glowmaps/speeds.
+The reason we need to use a second glowmap here is becase we want the two dots to flash at different speeds. If they were the same speed, we could just add the dot to the first glowmap. Note that the library is currently limited to a max of two independent glowmaps - while adding a third dot that blinks with a different speed to the first two isn't impossible, it's not as simple since there is no Glowmap3 and would require some very creative coding. I recommend trying to limit any animations to at most two independent glowmaps/speeds.
 
 In situations where the effects from glowmap1 and glowmap2 overlap, glowmap2 will take priority. For cutout, think of the textures being layered like glowmap2 > glowmap1 > diffuse - if cutout2 is set, when glowmap2 is inactive you will essentially be able to see through it to the layer "below". So if glowmap1 is active or has cutout1 not set, you will see glowmap1 below. If glowmap1 is inactive and has cutout1 set, you will either see the original diffuse texture (if alpha > 0 on glowmap1) or the mesh will be cut out and not visible (alpha = 0)
 
 
 The final code is:
 ```
-Resource\RabbitFX\Diffuse = ref ResourceSingleDot
-Resource\RabbitFX\Glowmap = ref ResourceSingleDot
-Resource\RabbitFX\Glowmap = ref ResourceSingleDotCorner
-Resource\RabbitFX\FXMap   = ref ResourceBasicExampleFour
+Resource\RabbitFX\Diffuse = ref ResourceDoubleDot
+Resource\RabbitFX\Glowmap  = ref ResourceDoubleDot
+Resource\RabbitFX\Glowmap2 = ref ResourceDoubleDot
+Resource\RabbitFX\FXMap   = ref ResourceBasicExample5
 
 $\RabbitFX\Brightness = 5.0
-$\RabbitFX\Time1 = time%1
+$\RabbitFX\Time1 = (time/2)%1
 $\RabbitFX\Radius1 = 0.25
 $\RabbitFX\cutout1 = 1
 $\RabbitFX\AnimationMode1 = -1
-$\RabbitFX\Time2 = (time/0.5)%1
+$\RabbitFX\Time2 = time%1
 $\RabbitFX\Radius2 = 0.25
 $\RabbitFX\cutout2 = 1
 
@@ -349,46 +353,50 @@ run = CommandList\RabbitFX\Cleanup
 ```
 
 
-6) Multiple Glowing Dots in Sequence
+### 6) Multiple Glowing Dots in Sequence
 
 Gradually getting more complex, in the next example we create a basic sequence by setting different circles to different channel values
 
-[VIDEO]
+https://github.com/user-attachments/assets/f6558c30-d5ec-4093-8e6c-58c9a58e6ed3
 
 We now have 3 dots - I have set them to values of 60, 120 and 180 in the red channel.
 
 [IMAGE]
 
-In this case, since we want a dot to fully turn off before the next one turns on, we need to shrink the radius to something like 0.1 (otherwise, there will be a slight overlap). Trying something like:
+Trying something like (I set radius to 0.3 to highlight a few issues that we will solve shortly):
 ```
-Resource\RabbitFX\Diffuse = ref ResourceSingleDot
-Resource\RabbitFX\Glowmap = ref ResourceSingleDot
-Resource\RabbitFX\FXMap   = ref ResourceBasicExampleOne
+Resource\RabbitFX\Diffuse = ref ResourceTripleDot
+Resource\RabbitFX\Glowmap = ref ResourceTripleDot
+Resource\RabbitFX\FXMap   = ref ResourceBasicExample6
 
 $\RabbitFX\Brightness = 5.0
 $\RabbitFX\Time1 = (time/3)%1
-$\RabbitFX\Radius1 = 0.1
+$\RabbitFX\Radius1 = 0.3
 $\RabbitFX\AnimationMode1 = 1
 
 run = CommandList\RabbitFX\SetTextures
 run = CommandList\RabbitFX\Run
+drawindexed = X,Y,Z
+run = CommandList\RabbitFX\Cleanup
 ```
 Almost works, but you may notice some issues:
 
-[VIDEO2]
+https://github.com/user-attachments/assets/8ca3f2ad-8fd6-49ac-ba82-27e7a5e46562
 
-First of all, the behaviour of the top and bottom dot is a bit odd. Instead of starting from 0, the glow seems to start half active. And when the cycle reaches the end point, the glow suddenly turns off instead of gradually reaching 0.
+The first issue is that there is a slight overlap between the lights being on; this is because the radius is too large and the ranges are overlapping. We can fix this by making sure the radius is lower than the distance between the channels (in this case, `0.25`).
 
-This is due to behaviour near the edges for ramping glow - something with a red channel of 60 on the fx map corresponds to ~0.25. The amount of glow is basically where this number is in the range [time-radius, time+radius], reaching the minimum value at the edges. In this example, time starts at 0, so the range is []
+The second issue, the behaviour of the top and bottom dot is a bit odd. Instead of starting from 0, the glow seems to start partially active. And when the cycle reaches the end point, the glow suddenly turns off instead of gradually reaching 0.
 
-The same issue is causing the issue for the last dot - when time reaches 1.0, it's still in the range [time-radius, time+radius] so it suddenly stops.
+This is due to behaviour near the edges for ramping glow - something with a red channel of `60` on the fx map corresponds to ~`0.25`. The amount of glow is basically where this number is in the range `[time-radius, time+radius]`, reaching the minimum value at the edges. In this example, time starts at 0, so the range is `[-0.3, 0.3]` so the point `0.25` is already within the range when the animation starts
+
+The same issue is causing the issue for the last dot - when time reaches `1.0`, it's still in the range `[time-radius, time+radius]` so it suddenly stops.
 
 
 There are a couple of solutions here. First is to adjust the channel to be further from the edges. Second is to shrink the radius. Both of these basically ensure the dot doesn't remain active when the cycle begins or ends. But it might mess with spacing or timing
 
-The more general solution is to adjust the start and endpoints of time. I mentioned before that time needs to be between 0 and 1, but that is only half-correct. It will still function if you pass something below 0 or above 1, it just won't activate any glowmap unless it is in the range [0,1]. But we *can* use this to create a buffer zone for the start and stop points.
+The more general solution is to adjust the start and endpoints of time. I mentioned before that time needs to be between `0` and `1`, but that is only half-correct. It will still function if you pass something below `0` or above `1`, it just won't activate any glowmap unless it is in the range `[0,1]`. But we *can* use this to create a buffer zone for the start and stop points.
 
-Let's say for example we want time to go from -0.5 to 1.5, while still keeping the same overall cycle time. First, we multiply the output of (time/3)%1 by 2 to put it in the range `[0,2]`; then, we subtract 0.5 to put it in the range `[-0.5, 1.5]`
+Let's say for example we want time to go from `-0.5` to `1.5`, while still keeping the same overall cycle time. First, we multiply the output of `(time/3)%1` by `2` to put it in the range `[0,2]`; then, we subtract 0.5 to put it in the range `[-0.5, 1.5]`
 
 Or more generally the equation is: 
 
@@ -396,12 +404,13 @@ Or more generally the equation is:
 
 for creating a cycle between lowerbound and upperbound with length cyclelength. 
 
-Just be aware that since we are changing the size of the range, you may need to adjust the cyclelength timing (even though this cycle still takes 3 seconds, it spends 1.5 seconds out of bounds and 1.5 seconds in-bounds - if you wanted 3 seconds in-bounds, you would need a cyclelength of 6 instead). Also be careful with setting lowerbound and upperbound too far away from the original 0 and 1 boundaries. You can see that with 0.5, the animation will already spend more than half the time inactive - something like -0.1 and 1.1 is probably better in this case to minimize that effect:
+Just be aware that since we are changing the size of the range, you may need to adjust the cyclelength timing (even though this cycle still takes `3` seconds, it spends `1.5` seconds out of bounds and `1.5` seconds in-bounds - if you wanted `3` seconds in-bounds, you would need a cyclelength of `6` instead). Also be careful with setting lowerbound and upperbound too far away from the original 0 and 1 boundaries. You can see that with `0.5`, the animation will already spend more than half the time inactive - something like `-0.1` and `1.1` is probably better in this case to minimize that effect:
 
 `$\RabbitFX\Time1 = 1.2*(time/3)%1 - 0.1`
 
+We also adjust the radius to be `0.1`:
 
-[VIDEO3]
+https://github.com/user-attachments/assets/b3bf7a1f-ab0a-4af1-b09d-86c3af3b252c
 
 That fixes the issue with the edges, but it is still the wrong direction. The issue here is that time is going from 0...1 when it should be going from 1...0. This has a simple solution - just do 1-time instead of time. So the general question to reverse the direction is:
 
@@ -411,21 +420,36 @@ or in this case:
 
 `$\RabbitFX\Time1 = 1.2*(1-(time/3)%1) - 0.1`
 
-[VIDEO4]
+https://github.com/user-attachments/assets/de017ad4-be39-48a6-9ae8-ec55b645462e
+
+(You could also flip all the channel values in the FX map, both ways will work)
 
 The final code is:
 
+```
+Resource\RabbitFX\Diffuse = ref ResourceTripleDot
+Resource\RabbitFX\Glowmap = ref ResourceTripleDot
+Resource\RabbitFX\FXMap   = ref ResourceBasicExample6
+
+$\RabbitFX\Brightness = 5.0
+$\RabbitFX\Time1 = 1.2*(1-(time/3)%1) - 0.1
+$\RabbitFX\Radius1 = 0.1
+$\RabbitFX\AnimationMode1 = 1
+
+run = CommandList\RabbitFX\SetTextures
+run = CommandList\RabbitFX\Run
+drawindexed = X, Y, Z
+run = CommandList\RabbitFX\Cleanup
+```
 
 
-
-
-7) Basic Scrolling Movement
+### 7) Basic Scrolling Movement
 
 Now, we show how to move textures vertically and horizontally.
 
-[VIDEO]
+https://github.com/user-attachments/assets/44391b99-8bcb-4c82-97ae-e42a095a81eb
 
-There are two values associated with movement: moveX1 and moveY1 (+the corresponding ones for glowmap2, moveX2 and moveY2). These represent the amount to shift the UV maps of the texture in the X and Y direction - a positive value represents movement to the right and up, while negative is left and down. You can pass in any number, but note that the range is [-1.0, 1.0] - anything with an absolute value larger than 1.0 will just be shifted back into this range (so 1.6 will be treated as 0.6, -5.3 is -0.3, etc. Think of 1.6 as meaning "move 1 full cycle then 0.6 of a cycle" which results in a movement of 0.6)
+There are two values associated with movement: `moveX1` and `moveY1` (+the corresponding ones for glowmap2, moveX2 and moveY2). These represent the amount to shift the UV maps of the texture in the X and Y direction - a positive value represents movement to the right and up, while negative is left and down. You can pass in any number, but note that the range is `[-1.0, 1.0]` - anything with an absolute value larger than `1.0` will just be shifted back into this range (so `1.6` will be treated as `0.6`, `-5.3` is `-0.3`, etc. Think of `1.6` as meaning "move 1 full cycle then 0.6 of a cycle" which results in a movement of 0.6)
 
 By setting moveX1 and moveY1 to static values, we can give a constant offset; by setting them to dynamic ones, we can create movement. The simplest dynamic value to use is time:
 
@@ -433,23 +457,48 @@ By setting moveX1 and moveY1 to static values, we can give a constant offset; by
 
 This will cause the dot to move to the right, taking 5 seconds to return to where it started. Meanwhile:
 
-`$\RabbitFX\movey1 = (time/20)%1`
+`$\RabbitFX\movey1 = 1-(time/20)%1`
 
 This will cause the dot to slowly move down, taking 20 seconds to complete a full cycle.
 
 It's possible to use this in tandom with the previous effects and a second glowmap to create fairly complex movement - we will explore some more advanced applications in the intermediate and advanced sections
 
-
-
 The final code is:
 
+```
+Resource\RabbitFX\Diffuse = ref ResourceBlack
+Resource\RabbitFX\Glowmap = ref ResourceSingleDot
+Resource\RabbitFX\FXMap   = ref ResourceBasicExample7
 
+$\RabbitFX\Brightness = 5.0
+$\RabbitFX\Time1 = (time/2)%1
+$\RabbitFX\Radius1 = 0.25
+$\RabbitFX\AnimationMode1 = 1
+
+$\RabbitFX\movex1 = (time/5)%1
+$\RabbitFX\movey1 = 1-(time/20)%1
+
+run = CommandList\RabbitFX\SetTextures
+run = CommandList\RabbitFX\Run
+drawindexed = 6, 22932, 0
+run = CommandList\RabbitFX\Cleanup
+```
+
+
+(Note: ResourceBlack is just a full-black texture. Some characters use diffuse alpha as cutout already, so by passing a full-black texture we avoid that issue. If you are having an issue similar to this:
+
+https://github.com/user-attachments/assets/c4df560a-4359-4863-ba81-95ddc5ac41e8
+
+try messing with the Diffuse texture)
 
 
 8) Combined
 
 In this last example, I'll use every single feature: one set of circles will be gradually travelling to the right, while glowing in sequence; another will be moving diagonally and popping in and out of existence
 
+`[VIDEO]`
+
+For the circles moving to the right, I'll use the triple dot from example 6; for the travelling dot, it will be the one from example 7.
 
 
 Intermediate Examples
