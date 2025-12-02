@@ -1,8 +1,6 @@
 # Animated Texture Tutorial
 
-Hello everyone. Recently, I wrote a library that extends RabbitFX by CaveRabbit to add support for animated textures/glow. This is a guide explaining how it works, with several examples of how it can be used.
-
-This code was originally written for Stella Sora, but should be cross-game compatible for any game that RabbitFX supports once it has been ported. It may be compatible with genshin TexFX by SinsOfSeven in the future one day as well.
+Hello everyone. Recently, I wrote a library to add animated texture/glow support to games supported by 3dmigoto. It currently only works for Stella Sora (extending the RabbitFX library by CaveRabbit), with no current plans to extend to other games at this time.
 
 See download section for example code. You can use left and right arrow keys when the mod is visible to move through examples covered in this guide, and up and down to move through the sections (Basic/Intermediate/Advanced)
 
@@ -658,7 +656,22 @@ The title says it all. Run
 
 [VIDEO]
 
-Here, we demonstrate how to create basic animated tattoos - 
+Here, we demonstrate how to create basic animated tattoos.
+
+For Glowmap1, we use a static image of sucrose. For Glowmap2, we use the glowing eyes overlay. We want sucrose to always be visible (of course), so the FX map will all black on any section that overlaps with her. For the eyes, we want gradually increase in intensity from the inside outwards, then fade back the same way - we can use the same idea as example 2, by using a gradiant on the FX map:
+
+[IMAGE]
+[VIDEO]
+
+This will half work, but the problem is that it will fade from the inside out, which is the opposite of what we want (we want it to appear inside-out, then fade outside-in). We will go over how to do this in more detail in example 6, but for now the basic idea is that once we reach the maximum glow, we want the time variable to start travelling backwards instead of continuing forward. That will ensure the center remains in the range, while the edges gradually fade
+
+`time`
+
+Also note that we still have an entire glowmap to play around with - we can add some light gradient glow effect on sucrose herself by adjusting the FX map:
+
+[IMAGE]
+[VIDEO]
+
 
 A practical application would be something like a dragon tattoo:
 
