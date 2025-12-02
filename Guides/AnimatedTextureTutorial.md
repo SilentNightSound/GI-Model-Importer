@@ -45,6 +45,7 @@ High-level overview of all the commands. Each of these will be explained in more
 `$\RabbitFX\AnimationMode1`  
 
 ; Default behaviour when animation is inactive. Setting `0` has the texture continue to appear, setting `1` makes it vanish  
+; Setting `-1` will make only the parts that correspond to an fx value of 0 vanish (ie parts that are always inactive)
 `$\RabbitFX\cutout1`  
 
 ; Same as above, but for glowmap2. Not required if not setting glowmap2  
@@ -492,43 +493,95 @@ https://github.com/user-attachments/assets/c4df560a-4359-4863-ba81-95ddc5ac41e8
 try messing with the Diffuse texture)
 
 
-8) Combined
+### 8) Combined
 
 In this last example, I'll use every single feature: one set of circles will be gradually travelling to the right, while glowing in sequence; another will be moving diagonally and popping in and out of existence
 
-`[VIDEO]`
+https://github.com/user-attachments/assets/ec91c6af-4569-4f0f-b846-af12496e6337
 
 For the circles moving to the right, I'll use the triple dot from example 6; for the travelling dot, it will be the one from example 7.
 
+The new FX map is:
 
-Intermediate Examples
+<p align="center">
+<img width="250"  alt="BasicExample8" src="https://github.com/user-attachments/assets/304ab45f-bd11-42e9-acc1-b8ac37b01809" />
+</p>
+
+The final code (mostly a combination of examples 6 and 7) is:
+
+```
+Resource\RabbitFX\Diffuse = ref ResourceBlack
+Resource\RabbitFX\Glowmap = ref ResourceTripleDot
+Resource\RabbitFX\Glowmap2 = ref ResourceSingleDot
+Resource\RabbitFX\FXMap   = ref ResourceBasicExample8
+
+$\RabbitFX\Brightness = 10
+$\RabbitFX\Time1 = 1.2*(1-(time/3)%1) - 0.1
+$\RabbitFX\Radius1 = 0.1
+$\RabbitFX\AnimationMode1 = 1
+$\RabbitFX\Cutout1 = -1
+
+$\RabbitFX\Time2 = (time/2)%1
+$\RabbitFX\Radius2 = 0.25
+$\RabbitFX\AnimationMode2 = 1
+
+$\RabbitFX\movex1 = (time/5)%1
+
+$\RabbitFX\movex2 = (time/10)%1
+$\RabbitFX\movey2 = 1-(time/2)%1
+
+run = CommandList\RabbitFX\SetTextures
+run = CommandList\RabbitFX\Run
+drawindexed = 6, 22932, 0
+run = CommandList\RabbitFX\Cleanup
+```
+
+The only thing to note here is we use `-1` for cutout, which works similarly to `0` except it cuts out any parts that are always inactive (if we didn't set this, then the green parts would appear black since they have alpha > 0)
+
+
+## Intermediate Examples
 
 The following examples will show some more complex use cases that use multiple features at the same time. I would recommend at least skimming the basic examples in the first section to learn the syntax before trying these.
 
 
-1) Stoplight
+### 1) Stoplight
 
-The first intermediate example will be a modification of Beginner example #6 to create a stoplight - it will flash green, yellow, then red in sequence with yellow being shorter.
+The first intermediate example will be a warm up - a modification of Beginner example #6 to create a stoplight. It will flash green, yellow, then red in sequence with yellow being shorter (5 seconds total loop, with red and green taking 2 second and yellow 1 seconds), the first practical application of the tool:
+
+[VIDEO]
+
+We start with the code from example 6. First, we recolor the glowmap to match the stoplight colors:
+
+[IMAGE]
+
+Note that we could have also made all 3 a single color then used the hue shift feature of the FX map to accomplish the same thing. Which way is better depends on the use case.
+
+Next, we adjust the FX map. We want the yellow light (middle) to be on a separate glowmap since it will be active for a shorter period than the other two lights, but otherwise the values remain the same.
+
+[IMAGE]
+
+The final part is getting the timing correct. All lights will be operating on a 5 second loop, but we want glowmap2 to be active for only half the time. We can do this by having `radius2` be half the size of `radius1`:
+
+
+The final code is:
+
+```
+```
+
+
+2) Gradient Glow
+
+The next intermediate example will show how to create a smoother version of movement compared to the on/off we have been using so far. We use it to make a glowing animated circuit:
+
+[VIDEO]
+
+Also a preview of this sort of effect on the character (we will go over how to implement this in the final example in this section):
 
 [VIDEO]
 
 
 
-X) Gradient Glow
-
-The next intermediate example will show how to create a smoother version of movement compared to the on/off we have been using so far.
-
-[VIDEO]
-
-
-X) Bobbing Movement
-
-Next, we explore other types of movement beside scrolling - it is possible to cause an object to move up and down instead of looping around the screen.
-
-[VIDEO]
-
-
-X) Rotating emoji sphere
+3) Rotating emoji sphere
 
 An example of using this animation on a non-flat texture, to create the illusion of a rotating sphere.
 
@@ -537,16 +590,35 @@ An example of using this animation on a non-flat texture, to create the illusion
 It's also possible to do this by creating a rotation shader and spinning the points (and would be required if the sphere had additional parts sticking out), but for a uniform sphere this way is lighter in terms of both code and performance impact.
 
 
+4) Glowing Eyes Sucrose
+
+The title says it all. Run
+
+[VIDEO]
+
+Here, we demonstrate how to create basic animated tattoos - 
+
+A practical application would be something like a dragon tattoo:
+
+[VIDEO]
+
 
 X) Digital Clock
 
 We create a simple digital clock that counts seconds between 0 and 9
 
-X) Glowing Eyes Sucrose
 
-The title says it all. Run
+
+
+
+X) Bobbing Movement
+
+Next, we explore other types of movement beside scrolling - it is possible to cause an object to move up and down instead of looping around the screen. We use this to animate a ship bobbing on the waves
 
 [VIDEO]
+
+
+
 
 X) Falling rain/teardrops
 
@@ -567,7 +639,7 @@ The first example that actually uses the original mesh,
 
 
 
-Advanced Applications
+## Advanced Applications
 
 The final section will use the knowledge we have gained in the previous two sections to implement some complex animations/effects. Make sure you have a solid grasp of how the examples in the first two sections work
 
