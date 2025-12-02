@@ -548,49 +548,111 @@ The following examples will show some more complex use cases that use multiple f
 
 The first intermediate example will be a warm up - a modification of Beginner example #6 to create a stoplight. It will flash green, yellow, then red in sequence with yellow being shorter (5 seconds total loop, with red and green taking 2 second and yellow 1 seconds), the first practical application of the tool:
 
-[VIDEO]
+https://github.com/user-attachments/assets/86ff78de-33ee-4830-a4e0-bddf9c8b044a
 
 We start with the code from example 6. First, we recolor the glowmap to match the stoplight colors:
 
-[IMAGE]
+<p align="center">  
+<img width="350" alt="IntermediateExample1_1" src="https://github.com/user-attachments/assets/4d639315-6635-4af6-8a9f-f059e2c455bb" />
+</p>
 
-Note that we could have also made all 3 a single color then used the hue shift feature of the FX map to accomplish the same thing. Which way is better depends on the use case.
+The green and red dots are on glowmap1, while the yellow dot is on glowmap2. Note that we could have also made all 3 a single color then used the hue shift feature of the FX map to accomplish the same thing. Which way is better depends on the use case.
 
-Next, we adjust the FX map. We want the yellow light (middle) to be on a separate glowmap since it will be active for a shorter period than the other two lights, but otherwise the values remain the same.
+Next, we adjust the FX map. We want the yellow light (middle) to be on a separate glowmap since it will be active for a shorter period than the other two lights, but otherwise the values remain the same. Unlike previous examples, we want the light to be active when the cycle starts/ends, so we choose `50` and `205` for the color values of red channel (`0.2` and `0.8` of `255`; we will show why these numbers are used when we talk about timing). The yellow light should be halfway in the cycle, so we pick `127` as the green channel.
 
-[IMAGE]
+<p align="center">  
+<img width="250" alt="IntermediateExample1_2" src="https://github.com/user-attachments/assets/28cb31cb-00c1-4503-886a-62fe3acc2a31" />
+</p>
 
-The final part is getting the timing correct. All lights will be operating on a 5 second loop, but we want glowmap2 to be active for only half the time. We can do this by having `radius2` be half the size of `radius1`:
+Now, we need to get the timing correct. All lights will be operating on a 5 second loop, but we want glowmap2 to be active for only half the time of glowmap1. We can do this by having `radius2` be half the size of `radius1`. For `radius1`, since we want each light to take up 2 seconds out of 5 seconds, it means the radius should cover 40% of the total range or a `radius1` of 0.2 (and thus, to ensure the lights are active at the start and end of the cycle they must be within 0.2 of the edges). `Radius2` is thus 0.1.
 
+https://github.com/user-attachments/assets/ba1f585e-3bee-44f1-a4bf-40522c049297
+
+Now that the logic is correct, we adjust the location and sizes of the dots to match up with the (completely non-sus) stoplight:
+
+<p align="center"> 
+<img width="250" alt="IntermediateExample1_3" src="https://github.com/user-attachments/assets/11876bda-5f42-44a2-a2c8-1bbc1691814d" />
+<img width="250" alt="IntermediateExample1_4" src="https://github.com/user-attachments/assets/e65cd992-3d33-4316-82a7-3c81af071127" />
+<img width="250" alt="IntermediateExample1_5" src="https://github.com/user-attachments/assets/f239dfdb-aa22-4c72-91b2-159238959475" />
+</p>
+
+The only thing of note here is to make sure the FX map (3rd image) has black wherever the stoplight mesh is - otherwise, it will be cut out and not visible (an alternate option is to put it on the diffuse map instead and cut out to display it).
 
 The final code is:
 
 ```
+Resource\RabbitFX\Diffuse = ref ResourceBlack
+Resource\RabbitFX\Glowmap = ref ResourceStoplight1
+Resource\RabbitFX\Glowmap2 = ref ResourceStoplight2
+
+Resource\RabbitFX\FXMap   = ref ResourceIntermediateExample1
+
+$\RabbitFX\Brightness = 5.0
+$\RabbitFX\Time1 = (time/5)%1
+$\RabbitFX\Radius1 = 0.2
+
+$\RabbitFX\Time2 = (time/5)%1
+$\RabbitFX\Radius2 = 0.1
+
+run = CommandList\RabbitFX\SetTextures
+run = CommandList\RabbitFX\Run
+drawindexed = 6, 22932, 0
+run = CommandList\RabbitFX\Cleanup
 ```
 
 
-2) Gradient Glow
+### 2) Gradient Glow
 
 The next intermediate example will show how to create a smoother version of movement compared to the on/off we have been using so far. We use it to make a glowing animated circuit:
 
 [VIDEO]
 
-Also a preview of this sort of effect on the character (we will go over how to implement this in the final example in this section):
-
-[VIDEO]
 
 
-
-3) Rotating emoji sphere
+### 3) Rotating emoji sphere
 
 An example of using this animation on a non-flat texture, to create the illusion of a rotating sphere.
 
-[VIDEO]
+https://github.com/user-attachments/assets/b4080d32-e777-491a-86d4-37d50f7d64b9
+
+Instead of using a flat plane, we export a standard blender sphere. We want the face to appear on sides of it, so we can use a texture like this as our glowmap:
+
+<p align="center"> 
+<img width="250" alt="IntermediateExample3_1" src="https://github.com/user-attachments/assets/068e8f91-d06e-4226-8283-b6396a473dd7" />
+</p>
+
+For the FX map, it will just be all black - remember that we don't need to use glow in all our textures, it's possible to use this library purely for animation.
+
+<p align="center"> 
+<img width="250" alt="IntermediateExample3_2" src="https://github.com/user-attachments/assets/135c49b6-a847-471f-8c48-e1ea274e05b8" />
+</p>
+
+Finally, to make the image scroll we set `movex1` to cycle every 5 seconds with `(time/5)%1`
+
+The final code is:
+
+```
+Resource\RabbitFX\Diffuse = ref ResourceBlack
+Resource\RabbitFX\Glowmap = ref ResourceThinkingEmoji
+Resource\RabbitFX\FXMap   = ref ResourceIntermediateExample3
+
+$\RabbitFX\Brightness = 5.0
+$\RabbitFX\Time1 = (time/2)%1
+$\RabbitFX\Radius1 = 0.25
+$\RabbitFX\AnimationMode1 = 1
+
+$\RabbitFX\movex1 = (time/5)%1
+
+run = CommandList\RabbitFX\SetTextures
+run = CommandList\RabbitFX\Run
+drawindexed = 2880, 22944, 0
+run = CommandList\RabbitFX\Cleanup
+```
 
 It's also possible to do this by creating a rotation shader and spinning the points (and would be required if the sphere had additional parts sticking out), but for a uniform sphere this way is lighter in terms of both code and performance impact.
 
 
-4) Glowing Eyes Sucrose
+### 4) Glowing Eyes Sucrose
 
 The title says it all. Run
 
@@ -603,7 +665,7 @@ A practical application would be something like a dragon tattoo:
 [VIDEO]
 
 
-X) Digital Clock
+### 5) Digital Clock
 
 We create a simple digital clock that counts seconds between 0 and 9
 
@@ -611,7 +673,7 @@ We create a simple digital clock that counts seconds between 0 and 9
 
 
 
-X) Bobbing Movement
+### 6) Bobbing Movement
 
 Next, we explore other types of movement beside scrolling - it is possible to cause an object to move up and down instead of looping around the screen. We use this to animate a ship bobbing on the waves
 
@@ -620,11 +682,11 @@ Next, we explore other types of movement beside scrolling - it is possible to ca
 
 
 
-X) Falling rain/teardrops
+### 7) Falling rain/teardrops
 
 [VIDEO]
 
-X) Travelling dragon
+8) Travelling dragon
 
 An example of a dragon travelling to the right
 
