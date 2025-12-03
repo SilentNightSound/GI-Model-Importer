@@ -360,7 +360,9 @@ https://github.com/user-attachments/assets/f6558c30-d5ec-4093-8e6c-58c9a58e6ed3
 
 We now have 3 dots - I have set them to values of 60, 120 and 180 in the red channel.
 
-[IMAGE]
+<p align="center">
+<img width="250"  alt="BasicExample6" src="https://github.com/user-attachments/assets/cd5e2d2e-9295-467d-b363-fa400aa6e5b0" />
+</p>
 
 Trying something like (I set radius to 0.3 to highlight a few issues that we will solve shortly):
 ```
@@ -399,13 +401,13 @@ Let's say for example we want time to go from `-0.5` to `1.5`, while still keepi
 
 Or more generally the equation is: 
 
-`(upperbound-lowerbound)*(time/cyclelength)%1 + lowerbound` 
+`(upperbound-lowerbound)*((time/cyclelength)%1) + lowerbound` 
 
 for creating a cycle between lowerbound and upperbound with length cyclelength. 
 
 Just be aware that since we are changing the size of the range, you may need to adjust the cyclelength timing (even though this cycle still takes `3` seconds, it spends `1.5` seconds out of bounds and `1.5` seconds in-bounds - if you wanted `3` seconds in-bounds, you would need a cyclelength of `6` instead). Also be careful with setting lowerbound and upperbound too far away from the original 0 and 1 boundaries. You can see that with `0.5`, the animation will already spend more than half the time inactive - something like `-0.1` and `1.1` is probably better in this case to minimize that effect:
 
-`$\RabbitFX\Time1 = 1.2*(time/3)%1 - 0.1`
+`$\RabbitFX\Time1 = 1.2*((time/3)%1) - 0.1`
 
 We also adjust the radius to be `0.1`:
 
@@ -606,7 +608,6 @@ The next intermediate example will show how to create a smoother version of move
 [VIDEO]
 
 
-
 ### 3) Rotating emoji sphere
 
 An example of using this animation on a non-flat texture, to create the illusion of a rotating sphere.
@@ -654,41 +655,176 @@ It's also possible to do this by creating a rotation shader and spinning the poi
 
 The title says it all. Run
 
-[VIDEO]
+https://github.com/user-attachments/assets/ebd8be71-297c-4252-8e30-3982638f2dae
 
 Here, we demonstrate how to create basic animated tattoos.
 
-For Glowmap1, we use a static image of sucrose. For Glowmap2, we use the glowing eyes overlay. We want sucrose to always be visible (of course), so the FX map will all black on any section that overlaps with her. For the eyes, we want gradually increase in intensity from the inside outwards, then fade back the same way - we can use the same idea as example 2, by using a gradiant on the FX map:
+For Glowmap1, we use a static image of sucrose. For Glowmap2, we use the glowing eyes overlay. We want sucrose to always be visible (of course), so the FX map will all black on any section that overlaps with her. For the eyes, we want gradually increase in intensity from the inside outwards, then fade back the same way - we can use the same idea as example 2, by using a gradiant on the FX map (note that we try to avoid going all the way to the edges (`0` and `255`) so we don't get any odd edge behaviour):
 
-[IMAGE]
-[VIDEO]
+<p align="center"> 
+<img width="250" alt="IntermediateExample4_1" src="https://github.com/user-attachments/assets/4dd0d7b9-8b81-4d8c-9d64-222029c3a2df" />
+<img width="250" alt="IntermediateExample4_2" src="https://github.com/user-attachments/assets/97f6f028-7ef9-4ee6-9bfe-558620b825d4" />
+<img width="250" alt="IntermediateExample4_3" src="https://github.com/user-attachments/assets/6362e1fc-0049-4392-a9e7-171ab90a8c3a" />
+</p>
+
+https://github.com/user-attachments/assets/ed5de0d7-7c93-4752-acf0-174f571ecdc1
 
 This will half work, but the problem is that it will fade from the inside out, which is the opposite of what we want (we want it to appear inside-out, then fade outside-in). We will go over how to do this in more detail in example 6, but for now the basic idea is that once we reach the maximum glow, we want the time variable to start travelling backwards instead of continuing forward. That will ensure the center remains in the range, while the edges gradually fade
 
-`time`
+The simplest way to do this is with an if/else statement, that reverses the direction when time is above 0.5:
+
+```
+if 1.3*((time/6)%1)-0.3 > 0.5
+	$\RabbitFX\Time2 = 1.3*(1 - (time/6)%1)-0.3
+else
+	$\RabbitFX\Time2 = 1.3*((time/6)%1)-0.3
+endif
+```
 
 Also note that we still have an entire glowmap to play around with - we can add some light gradient glow effect on sucrose herself by adjusting the FX map:
 
-[IMAGE]
-[VIDEO]
+<p align="center"> 
+<img width="250" alt="IntermediateExample4_4" src="https://github.com/user-attachments/assets/cb75eb81-bbe4-4697-8416-5220cbce85ca" />
+</p>
 
-
-A practical application would be something like a dragon tattoo:
-
-[VIDEO]
+Which will cause some of the seams on her clothing to have a moving glow (as you can see in the original video at the top of this example).
 
 
 ### 5) Digital Clock
 
-We create a simple digital clock that counts seconds between 0 and 9
+We create a simple digital clock that counts seconds up to 60. This example shows how you can mix this library with ini coding to create more complex effects (remember that ini coding can be very powerful! Lots of basic animations and effects can be created with nothing but if/else statements and texture swaps).
+
+https://github.com/user-attachments/assets/8e59a437-0f36-465c-b2fa-58b7a4a738b6
+
+To start, we will count from 0 to 9. This requires 10 images in total (20 if you also count the corresponding FX textures):
+
+<p align="center"> 
+<img width="350" alt="IntermediateExample5" src="https://github.com/user-attachments/assets/24f1b320-e9d8-4d21-bac3-b8a61446c65d" />
+</p>
+
+Next, we decide which to load into the glowmap depending on the value of time.  A cycle lasts 10 seconds, and each number gets a one-second slice of that time. So we can do something like:
+
+```
+$digit = (time/10)%1
+if $digit >= 0 && $digit < 0.1 
+	Resource\RabbitFX\Glowmap = ref Resource0Right
+	Resource\RabbitFX\FXMap = ref ResourceIntermediateExample5_0
+elif $digit >= 0.1 && $digit < 0.2 
+	Resource\RabbitFX\Glowmap = ref Resource1Right
+	Resource\RabbitFX\FXMap = ref ResourceIntermediateExample5_1
+elif $digit >= 0.2 && $digit < 0.3 
+	Resource\RabbitFX\Glowmap = ref Resource2Right
+	Resource\RabbitFX\FXMap = ref ResourceIntermediateExample5_2
+elif $digit >= 0.3 && $digit < 0.4 
+	Resource\RabbitFX\Glowmap = ref Resource3Right
+	Resource\RabbitFX\FXMap = ref ResourceIntermediateExample5_3
+elif $digit >= 0.4 && $digit < 0.5 
+	Resource\RabbitFX\Glowmap = ref Resource4Right
+	Resource\RabbitFX\FXMap = ref ResourceIntermediateExample5_4
+elif $digit >= 0.5 && $digit < 0.6 
+	Resource\RabbitFX\Glowmap = ref Resource5Right
+	Resource\RabbitFX\FXMap = ref ResourceIntermediateExample5_5
+elif $digit >= 0.6 && $digit < 0.7 
+	Resource\RabbitFX\Glowmap = ref Resource6Right
+	Resource\RabbitFX\FXMap = ref ResourceIntermediateExample5_6
+elif $digit >= 0.7 && $digit < 0.8 
+	Resource\RabbitFX\Glowmap = ref Resource7Right
+	Resource\RabbitFX\FXMap = ref ResourceIntermediateExample5_7
+elif $digit >= 0.8 && $digit < 0.9 
+	Resource\RabbitFX\Glowmap = ref Resource8Right
+	Resource\RabbitFX\FXMap = ref ResourceIntermediateExample5_8
+elif $digit >= 0.9 && $digit < 1.0 
+	Resource\RabbitFX\Glowmap = ref Resource9Right
+	Resource\RabbitFX\FXMap = ref ResourceIntermediateExample5_9
+endif
+```
+
+Which will load the each digit in sequence for 1 second:
+
+https://github.com/user-attachments/assets/50c86381-06db-44fe-b573-ad9b48ec110b
+
+Next, we deal with the left digit. At first, you might think that the simplest way is to just create another set of 10 textures but there is an easier way - we can use the exact same set but give them all a `movex1` offset to put them in the correct place. We can actually re-use the set code from the right digit if we move it into a command list too:
+
+```
+$\RabbitFX\Brightness = 5.0
+$\RabbitFX\movex1 = 0.35
+$digit = (time/100)%1
+run = CommandListDisplayDigit
+run = CommandList\RabbitFX\SetTextures
+run = CommandList\RabbitFX\Run
+drawindexed = 6, 22932, 0
+```
+
+Note that we are actually drawing the mesh twice - once for the right digit, and once for the left. You may need to set some values again like `$\RabbitFX\Brightness` between calls (and you only need to call `Cleanup` once at the very end).
+
+This will create a timer that counts between `0` and `99` which is close to what we want but not quite - we want it to cycle between `0` and `60`. Your first thought might be to change `/100` to `/60` to swap it to a 60 second cycle, but that won't work since each slice will be 6 seconds and not 10 seconds. The actual solution is to use
+
+`$digit = (time/100)%0.6`
+
+iInstead, which keeps the slices at 10 seconds but constrains the output to `[0,0.6]` instead of `[0,1.0]` (ie only the first 6 digits).
+
+The final code is:
+
+```
+Resource\RabbitFX\Diffuse = ref ResourceBlack
+
+$digit = (time/10)%1
+run = CommandListDisplayDigit
+$\RabbitFX\Brightness = 5.0
+$\RabbitFX\Time1 = 0
+$\RabbitFX\Radius1 = 0.2
+$\RabbitFX\movex1 = 0.05
+run = CommandList\RabbitFX\SetTextures
+run = CommandList\RabbitFX\Run
+drawindexed = 6, 22932, 0
+
+$\RabbitFX\Brightness = 5.0
+$\RabbitFX\movex1 = 0.35
+$digit = (time/100)%0.6
+run = CommandListDisplayDigit
+run = CommandList\RabbitFX\SetTextures
+run = CommandList\RabbitFX\Run
+drawindexed = 6, 22932, 0
+run = CommandList\RabbitFX\Cleanup
 
 
+[CommandListDisplayDigit]
+if $digit >= 0 && $digit < 0.1 
+	Resource\RabbitFX\Glowmap = ref Resource0Right
+	Resource\RabbitFX\FXMap = ref ResourceIntermediateExample5_0
+elif $digit >= 0.1 && $digit < 0.2 
+	Resource\RabbitFX\Glowmap = ref Resource1Right
+	Resource\RabbitFX\FXMap = ref ResourceIntermediateExample5_1
+elif $digit >= 0.2 && $digit < 0.3 
+	Resource\RabbitFX\Glowmap = ref Resource2Right
+	Resource\RabbitFX\FXMap = ref ResourceIntermediateExample5_2
+elif $digit >= 0.3 && $digit < 0.4 
+	Resource\RabbitFX\Glowmap = ref Resource3Right
+	Resource\RabbitFX\FXMap = ref ResourceIntermediateExample5_3
+elif $digit >= 0.4 && $digit < 0.5 
+	Resource\RabbitFX\Glowmap = ref Resource4Right
+	Resource\RabbitFX\FXMap = ref ResourceIntermediateExample5_4
+elif $digit >= 0.5 && $digit < 0.6 
+	Resource\RabbitFX\Glowmap = ref Resource5Right
+	Resource\RabbitFX\FXMap = ref ResourceIntermediateExample5_5
+elif $digit >= 0.6 && $digit < 0.7 
+	Resource\RabbitFX\Glowmap = ref Resource6Right
+	Resource\RabbitFX\FXMap = ref ResourceIntermediateExample5_6
+elif $digit >= 0.7 && $digit < 0.8 
+	Resource\RabbitFX\Glowmap = ref Resource7Right
+	Resource\RabbitFX\FXMap = ref ResourceIntermediateExample5_7
+elif $digit >= 0.8 && $digit < 0.9 
+	Resource\RabbitFX\Glowmap = ref Resource8Right
+	Resource\RabbitFX\FXMap = ref ResourceIntermediateExample5_8
+elif $digit >= 0.9 && $digit < 1.0 
+	Resource\RabbitFX\Glowmap = ref Resource9Right
+	Resource\RabbitFX\FXMap = ref ResourceIntermediateExample5_9
+endif
+```
 
+### 6) DVD Logo
 
-
-### 6) Bobbing Movement
-
-Next, we explore other types of movement beside scrolling - it is possible to cause an object to move up and down instead of looping around the screen. We use this to animate a ship bobbing on the waves
+Next, we explore other types of movement beside scrolling - more complex movement is possible instead of just looping around the screen. We use this to animate a DVD logo in various ways
 
 [VIDEO]
 
@@ -699,15 +835,11 @@ Next, we explore other types of movement beside scrolling - it is possible to ca
 
 [VIDEO]
 
-8) Travelling dragon
 
-An example of a dragon travelling to the right
 
-[VIDEO]
+### 8) Moving glow on clothing
 
-X) Moving glow on clothing
-
-The first example that actually uses the original mesh, 
+We combine several of the previous intermediate examples to create an animated tattoo on the character
 
 [VIDEO]
 
@@ -739,6 +871,8 @@ X) Rotating halo
 X) Rotating magic circle
 
 X) Analog Clock
+
+X) DVD Logo
 
 X) Shorekeeper-style effect (or paimon cape)
 
