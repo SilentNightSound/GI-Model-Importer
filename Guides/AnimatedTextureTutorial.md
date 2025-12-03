@@ -100,7 +100,7 @@ To set the diffuse and lightmap textures.
 
 ## Basic Use
 
-The following examples will go through the basic usage of the library. I will demonstrate them on a flat plane for simplicity, but the concepts will work on a mesh of any shape.
+The following examples will go through the basic usage of the library. I will demonstrate them on a flat plane for simplicity, but the concepts will work on a mesh of any shape. These examples are meant to illustrate how the commands work and so are very basic (mostly using glowing dots for simplicity) - if are already familiar with the library or the notes in the overview make sense you can skip to the intermediate section for some practical examples.
 
 Before we begin, a note on where to call RabbitFX: you want to call it in the override that actually draws the model, before the draw call. Look for where `drawindexed = X, Y, 0` or `drawindexed = auto` is, and it should go right before. That section will also very likely have an ib = ResourceIB section somewhere as well.
 
@@ -326,7 +326,9 @@ We also need to update the fx map - the green channel controls Glowmap2 (and fun
 
 The reason we need to use a second glowmap here is becase we want the two dots to flash at different speeds. If they were the same speed, we could just add the dot to the first glowmap. Note that the library is currently limited to a max of two independent glowmaps - while adding a third dot that blinks with a different speed to the first two isn't impossible, it's not as simple since there is no Glowmap3 and would require some very creative coding. I recommend trying to limit any animations to at most two independent glowmaps/speeds.
 
-In situations where the effects from glowmap1 and glowmap2 overlap, glowmap2 will take priority. For cutout, think of the textures being layered like glowmap2 > glowmap1 > diffuse - if cutout2 is set, when glowmap2 is inactive you will essentially be able to see through it to the layer "below". So if glowmap1 is active or has cutout1 not set, you will see glowmap1 below. If glowmap1 is inactive and has cutout1 set, you will either see the original diffuse texture (if alpha > 0 on glowmap1) or the mesh will be cut out and not visible (alpha = 0)
+In situations where the effects from glowmap1 and glowmap2 overlap, glowmap2 will take priority. For cutout, think of the textures being layered like glowmap2 > glowmap1 > diffuse - if cutout2 is set, when glowmap2 is inactive you will essentially be able to see through it to the layer "below". So if glowmap1 is active or has cutout1 not set, you will see glowmap1 below. If glowmap1 is inactive and has cutout1 set, you will either see the original diffuse texture (if alpha > 0 on glowmap1) or the mesh will be cut out and not visible (alpha = 0).
+
+See Addendum for a more detailed list of what texture is visible under what circumstances.
 
 
 The final code is:
@@ -450,7 +452,7 @@ Now, we show how to move textures vertically and horizontally.
 
 https://github.com/user-attachments/assets/44391b99-8bcb-4c82-97ae-e42a095a81eb
 
-There are two values associated with movement: `moveX1` and `moveY1` (+the corresponding ones for glowmap2, moveX2 and moveY2). These represent the amount to shift the UV maps of the texture in the X and Y direction - a positive value represents movement to the right and up, while negative is left and down. You can pass in any number, but note that the range is `[-1.0, 1.0]` - anything with an absolute value larger than `1.0` will just be shifted back into this range (so `1.6` will be treated as `0.6`, `-5.3` is `-0.3`, etc. Think of `1.6` as meaning "move 1 full cycle then 0.6 of a cycle" which results in a movement of 0.6)
+There are two values associated with movement: `moveX1` and `moveY1` (+the corresponding ones for glowmap2, moveX2 and moveY2). These represent the amount to shift the UV maps of the texture in the X and Y direction - the exact direction depends on how the mesh UV is laid out (positive might be scrolling left or right, you will need to double check. By default, it should be right and up for most uv maps). You can pass in any number, but note that the range is `[-1.0, 1.0]` - anything with an absolute value larger than `1.0` will just be shifted back into this range (so `1.6` will be treated as `0.6`, `-5.3` is `-0.3`, etc. Think of `1.6` as meaning "move 1 full cycle then 0.6 of a cycle" which results in a movement of 0.6)
 
 By setting moveX1 and moveY1 to static values, we can give a constant offset; by setting them to dynamic ones, we can create movement. The simplest dynamic value to use is time:
 
@@ -541,7 +543,7 @@ The only thing to note here is we use `-1` for cutout, which works similarly to 
 
 ## Intermediate Examples
 
-The following examples will show some more complex use cases that use multiple features at the same time. I would recommend at least skimming the basic examples in the first section to learn the syntax before trying these.
+The following examples will show some more complex use cases that use multiple features at the same time. I would recommend at least skimming the basic examples in the first section to learn the syntax before trying these. Most of these intermediate examples will still be using solid objects like planes or spheres, but the concepts can be applied to any mesh shape (the plane is to help visualize how the UVs will function on more complicated shapes - when troubleshooting complicated animations, it can be helpful to think of how it will look like on a flat surface). See the advanced section for examples with non-basic geometry.
 
 
 ### 1) Stoplight
@@ -606,6 +608,48 @@ run = CommandList\RabbitFX\Cleanup
 The next intermediate example will show how to create a smoother version of movement compared to the on/off we have been using so far. We use it to make a glowing animated circuit:
 
 [VIDEO]
+
+In the earlier sections, we used discrete values of FX channels to make things blink in sequence. We can use gradients instead for a smooth motion. Assuming time is increasing from 0 to 1, then FX values closer to 0 will turn on sooner than ones closer to 1, and the amount of the effect active at any given time depends on the size of the radius. An example of an FX map with this property, where the further points from the "front" of the texture have lower values:
+
+[IMAGE]
+
+There are a few common issues to be aware of: if your animation is behaving oddly near the edges, make sure the lowest and highest FX channels don't begin/end within the range `[time-radius, time+radius]` (see basic example 6 for details). If the movement isn't smooth, double check you are saving the format as linear (srgb will create a curve of values which will cause the speed to be non-uniform)
+
+
+To control how much of the line is visible at once, one can either change the radius (like `0.1` vs `0.4` - a smaller radius means less is active) or make the gradient less steep (a gradient between `30` and `230` will cause a radius of `0.1` to only have `10%` active at once; a gradient between
+
+Smaller radius/steep gradient:
+[IMAGE]
+
+Larger radius/flat gradient:
+[IMAGE]
+
+It's also possible to use a non-linear gradient to cause the size of the line to grow and shrink as it travels
+
+
+The speed the effect travels depends on the value we pass in to time - the faster `time` moves between `0` and `1` (ie the shorter the cycle time), the faster the line will appear to move
+
+5 second cycle:
+[VIDEO]
+
+10 second cycle:
+[VIDEO]
+
+
+Since the gradient can be controlled via texture, the size of the line can be different between two lines even if they are on the same glowmap. In comparison, if one wanted a different speed one has to use glowmap2 instead (and we can have a maximum of two distinct speeds in any animation, ignoring any ini trickery like changing the speed in different time regions).
+
+To demonstrate this concept, we have the lines in the center move slowly while the ones on the edges move faster. The edge lines will all have different lengths:
+
+[IMAGE]
+[VIDEO]
+
+The last intermediate example (number 8) and first expert example (number 1) will demonstrate how to put this effect on a character to create the animated effect that is similar to the one from the effect tutorial.
+
+The final code is
+
+```
+```
+
 
 
 ### 3) Rotating emoji sphere
@@ -699,7 +743,7 @@ https://github.com/user-attachments/assets/8e59a437-0f36-465c-b2fa-58b7a4a738b6
 To start, we will count from 0 to 9. This requires 10 images in total (20 if you also count the corresponding FX textures):
 
 <p align="center"> 
-<img width="350" alt="IntermediateExample5" src="https://github.com/user-attachments/assets/24f1b320-e9d8-4d21-bac3-b8a61446c65d" />
+<img width="500" alt="IntermediateExample5" src="https://github.com/user-attachments/assets/24f1b320-e9d8-4d21-bac3-b8a61446c65d" />
 </p>
 
 Next, we decide which to load into the glowmap depending on the value of time.  A cycle lasts 10 seconds, and each number gets a one-second slice of that time. So we can do something like:
@@ -826,18 +870,103 @@ endif
 
 Next, we explore other types of movement beside scrolling - more complex movement is possible instead of just looping around the screen. We use this to animate a DVD logo in various ways
 
+https://github.com/user-attachments/assets/e13c3dce-5e28-4705-841d-685f13a43468
+
+First, let's start with something basic - instead of having the DVD logo loop, we are going to have it hover up and down in place.
+
+The key here is instead of passing something like `(time/5)%1`, we are going to cause it to reverse directions when it reaches a certain point. We already saw an example in the Sucrose example, and we examine it more here. Basically, we want to swap to using `1-(time/N)%1` when we reach the half-way point, where `N` is the cycle length - that will cause the direction to reverse, until it reaches the lowest point again creating a "bobbing" motion
+
+So let's say we want the dvd logo to go up and down by a total of `0.15` (ie we want it to travel between `-0.15` and `+0.15`) over the course of five seconds. We set the lower bound to `-0.15` and the upper bound to `+0.45` (*not* `+0.15`, since we want to travel back upon reaching `+0.15` which means we need an extra `0.3` of space to return to `-0.15`)
+
+Using the equation from the basic section, that gives us `0.6*((time/5)%1) - 0.15`. Next, we do an if statement to check if we are above `+0.15` and if so reverse direction:
+
+```
+if 0.6*((time/5)%1) - 0.15 > 0.15
+	$\RabbitFX\movey1 = 0.6*(1 - (time/5)%1) - 0.15
+else
+	$\RabbitFX\movey1 = 0.6*((time/5)%1) - 0.15
+endif
+```
+
+https://github.com/user-attachments/assets/eb3c1289-7f61-422b-8754-26565066157e
+
+This works, but the movement is a bit stiff - if our goal is to create a "bobbing" motion (like being on the waves), then it should spend more time at the edges and less time in the center. This is more complicated, however, and is something we will cover in the advanced section (see the Halo example specifically) - for now, this motion is good enough for our purposes.
+
+Now that we know the basics of how to move an object back and forth, let's implement the bouncing DVD logo from the original video. To move diagonally, we set movement in X and Y to be equal. Assuming the dvd logo starts in the center, the edges of X and Y are located at -0.5 and 0.5. So in other words, we want to apply the concepts from the previous code block but to both directions and with the range `[-0.5, +0.5]` (while remembering that the logo itself has a thickness of about ~0.15, so the actual range is `[-0.35, 0.35]`):
+
+```
+if 1.35*((time/5)%1) - 0.35 > 0.35
+	$\RabbitFX\movex1 = 1.35*(1 - (time/5)%1) - 0.35
+	$\RabbitFX\movey1 = 1.35*(1 - (time/5)%1) - 0.35
+else
+	$\RabbitFX\movex1 = 1.35*((time/5)%1) - 0.35
+	$\RabbitFX\movey1 = 1.35*((time/5)%1) - 0.35
+endif
+```
+
+This works, but the movement is sort of boring:
+
+https://github.com/user-attachments/assets/27cb0935-2f73-4c17-bbf5-fd2edf63e3ea
+
+Since the DVD logo starts in the center, it will just bounce between corners. For more interesting movement, we can add an initial offset to one of the directions (by shifting one of the time variables by 1 second relative to the other):
+
+```
+if 1.35*(((time+1)/5)%1) - 0.35 > 0.35
+	$\RabbitFX\movex1 = 1.35*(1 - ((time+1)/5)%1) - 0.35
+else
+	$\RabbitFX\movex1 = 1.35*(((time+1)/5)%1) - 0.35
+endif
+if 1.35*((time/5)%1) - 0.35 > 0.35
+	$\RabbitFX\movey1 = 1.35*(1 - (time/5)%1) - 0.35
+else
+	$\RabbitFX\movey1 = 1.35*((time/5)%1) - 0.35
+endif
+```
+
+This creates the motion we saw in the original video where the DVD logo bounces around the sides.
+
+The final code is:
+
+```
+Resource\RabbitFX\Diffuse = ref ResourceBlack
+Resource\RabbitFX\Glowmap = ref ResourceDVD
+Resource\RabbitFX\FXMap   = ref ResourceIntermediateExample6
+
+$\RabbitFX\Brightness = 5.0
+$\RabbitFX\Time1 = (time/2)%1
+$\RabbitFX\Radius1 = 0.25
+$\RabbitFX\AnimationMode1 = 1
+
+;$\RabbitFX\movex1 = -(time/5)%1
+
+if 1.35*(((time+1)/5)%1) - 0.35 > 0.35
+	$\RabbitFX\movex1 = 1.35*(1 - ((time+1)/5)%1) - 0.35
+else
+	$\RabbitFX\movex1 = 1.35*(((time+1)/5)%1) - 0.35
+endif
+if 1.35*((time/5)%1) - 0.35 > 0.35
+	$\RabbitFX\movey1 = 1.35*(1 - (time/5)%1) - 0.35
+else
+	$\RabbitFX\movey1 = 1.35*((time/5)%1) - 0.35
+endif
+
+run = CommandList\RabbitFX\SetTextures
+run = CommandList\RabbitFX\Run
+drawindexed = 6, 22932, 0
+run = CommandList\RabbitFX\Cleanup
+```
+
+
+
+### 7) Falling rain/teardrops/smoke
+
+In this example, we show how it is possible to layer the two glowmaps to create certain effects such as billowing smoke
+
 [VIDEO]
 
 
 
-
-### 7) Falling rain/teardrops
-
-[VIDEO]
-
-
-
-### 8) Moving glow on clothing
+### 8) Moving Clothing Glow
 
 We combine several of the previous intermediate examples to create an animated tattoo on the character
 
@@ -848,7 +977,7 @@ We combine several of the previous intermediate examples to create an animated t
 
 ## Advanced Applications
 
-The final section will use the knowledge we have gained in the previous two sections to implement some complex animations/effects. Make sure you have a solid grasp of how the examples in the first two sections work
+The final section will use the knowledge we have gained in the previous two sections to implement some complex animations/effects. Make sure you have a solid grasp of how the examples in the first two sections work. These examples will mostly be applied to complex meshes such as characters, though some planes will still be used to illustrate more complicated concepts.
 
 
 1) Traveling Rainbow Circuit
@@ -872,8 +1001,6 @@ X) Rotating magic circle
 
 X) Analog Clock
 
-X) DVD Logo
-
 X) Shorekeeper-style effect (or paimon cape)
 
 X) Flappy Bird
@@ -883,31 +1010,112 @@ X) Flappy Bird
 
 ### Colorspaces:
 
-The FX texture expects a linear colorspace, while the glow textures expect srgb colorspace. If you are using a tool like paint.net, make sure to select the correct export type.
+The FX texture expects a linear colorspace, while the glow textures expect SRGB colorspace. If you are using a tool like paint.net, make sure to select the correct export type.
 
 While paint.net is a good tool, it has some issues with DDS compression; if you are noticing odd artifacting on your textures, there are a couple of alternatives:
 
-1) Save as png and convert via magick: magick.exe .\Dots.png -colorspace sRGB .\DotsTest.png . Smallest size and no compression issues, but may have compatibility issues on some systems/OS
+1) Save as png and convert via magick: `magick.exe .\Dots.png -colorspace sRGB .\DotsTest.png` . Most tools save png as SRGB by default, and that command converts it to linear (*even though* it says sRGB colorspace in the command, it's linear. I don't know why. Some tools like photoshop also support choosing colorspace) . Smallest size and no compression issues, but may have compatibility issues on some systems/OS
 2) Use nvidia texture tools (exports as linear by default, can change in export transfer function. Don't export mip maps, rest is default)
 3) Photoshop with either intel texture works or nvidia texture tools
 4) texconv tools (may result in crunchiness, texconv sometimes won't use the correct color space)
 
 Do NOT use blender dds export or photoshop default dds export, they don't work properly as of the time of writing this guide
 
-Also note that behaviour may be odd around the edges - I recommend leaving a small gap (~0.01) around the edges and avoiding numbers that are very close to 0 or 1.0
+Also note that behaviour may be odd around the edges - I recommend leaving a small gap (~`0.01`) around the edges and avoiding numbers that are very close to `0` or `1.0`
 
 
 ### Setting textures using RabbitFX
 
 For stella sora and star rail, RabbitFX supports setting diffuse, lightmap via calls:
-
+```
 Resource\RabbitFX\Diffuse = ref ResourceDiffuse
 Resource\RabbitFX\LightMap = ref ResourceLightmap
+```
 
 Stella sora specifically also has a specular map
-Resource\RabbitFX\SpecularMap = ref ResourceSpecularmap
+`Resource\RabbitFX\SpecularMap = ref ResourceSpecularmap`
 
 Along with the ability to set custom outlines via
-Resource\RabbitFX\OutlineMap = ref ResourceOutlinemap
+`Resource\RabbitFX\OutlineMap = ref ResourceOutlinemap`
 
 For more details, please refer to the rabbitfx page of your game
+
+### Texture Visibility
+
+Since it can be confusing to remember, here is a quick overview of what will happen depending on the values of Glowmap1, Glowmap2 and FX map (Remember: setting Glowmap2 without Glowmap1 first is undefined behaviour):
+
+#### Glowmap1 set, Glowmap2 not set:
+
+```
+FXmap alpha == 0:
+	Mesh will always be invisible, regardless of other values
+
+Glowmap alpha == 0, FXmap alpha > 0, FXmap red channel == 0:
+	cutout = 0 : uses original diffuse
+	cutout = +1 or -1 : mesh will not be visible
+
+(Note: this case isn't well defined, since glowmap alpha being 0 usually means that part isn't active)
+Glowmap alpha == 0, FXmap alpha > 0, FXmap red channel > 0:
+	cutout = 0 or -1 : uses original diffuse (no animation, entire segment will always be visible)
+	cutout = 1 : uses original diffuse (animation - when active, original diffuse will be visible and when inactive will be invisible. Will not glow)
+
+Glowmap alpha > 0, FXmap alpha > 0, FXmap red channel > 0:
+	cutout = 0 or -1: uses glowmap color (will glow when active using glowmap color, and use non-glowing glowmap color when inactive)
+	cutout = 1: uses glowmap color (will glow when active using glowmap color, and be invisible when inactive)
+
+Glowmap alpha > 0, FXmap alpha > 0, FXmap red channel == 1:
+	Uses glowmap color and will always glow (no animation)
+```
+
+The inverse table is:
+```
+Mesh is invisible when:
+	FXmap alpha == 0
+	Glowmap alpha == 0, FXmap alpha > 0, FXmap red channel == 0, cutout = +1 or -1
+	Glowmap alpha >= 0, FXmap alpha > 0, FXmap red channel > 0,  cutout = 1, section is inactive
+
+Diffuse is visible when:
+	Glowmap alpha == 0, FXmap alpha > 0, FXmap red channel == 0, cutout = 0
+	Glowmap alpha == 0, FXmap alpha > 0, FXmap red channel > 0,  cutout = 0 or -1
+	Glowmap alpha == 0, FXmap alpha > 0, FXmap red channel > 0,  cutout = 1, section is active
+
+Glowmap is visible when:
+	Glowmap alpha > 0,  FXmap alpha > 0, FXmap red channel > 0,  cutout = 0 or -1
+	Glowmap alpha > 0,  FXmap alpha > 0, FXmap red channel > 0,  cutout = 1, section is active
+
+Texture glows when:
+	Glowmap alpha > 0, FXmap alpha > 0, FXmap red channel > 0,  section is active
+	Glowmap alpha > 0, FXmap alpha > 0, FXmap red channel == 1, at all times
+```
+
+Note that the one situation that is difficult to handle is when you want the original diffuse to be visible on a part of the texture which also supports glow, where the original diffuse color is different than the glow color (such as having a blue part glow red, or having a gray part light up). See Intermediate example #2 for a situation where this occurs and some solutions
+
+
+#### Glowmap1 set, Glowmap2 set:
+
+When active, Glowmap2 takes priority over Glowmap1. Otherwise, the behaviour of Glowmap2 is very similar to Glowmap1 with 1 noticeable difference: when Glowmap2 is inactive, depending on the value of `cutout2`, it will defer what to display to Glowmap1 instead of simply turning invisible or displaying the diffuse (think of it as being layered Glowmap2 > Glowmap1 > Diffuse; even if Glowmap2 isn't active, we don't know what the final output will be until we check Glowmap1)
+
+```
+FXmap alpha == 0:
+	Mesh will always be invisible, regardless of other values
+
+Glowmap2 alpha == 0, FXmap alpha > 0, FXmap green channel == 0:
+	Defer to Glowmap1
+
+(Note: this case isn't well defined, since glowmap alpha being 0 usually means that part isn't active)
+Glowmap alpha == 0, FXmap alpha > 0, FXmap red channel > 0:
+	cutout = 0 or -1 : uses original diffuse (no animation, entire segment will always be visible)
+	cutout = 1 : uses original diffuse (animation - when active, original diffuse will be visible and when inactive will be invisible. Will not glow)
+
+Glowmap alpha > 0, FXmap alpha > 0, FXmap red channel > 0:
+	cutout = 0 or -1: uses glowmap color (will glow when active using glowmap color, and use non-glowing glowmap color when inactive)
+	cutout = 1: uses glowmap color (will glow when active using glowmap color, and be invisible when inactive)
+
+Glowmap alpha > 0, FXmap alpha > 0, FXmap red channel == 1:
+	Uses glowmap color and will always glow (no animation)
+```
+
+
+#### Glowmap1 not set, Glowmap2 set:
+
+Undefined. It *should* behave the same as if Glowmap1 had all values == 0 (ie it is a full black texture) and thus should will either show diffuse or be invisible depending on the values of the `cutout`, but hasn't been tested.
