@@ -607,47 +607,114 @@ run = CommandList\RabbitFX\Cleanup
 
 The next intermediate example will show how to create a smoother version of movement compared to the on/off we have been using so far. We use it to make a glowing animated circuit:
 
-[VIDEO]
+https://github.com/user-attachments/assets/8a1f9616-63e5-41b6-a52e-a04f2a565631
 
 In the earlier sections, we used discrete values of FX channels to make things blink in sequence. We can use gradients instead for a smooth motion. Assuming time is increasing from 0 to 1, then FX values closer to 0 will turn on sooner than ones closer to 1, and the amount of the effect active at any given time depends on the size of the radius. An example of an FX map with this property, where the further points from the "front" of the texture have lower values:
 
-[IMAGE]
+<p align="center"> 
+<img width="300" alt="IntermediateExample2_1" src="https://github.com/user-attachments/assets/fc154717-9d89-4d82-bdc0-801bad1a8dd8" />
+</p>
 
-There are a few common issues to be aware of: if your animation is behaving oddly near the edges, make sure the lowest and highest FX channels don't begin/end within the range `[time-radius, time+radius]` (see basic example 6 for details). If the movement isn't smooth, double check you are saving the format as linear (srgb will create a curve of values which will cause the speed to be non-uniform)
+There are a few common issues to be aware of: if your animation is behaving oddly near the edges, make sure the lowest and highest FX channels don't begin/end within the range `[time-radius, time+radius]` (see basic example 6 for details). If the movement isn't smooth, double check you are saving the format as linear (srgb will create a curve of values which will cause the speed to be non-uniform) and that the gradient is smooth (depending on how you create it, it might end up scrunched near the edges).
+
+https://github.com/user-attachments/assets/6b9191e4-dfb6-4c38-a298-756e006079a8
+
+Now, let's go over something that is slightly tricky - what if we want the glowing part to be green when active but gray when inactive? This is actually more complicated than it sounds - cutout will make the mesh invisible when not active, instead of displaying the original diffuse (see Addendum for full combination of situations).
+
+We can't really use the hue shift here, since there is no way to shift from gray -> green. We can instead put it on Glowmap2 and have it defer to Glowmap1 which is just a gray line, but that requires us to sacrifice an entire glowmap (and we need glowmap2 later for other stuff).
+
+The overall simplest way to do this that keeps flexibility is to do a second draw; we first draw the texture with the gray lines, then draw the animated ones on top with cutout.  So the code would look like:
+
+```
+Resource\RabbitFX\Glowmap = ref ResourceCircuitInactive
+Resource\RabbitFX\FXMap   = ref ResourceBlack
+run = CommandList\RabbitFX\SetTextures
+run = CommandList\RabbitFX\Run
+drawindexed = 6, 22932, 0
+
+Resource\RabbitFX\Glowmap = ref ResourceCircuitTwoLines
+Resource\RabbitFX\FXMap   = ref ResourceIntermediateExample2_1
+$\RabbitFX\Brightness = 5.0
+$\RabbitFX\Time1 = (time/5)%1
+$\RabbitFX\Radius1 = 0.1
+$\RabbitFX\Cutout1 = 1
+run = CommandList\RabbitFX\SetTextures
+run = CommandList\RabbitFX\Run
+drawindexed = 6, 22932, 0
+```
+
+The first call draws the inactive lines, while the second call is drawing the glowing lines on top while cutting out any non-active components. This is a very common use case, and can actually be used to go above the default limit of two maps if your animation is complex enough to require it (e.g. normally you are limited to only two speeds, but you can in theory create as many as you want by just drawing the mesh multiple times and overlapping them. Just be careful if the mesh is very complex since repeating large `drawindexed` can lead to performance issues). We will see some cases in the advanced section where we use this trick.
+
+https://github.com/user-attachments/assets/08b966d6-8ebe-4e21-870f-4c16af729f65
 
 
 To control how much of the line is visible at once, one can either change the radius (like `0.1` vs `0.4` - a smaller radius means less is active) or make the gradient less steep (a gradient between `30` and `230` will cause a radius of `0.1` to only have `10%` active at once; a gradient between
 
 Smaller radius/steep gradient:
-[IMAGE]
+<p align="center"> 
+<img width="300" alt="IntermediateExample2_2" src="https://github.com/user-attachments/assets/7cd0ca15-c683-4947-b756-59494935ac71" />
+</p>
 
 Larger radius/flat gradient:
-[IMAGE]
+<p align="center"> 
+<img width="300" alt="IntermediateExample2_3" src="https://github.com/user-attachments/assets/9bea5ae9-be22-4f20-9bb0-9780d9151d98" />
+</p>
 
-It's also possible to use a non-linear gradient to cause the size of the line to grow and shrink as it travels
+It's also possible to use a non-linear gradient to cause the size of the line to grow and shrink as it travels.
 
 
 The speed the effect travels depends on the value we pass in to time - the faster `time` moves between `0` and `1` (ie the shorter the cycle time), the faster the line will appear to move
 
-5 second cycle:
-[VIDEO]
+3 second cycle:
+
+https://github.com/user-attachments/assets/424dc7de-8054-42f1-8839-86124a49370a
 
 10 second cycle:
-[VIDEO]
+
+https://github.com/user-attachments/assets/783b93c8-12ed-49c0-a8ff-c0a9d687d24b
 
 
-Since the gradient can be controlled via texture, the size of the line can be different between two lines even if they are on the same glowmap. In comparison, if one wanted a different speed one has to use glowmap2 instead (and we can have a maximum of two distinct speeds in any animation, ignoring any ini trickery like changing the speed in different time regions).
+Since the gradient can be controlled via texture, the size of the line can be different between two lines even if they are on the same glowmap. In comparison, if one wanted a different speed one has to use glowmap2 instead (and we can have a maximum of two distinct speeds in any animation, ignoring any trickery like multiple overlapping draws).
 
-To demonstrate this concept, we have the lines in the center move slowly while the ones on the edges move faster. The edge lines will all have different lengths:
+To demonstrate this concept, we set the two glowmaps to different speeds and have an assortment of different lines:
 
-[IMAGE]
-[VIDEO]
+<p align="center"> 
+<img width="300" height="815" alt="IntermediateExample2_4" src="https://github.com/user-attachments/assets/67fac20c-55f0-4876-a562-b0d81d4119f4" />
+</p>
+
+https://github.com/user-attachments/assets/e08b43ad-6bde-4375-9f6d-85d56dbd0449
 
 The last intermediate example (number 8) and first expert example (number 1) will demonstrate how to put this effect on a character to create the animated effect that is similar to the one from the effect tutorial.
 
 The final code is
 
 ```
+Resource\RabbitFX\Diffuse = ref ResourceBlack
+
+Resource\RabbitFX\Glowmap = ref ResourceCircuitInactive
+Resource\RabbitFX\FXMap   = ref ResourceBlack
+run = CommandList\RabbitFX\SetTextures
+run = CommandList\RabbitFX\Run
+drawindexed = 6, 22932, 0
+
+Resource\RabbitFX\Glowmap = ref ResourceCircuitTwoLines
+Resource\RabbitFX\Glowmap2 = ref ResourceCircuitMultiLinesRed
+
+Resource\RabbitFX\FXMap   = ref ResourceIntermediateExample2_2
+$\RabbitFX\Brightness = 5.0
+$\RabbitFX\Time1 = (time/7)%1
+$\RabbitFX\Radius1 = 0.1
+$\RabbitFX\Cutout1 = 1
+
+$\RabbitFX\Time2 = (time/4)%1
+$\RabbitFX\Radius2 = 0.05
+$\RabbitFX\Cutout2 = 1
+
+run = CommandList\RabbitFX\SetTextures
+run = CommandList\RabbitFX\Run
+drawindexed = 6, 22932, 0
+
+run = CommandList\RabbitFX\Cleanup
 ```
 
 
@@ -1099,9 +1166,9 @@ Note that the one situation that is difficult to handle is when you want the ori
 
 #### Glowmap1 set, Glowmap2 set:
 
-When active, Glowmap2 takes priority over Glowmap1. Otherwise, the behaviour of Glowmap2 is very similar to Glowmap1 with a few key differences. The most important one is that instead of directly cutting out the mesh or displaying the diffuse, it will defer the decision to glowmap1 *most of the time (they are layered Glowmap2 > Glowmap1 > Diffuse; even if Glowmap2 isn't active, we don't know what the final output will be until we check Glowmap1). 
+When active, Glowmap2 takes priority over Glowmap1. Otherwise, the behaviour of Glowmap2 is very similar to Glowmap1 with a few key differences. The most important one is that instead of directly cutting out the mesh or displaying the diffuse, it will defer the decision to glowmap1 *most of the time* (they are layered Glowmap2 > Glowmap1 > Diffuse; even if Glowmap2 isn't active, we don't know what the final output will be until we check Glowmap1). 
 
-The second point is that values of the FX map with alpha > 0 and green channel == 0 (such as black) behave slightly differently. For Glowmap1, it will display the Glowmap value as long as cutout is 0 but for Glowmap2, it will still defer to Glowmap1 instead of using 2. This is for technical reasons, to prevent issues where Glowmap2 is not set; as a result, if you want constant non-glowing parts, it's better to put them on Diffuse or Glowmap1 instead of Glowmap2.
+The second point is that values of the FX map with alpha > 0 and green channel == 0 (such as black) behave slightly differently. For Glowmap1, it will display the Glowmap1 value as long as cutout is 0 but for Glowmap2, it will still defer to Glowmap1 instead of using 2. This is for technical reasons, to prevent issues where Glowmap2 is not set; as a result, if you want constant non-glowing parts, it's better to put them on Diffuse or Glowmap1 instead of Glowmap2 (you can still have parts that don't have glow on Glowmap2, by adjusting the glow output so they have a glow of 1.0).
 
 ```
 FXmap alpha == 0:
