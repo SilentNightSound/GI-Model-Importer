@@ -1,6 +1,6 @@
 # Animated Texture Tutorial
 
-Hello everyone. Recently, I wrote a library to add animated texture/glow support to games supported by 3dmigoto. It currently only works for Stella Sora (extending the RabbitFX library by CaveRabbit), with no current plans to extend to other games at this time.
+Hello everyone. Recently, I wrote a library to add animated texture/glow support (SilentFX) to games supported by 3dmigoto. It currently only works for Stella Sora (extending the RabbitFX library by CaveRabbit), with no current plans to extend to other games at this time.
 
 See download section for example code. You can use left and right arrow keys when the mod is visible to move through examples covered in this guide, and up and down to move through the sections (Basic/Intermediate/Advanced)
 
@@ -1054,10 +1054,13 @@ Glowmap alpha == 0, FXmap alpha > 0, FXmap red channel == 0:
 	cutout = 0 : uses original diffuse
 	cutout = +1 or -1 : mesh will not be visible
 
-(Note: this case isn't well defined, since glowmap alpha being 0 usually means that part isn't active)
 Glowmap alpha == 0, FXmap alpha > 0, FXmap red channel > 0:
 	cutout = 0 or -1 : uses original diffuse (no animation, entire segment will always be visible)
 	cutout = 1 : uses original diffuse (animation - when active, original diffuse will be visible and when inactive will be invisible. Will not glow)
+
+Glowmap alpha > 0, FXmap alpha > 0, FXmap red channel == 0:
+	cutout = 0 : uses glowmap color
+	cutout = 1 or -1 : mesh will not be visible
 
 Glowmap alpha > 0, FXmap alpha > 0, FXmap red channel > 0:
 	cutout = 0 or -1: uses glowmap color (will glow when active using glowmap color, and use non-glowing glowmap color when inactive)
@@ -1071,7 +1074,7 @@ The inverse table is:
 ```
 Mesh is invisible when:
 	FXmap alpha == 0
-	Glowmap alpha == 0, FXmap alpha > 0, FXmap red channel == 0, cutout = +1 or -1
+	Glowmap alpha >= 0, FXmap alpha > 0, FXmap red channel == 0, cutout = +1 or -1
 	Glowmap alpha >= 0, FXmap alpha > 0, FXmap red channel > 0,  cutout = 1, section is inactive
 
 Diffuse is visible when:
@@ -1080,6 +1083,7 @@ Diffuse is visible when:
 	Glowmap alpha == 0, FXmap alpha > 0, FXmap red channel > 0,  cutout = 1, section is active
 
 Glowmap is visible when:
+	Glowmap alpha > 0,  FXmap alpha > 0, FXmap red channel == 0, cutout = 0
 	Glowmap alpha > 0,  FXmap alpha > 0, FXmap red channel > 0,  cutout = 0 or -1
 	Glowmap alpha > 0,  FXmap alpha > 0, FXmap red channel > 0,  cutout = 1, section is active
 
@@ -1088,12 +1092,16 @@ Texture glows when:
 	Glowmap alpha > 0, FXmap alpha > 0, FXmap red channel == 1, at all times
 ```
 
-Note that the one situation that is difficult to handle is when you want the original diffuse to be visible on a part of the texture which also supports glow, where the original diffuse color is different than the glow color (such as having a blue part glow red, or having a gray part light up). See Intermediate example #2 for a situation where this occurs and some solutions
+TLDR: If FX map alpha is 0, the mesh will always be invisible regardless of other values. If glowmap1 alpha is 0, you will either see the original diffuse or it will be invisible depending on `cutout1`. If both fxmap and glowmap have alpha > 0, then it will either display glowmap1 or be invisible depending on the value of `cutout` and the FX map red channel.
+
+Note that the one situation that is difficult to handle is when you want the original diffuse to be visible on a part of the texture which also supports glow, where the original diffuse color is different than the glow color (such as having a blue part glow red, or having a gray part light up). See Intermediate example #2 for a situation where this occurs and some solutions (usually the simplest solution is to just draw the mesh twice and overlap it while using cutouts- once for the default color, and once for the glow)
 
 
 #### Glowmap1 set, Glowmap2 set:
 
-When active, Glowmap2 takes priority over Glowmap1. Otherwise, the behaviour of Glowmap2 is very similar to Glowmap1 with 1 noticeable difference: when Glowmap2 is inactive, depending on the value of `cutout2`, it will defer what to display to Glowmap1 instead of simply turning invisible or displaying the diffuse (think of it as being layered Glowmap2 > Glowmap1 > Diffuse; even if Glowmap2 isn't active, we don't know what the final output will be until we check Glowmap1)
+When active, Glowmap2 takes priority over Glowmap1. Otherwise, the behaviour of Glowmap2 is very similar to Glowmap1 with a few key differences. The most important one is that instead of directly cutting out the mesh or displaying the diffuse, it will defer the decision to glowmap1 *most of the time (they are layered Glowmap2 > Glowmap1 > Diffuse; even if Glowmap2 isn't active, we don't know what the final output will be until we check Glowmap1). 
+
+The second point is that values of the FX map with alpha > 0 and green channel == 0 (such as black) behave slightly differently. For Glowmap1, it will display the Glowmap value as long as cutout is 0 but for Glowmap2, it will still defer to Glowmap1 instead of using 2. This is for technical reasons, to prevent issues where Glowmap2 is not set; as a result, if you want constant non-glowing parts, it's better to put them on Diffuse or Glowmap1 instead of Glowmap2.
 
 ```
 FXmap alpha == 0:
@@ -1102,18 +1110,48 @@ FXmap alpha == 0:
 Glowmap2 alpha == 0, FXmap alpha > 0, FXmap green channel == 0:
 	Defer to Glowmap1
 
-(Note: this case isn't well defined, since glowmap alpha being 0 usually means that part isn't active)
-Glowmap alpha == 0, FXmap alpha > 0, FXmap red channel > 0:
-	cutout = 0 or -1 : uses original diffuse (no animation, entire segment will always be visible)
-	cutout = 1 : uses original diffuse (animation - when active, original diffuse will be visible and when inactive will be invisible. Will not glow)
+(This one is tricky and somewhat non-standard. Honestly, I'd avoid this set if possible, unless you really need to cut directly to the diffuse)
+Glowmap2 alpha == 0, FXmap alpha > 0, FXmap green channel > 0:
+	cutout2 = 0  : Uses original diffuse
+	cutout2 = +1 or -1 : Uses original diffuse when when active, defers to glowmap1 when inactive
 
-Glowmap alpha > 0, FXmap alpha > 0, FXmap red channel > 0:
-	cutout = 0 or -1: uses glowmap color (will glow when active using glowmap color, and use non-glowing glowmap color when inactive)
-	cutout = 1: uses glowmap color (will glow when active using glowmap color, and be invisible when inactive)
+Glowmap2 alpha > 0, FXmap alpha > 0, FXmap green channel == 0:
+	Defer to Glowmap1
 
-Glowmap alpha > 0, FXmap alpha > 0, FXmap red channel == 1:
-	Uses glowmap color and will always glow (no animation)
+Glowmap2 alpha > 0, FXmap alpha > 0, FXmap green channel > 0:
+	cutout2 = 0 or -1 : uses Glowmap2 color (will glow when active using glowmap2 color, and use non-glowing glowmap2 color when inactive)
+	cutout2 = 1  : will glow when active using glowmap2 color, and defer to glowmap1 when inactive
+
+Glowmap2 alpha > 0, FXmap alpha > 0, FXmap green channel == 1:
+	Uses glowmap2 color and will always glow (no animation)
+
 ```
+
+The inverse table is:
+
+```
+Mesh is invisible when:
+	FXmap alpha == 0
+
+Diffuse is visible when:
+	Glowmap2 alpha == 0, FXmap alpha > 0, FXmap green channel > 0, cutout2 = 0
+	Glowmap2 alpha == 0, FXmap alpha > 0, FXmap green channel > 0, cutout2 = +1 or -1 when active
+
+Defer to Glowmap1 to decide what to display:
+	Glowmap2 alpha == 0, FXmap alpha > 0, FXmap green channel == 0
+	Glowmap2 alpha == 0, FXmap alpha > 0, FXmap green channel > 0, cutout2 = +1 or -1 when inactive
+	Glowmap2 alpha > 0, FXmap alpha > 0, FXmap green channel == 0
+	Glowmap2 alpha > 0, FXmap alpha > 0, FXmap green channel > 0 , cutout2 = 1 when inactive
+
+Glowmap2 is visible when:
+	Glowmap2 alpha > 0, FXmap alpha > 0, FXmap green channel > 0
+
+Texture glows with Glowmap2 colors when:
+	Glowmap2 alpha > 0, FXmap alpha > 0, FXmap green channel > 0, section is active
+	Glowmap2 alpha > 0, FXmap alpha > 0, FXmap green channel == 1
+```
+
+TLDR: If FX map alpha is 0, the mesh will always be invisible regardless of other values. If Glowmap2 alpha is 0, it will either display diffuse or defer to glowmap1 depending on the value of `cutout2` and the FX map green channel. If both fxmap and glowmap2 have alpha > 0, then it will either display glowmap2 or defer to glowmap1 depending on the value of `cutout2` and the FX map green channel.
 
 
 #### Glowmap1 not set, Glowmap2 set:
