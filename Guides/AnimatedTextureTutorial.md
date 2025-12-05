@@ -48,6 +48,7 @@ High-level overview of all the commands. Each of these will be explained in more
 
 ; Same as above, but for glowmap2. Not required if not setting glowmap2  
 ; If both glowmap1 and glowmap2 are active, these take priority. If not specified, they are all set to `0`  
+; `cuout2` behaves slightly differently than `cutout1`, including being able to set `2` to make only glowmap2 parts that overlap glowmap1 parts appear; see Addendum for details
 `$\RabbitFX\Time2`  
 `$\RabbitFX\Radius2`  
 `$\RabbitFX\AnimationMode2`  
@@ -1025,21 +1026,84 @@ run = CommandList\RabbitFX\Cleanup
 
 
 
-### 7) Falling rain/teardrops/smoke
+### 7) Lightning Clouds
 
-In this example, we show how it is possible to layer the two glowmaps to create certain effects such as billowing smoke
+In this example, we show how it is possible to layer the two glowmaps to create certain effects such as scrolling clouds with lightning. This is a more complicated version of intermediate example 2, where we add movement to the gradient effects, and demonstrates how multiple effects can be layered:
 
 [VIDEO]
 
+This effect consists of two layers: the first is the scrolling clouds, and the second is the lightning effects. The FX textures look like:
+
+[IMAGE]
+
+Combined:
+
+[IMAGE]
+
+Trying this out, we see that it has an issue - since glowmap2 takes priority over glowmap1, the lightning will appear even outside the clouds:
+
+[VIDEO]
+
+If the background was a static color, we could do something like draw glowmap1 -> draw glowmap2 -> draw background, but since it is a cutout that won't work (once we draw glowmap2, we can't "erase" it anymore; we can only draw more things on top). To get around this, we use a value for `cuout2` we haven't seen so far: `cutout2 = 2`. This causes glowmap2 to *only* be active whenever glowmap1 is also active, and results in the lightning only appearing when over the clouds.
+
+The final code is:
+
+```
+```
 
 
 ### 8) Moving Clothing Glow
 
-We combine several of the previous intermediate examples to create an animated tattoo on the character
+We combine several of the previous intermediate examples to create an animated tattoo on the character's skin and clothing. This is the first example where we apply the concepts we have been learning to a more complicated mesh.
 
 [VIDEO]
 
+There are two new concepts introduced here - first, we are applying the gradient glow from intermediate examples 2 and 7 (circuit and clouds) on to a non-flat mesh, and second we need to understand how to handle cases where the location on the UV map no longer correlates directly to location in space (ie a point high up on the UV map might no longer be high up on the model).
 
+The first concept is fairly straightforward - we have already seen an example of a non-flat mesh in example 3 (rotating emoji sphere), and while a character mesh has more complicated geometry and UVs it's still fundamentally the same. For example, Iris's scarf corresponds to this part of the texture:
+
+[IMAGE]
+
+So we can make it glow using the same concepts we have been using so far:
+
+[IMAGE]
+
+
+The second concept is a little tricker. Say we want the glow to travel from top-to-bottom of the model. Before, we could just directly color the texture with a gradient, but now the location on the UV map no longer corresponds to the "height" on the character model. For example, you can see that the pattern for Iris's boots is actually above the pattern for her stockings:
+
+[IMAGE]
+
+The simplest way to handle this is the following:
+
+1) Load up the model in blender
+2) Press numpad `.` to focus select and get a front view
+3) Create a new empty texture
+4) Create a new material and assign that texture to the model
+5) Enter texture edit mode
+6) Set the brush to be between black (~15) and white (~240) (remember it is usually better to avoid edges if possible, so don't go all the way to 0/255)
+7) Use fill mode with the gradient option and drag from top to bottom (or vice-versa, depending if you want black or white at the top)
+
+This will create a texture that represents the gradient from top-to-bottom for the character:
+
+[IMAGE]
+
+And we can separate out the red/green channels and get the portion we need for our effect:
+
+[IMAGE]
+
+[VIDEO]
+
+The final step is creating the different glowmaps:
+
+[IMAGE]
+
+Resulting in the effect:
+
+
+The final code is: 
+
+'''
+'''
 
 
 ## Advanced Applications
@@ -1049,24 +1113,54 @@ The final section will use the knowledge we have gained in the previous two sect
 
 1) Traveling Rainbow Circuit
 
-A modified version of the final example from the intermediate section, to demonstrate ways we can control the color of the effect
+A modified version of the final example from the intermediate section, to demonstrate additional things we can do to the effect:
+
+[VIDEO]
+
+We will tweak the effect in 3 ways: First, by giving it a rainbow glow. Second, by using the lightning pattern to overlay another effect on top. And third, 
+
+
+X) Rotating halo
+
+A combination of the rotating emoji and DVD logo examples to create a halo above the character
+
+[VIDEO]
+
+
+X) Rotating magic circle
+
+A more advanced rotation example showing how to rotate on a flat plane.
+
+[VIDEO]
+
+"We have already seen two examples of rotating objects before Silent, why is this one any different?". Well, the previous examples had something in common - the mesh they were displayed on was already curved (sphere, cylinder) and we scrolled along that curved surface to create the rotation. But what if we want to rotate something on a flat surface? As it turns out, this is actually more complicated than expected - we can move things easily in X and Y directions, but how do we move things along a circle?
+
+The answer is math. Until recently, we have been representing the locations on the texture using cartesian coordinates
+
+
+X) Analog Clock
+
+An alternate application of the rotating circle example above
+
 
 X) Matrix-style numbers
 
-A combination of the rain and number example from intermediate to create a matrix-style falling effect
+A combination of the movement and clock examples from intermediate examples to create a matrix-style falling effect
+
 
 
 X) River of stars/sky
 
-X) Flames/Smoke/Lightning
+A more advanced version of the lightning cloud effect
+
 
 X) Radial lightning/lines
 
-X) Rotating halo
 
-X) Rotating magic circle
 
-X) Analog Clock
+
+
+
 
 X) Shorekeeper-style effect (or paimon cape)
 
@@ -1170,6 +1264,8 @@ When active, Glowmap2 takes priority over Glowmap1. Otherwise, the behaviour of 
 
 The second point is that values of the FX map with alpha > 0 and green channel == 0 (such as black) behave slightly differently. For Glowmap1, it will display the Glowmap1 value as long as cutout is 0 but for Glowmap2, it will still defer to Glowmap1 instead of using 2. This is for technical reasons, to prevent issues where Glowmap2 is not set; as a result, if you want constant non-glowing parts, it's better to put them on Diffuse or Glowmap1 instead of Glowmap2 (you can still have parts that don't have glow on Glowmap2, by adjusting the glow output so they have a glow of 1.0).
 
+The third point is that `cutout2` can be set to `2` (in addition to the regular values of `0`, `1` and `-1`). This is a special case that causes only parts of glowmap2 that overlap glowmap1 to be visible (see intermediate example 7 for a case where we use it to make the glowing lightning effects only appear over the clouds)
+
 ```
 FXmap alpha == 0:
 	Mesh will always be invisible, regardless of other values
@@ -1191,6 +1287,9 @@ Glowmap2 alpha > 0, FXmap alpha > 0, FXmap green channel > 0:
 
 Glowmap2 alpha > 0, FXmap alpha > 0, FXmap green channel == 1:
 	Uses glowmap2 color and will always glow (no animation)
+
+Special:
+	cutout2 = 2 : Behaves the same as cutout2 = 0, but with the restriction that glowmap1 must also be active
 
 ```
 
