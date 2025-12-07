@@ -1028,27 +1028,53 @@ run = CommandList\RabbitFX\Cleanup
 
 ### 7) Lightning Clouds
 
-In this example, we show how it is possible to layer the two glowmaps to create certain effects such as scrolling clouds with lightning. This is a more complicated version of intermediate example 2, where we add movement to the gradient effects, and demonstrates how multiple effects can be layered:
+In this example, we show how it is possible to layer the two glowmaps to create certain effects such as scrolling clouds with lightning. This is a more complicated version of intermediate example 2; we add movement to the gradient effects and demonstrates how multiple effects can be layered:
 
-[VIDEO]
+https://github.com/user-attachments/assets/f4b22fc8-219c-484b-b9ab-8e566bae355b
 
 This effect consists of two layers: the first is the scrolling clouds, and the second is the lightning effects. The FX textures look like:
 
-[IMAGE]
+<p align="center"> 
+<img width="300" alt="IntermediateExample7_1" src="https://github.com/user-attachments/assets/9552ed2c-6fde-4541-9b95-4ba6ba23a021" />
+<img width="300" alt="IntermediateExample7_2" src="https://github.com/user-attachments/assets/8016a618-7b87-46c4-b002-1ef42ffc88b1" />
+</p>
 
 Combined:
 
-[IMAGE]
+<p align="center"> 
+<img width="300" alt="IntermediateExample7_3" src="https://github.com/user-attachments/assets/d5f021dd-09a7-4ae2-9225-b94f529038d3" />
+</p>
 
 Trying this out, we see that it has an issue - since glowmap2 takes priority over glowmap1, the lightning will appear even outside the clouds:
 
-[VIDEO]
+https://github.com/user-attachments/assets/343554c4-168e-4cb7-80f3-8a35fbd8f703
 
 If the background was a static color, we could do something like draw glowmap1 -> draw glowmap2 -> draw background, but since it is a cutout that won't work (once we draw glowmap2, we can't "erase" it anymore; we can only draw more things on top). To get around this, we use a value for `cuout2` we haven't seen so far: `cutout2 = 2`. This causes glowmap2 to *only* be active whenever glowmap1 is also active, and results in the lightning only appearing when over the clouds.
 
 The final code is:
 
 ```
+[CommandListIntermediate7]
+Resource\RabbitFX\Diffuse = ref ResourceBlack
+Resource\RabbitFX\Glowmap = ref ResourceCloud
+Resource\RabbitFX\Glowmap2 = ref ResourceLightning
+Resource\RabbitFX\FXMap   = ref ResourceIntermediateExample7_1
+
+$\RabbitFX\Brightness = 1.0
+$\RabbitFX\Time1 = (time/5)%1
+$\RabbitFX\Radius1 = 0.25
+$\RabbitFX\Cutout1 = 1
+$\RabbitFX\movex1 = -(time/8)%1
+
+$\RabbitFX\Time2 = (time/4)%1
+$\RabbitFX\Radius2 = 0.05
+$\RabbitFX\Cutout2 = 2
+$\RabbitFX\AnimationMode2 = 10
+
+run = CommandList\RabbitFX\SetTextures
+run = CommandList\RabbitFX\Run
+drawindexed = 6, 22932, 0
+run = CommandList\RabbitFX\Cleanup
 ```
 
 
@@ -1056,54 +1082,99 @@ The final code is:
 
 We combine several of the previous intermediate examples to create an animated tattoo on the character's skin and clothing. This is the first example where we apply the concepts we have been learning to a more complicated mesh.
 
-[VIDEO]
+https://github.com/user-attachments/assets/0efb5ec0-9e9c-4fa8-b63a-acfac1afbf0f
 
 There are two new concepts introduced here - first, we are applying the gradient glow from intermediate examples 2 and 7 (circuit and clouds) on to a non-flat mesh, and second we need to understand how to handle cases where the location on the UV map no longer correlates directly to location in space (ie a point high up on the UV map might no longer be high up on the model).
 
-The first concept is fairly straightforward - we have already seen an example of a non-flat mesh in example 3 (rotating emoji sphere), and while a character mesh has more complicated geometry and UVs it's still fundamentally the same. For example, Iris's scarf corresponds to this part of the texture:
+The first concept is fairly straightforward - we have already seen an example of a non-flat mesh in example 3 (rotating emoji sphere), and while a character mesh has more complicated geometry and UVs it's still fundamentally the same. For example, Iris's cape corresponds to this part of the texture:
 
-[IMAGE]
+<p align="center"> 
+<img width="300" alt="IntermediateExample8_1" src="https://github.com/user-attachments/assets/2b6445ce-50c2-4497-8ad6-ad14cafaa83c" />
+</p>
 
 So we can make it glow using the same concepts we have been using so far:
 
-[IMAGE]
-
+<p align="center"> 
+<img width="300" alt="IntermediateExample8_2" src="https://github.com/user-attachments/assets/de6050d5-b5cd-4833-a209-424829478c0f" />
+<img width="300" height="1012" alt="IntermediateExample8_3" src="https://github.com/user-attachments/assets/9ea6c3d2-c7d1-4f60-86f2-ed079df5bc14" />
+</p>
 
 The second concept is a little tricker. Say we want the glow to travel from top-to-bottom of the model. Before, we could just directly color the texture with a gradient, but now the location on the UV map no longer corresponds to the "height" on the character model. For example, you can see that the pattern for Iris's boots is actually above the pattern for her stockings:
 
-[IMAGE]
+<p align="center"> 
+<img width="300" alt="IntermediateExample8_4" src="https://github.com/user-attachments/assets/1f710de3-f6d3-40cb-8b39-d061a0c2ef01" />
+</p>
 
 The simplest way to handle this is the following:
 
 1) Load up the model in blender
-2) Press numpad `.` to focus select and get a front view
-3) Create a new empty texture
-4) Create a new material and assign that texture to the model
-5) Enter texture edit mode
-6) Set the brush to be between black (~15) and white (~240) (remember it is usually better to avoid edges if possible, so don't go all the way to 0/255)
-7) Use fill mode with the gradient option and drag from top to bottom (or vice-versa, depending if you want black or white at the top)
+2) Press numpad `1` to focus select and get a front view
+3) Create a copy of the mesh, and merge it together (select all body parts with the same material and ctrl+j)
+4) Create a new empty texture
+5) Create a new material and assign that texture to the model
+6) Enter texture edit mode
+7) Set the brush to be between black (~15) and white (~240) (remember it is usually better to avoid edges if possible, so don't go all the way to 0/255)
+8) Use fill mode with the gradient option and drag from top to bottom (or vice-versa, depending if you want black or white at the top)
 
 This will create a texture that represents the gradient from top-to-bottom for the character:
 
-[IMAGE]
+<p align="center"> 
+<img width="300" alt="IntermediateExample8_5" src="https://github.com/user-attachments/assets/ac92c65e-3ead-4ad4-bf37-d088db467816" />
+</p>
 
-And we can separate out the red/green channels and get the portion we need for our effect:
+And we can separate out the red channel and overlay it with the parts we want to glow to get for our effect:
 
-[IMAGE]
-
-[VIDEO]
-
-The final step is creating the different glowmaps:
-
-[IMAGE]
+<p align="center"> 
+<img width="300" alt="IntermediateExample8_6" src="https://github.com/user-attachments/assets/0250c316-fe34-4979-8c28-cbeafe551a7e" />
+<img width="300" alt="IntermediateExample8_7" src="https://github.com/user-attachments/assets/f58ca03f-84d6-4dad-a925-d56c001dca27" />
+</p>
 
 Resulting in the effect:
 
+https://github.com/user-attachments/assets/4cafde99-3df6-4896-96cb-7e2751032f32
 
 The final code is: 
 
-'''
-'''
+```
+[CommandListIntermediate8]
+Resource\RabbitFX\Diffuse = ref ResourceIrisBodyDiffuse
+Resource\RabbitFX\LightMap = ref ResourceIrisBodyLightMap
+Resource\RabbitFX\SpecularMap = ref ResourceIrisBodySpecularMap
+
+Resource\RabbitFX\Glowmap = ref ResourceIrisGlowMap1
+Resource\RabbitFX\FXMap   = ref ResourceIntermediateExample8_2
+
+$\RabbitFX\Brightness = 10.0
+$\RabbitFX\Time1 = (time/7)%1
+$\RabbitFX\Radius1 = 0.1
+$\RabbitFX\Cutout1 = 0
+
+run = CommandList\RabbitFX\SetTextures
+run = CommandList\RabbitFX\Run
+drawindexed = 19104, 3828, 0
+run = CommandList\RabbitFX\Cleanup
+
+
+[CommandListIntermediate8Dress]
+Resource\RabbitFX\Diffuse = ref ResourceIrisBodyDiffuse
+Resource\RabbitFX\LightMap = ref ResourceIrisBodyLightMap
+Resource\RabbitFX\SpecularMap = ref ResourceIrisBodySpecularMap
+
+Resource\RabbitFX\Glowmap = ref ResourceIrisGlowMap1
+Resource\RabbitFX\FXMap   = ref ResourceIntermediateExample8_2
+
+$\RabbitFX\Brightness = 10.0
+$\RabbitFX\Time1 = (time/7)%1
+$\RabbitFX\Radius1 = 0.1
+$\RabbitFX\Cutout1 = 0
+
+run = CommandList\RabbitFX\SetTextures
+run = CommandList\RabbitFX\Run
+drawindexed = 2844, 0, 0
+run = CommandList\RabbitFX\Cleanup
+```
+
+Note that we had to do a separate draw for the dress, since it is on a different part that the rest of her body (we could have also moved the dress to the same part as her body if it didn't change the outlines).
 
 
 ## Advanced Applications
@@ -1111,9 +1182,14 @@ The final code is:
 The final section will use the knowledge we have gained in the previous two sections to implement some complex animations/effects. Make sure you have a solid grasp of how the examples in the first two sections work. These examples will mostly be applied to complex meshes such as characters, though some planes will still be used to illustrate more complicated concepts.
 
 
-1) Traveling Rainbow Circuit
+1) Rainbow Circuits
 
 A modified version of the final example from the intermediate section, to demonstrate additional things we can do to the effect:
+
+First, let's start with something basic as a warm-up - we want to have the effect from intermediate8, but have it display the default colors instead of purple when the glow is inactive
+
+
+
 
 [VIDEO]
 
@@ -1163,6 +1239,8 @@ X) Radial lightning/lines
 
 
 X) Shorekeeper-style effect (or paimon cape)
+
+X) Animation atlas
 
 X) Flappy Bird
 
