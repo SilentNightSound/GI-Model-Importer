@@ -1182,28 +1182,155 @@ Note that we had to do a separate draw for the dress, since it is on a different
 The final section will use the knowledge we have gained in the previous two sections to implement some complex animations/effects. Make sure you have a solid grasp of how the examples in the first two sections work. These examples will mostly be applied to complex meshes such as characters, though some planes will still be used to illustrate more complicated concepts.
 
 
-1) Rainbow Circuits
+### 1) Rainbow Gradient
 
-A modified version of the final example from the intermediate section, to demonstrate additional things we can do to the effect:
+A modified version of the final example from the intermediate section, to demonstrate additional things we can do to the effect.
 
-First, let's start with something basic as a warm-up - we want to have the effect from intermediate8, but have it display the default colors instead of purple when the glow is inactive
+https://github.com/user-attachments/assets/d028c460-9f11-491c-8072-b63c222cb16b
+
+First, let's start with something basic as a warm-up for the advanced section - we want to have the effect from intermediate8, but have it display the default colors instead of purple when the glow is inactive
+
+We can do this via the technique from the intermediate2 circuit example: we draw the diffuse first, then draw the glow on top while cutting out the non-glowing parts:
+
+```
+Resource\RabbitFX\Diffuse = ref ResourceIrisBodyDiffuse
+Resource\RabbitFX\LightMap = ref ResourceIrisBodyLightMap
+Resource\RabbitFX\SpecularMap = ref ResourceIrisBodySpecularMap
+run = CommandList\RabbitFX\SetTextures
+run = CommandList\RabbitFX\Run
+drawindexed = 19104, 3828, 0
+
+Resource\RabbitFX\Glowmap = ref ResourceIrisGlowMap1
+Resource\RabbitFX\FXMap   = ref ResourceIntermediateExample8_2
+
+$\RabbitFX\Brightness = 10.0
+$\RabbitFX\Time1 = (time/7)%1
+$\RabbitFX\Radius1 = 0.1
+$\RabbitFX\Cutout1 = 1
+
+run = CommandList\RabbitFX\SetTextures
+run = CommandList\RabbitFX\Run
+drawindexed = 19104, 3828, 0
+run = CommandList\RabbitFX\Cleanup
+```
+https://github.com/user-attachments/assets/812ccb09-2e84-40a5-b81f-cd32664153cf
 
 
+This is a powerful technique, and one that is good to remember - we will use it several times in the advanced examples. It's actually possible to do even more with it too; right now, we are simply overlapping the textures, but we can blend them instead to create transparency effects or merge colors as well.
 
 
-[VIDEO]
+Next, let's make it so the we cycle the colors. We can do this via changing the `$\rabbitfx\h` value. It goes from 0 to 360, so we should multiply the output of the `time` values we have been using by 360:
 
-We will tweak the effect in 3 ways: First, by giving it a rainbow glow. Second, by using the lightning pattern to overlay another effect on top. And third, 
+https://github.com/user-attachments/assets/09a77e2a-b44a-4340-ae9e-0c5f4285a371
+
+This is a neat effect, but it's not quite the one we wanted in the original video - we want multiple colors to appear at once instead of having the entire mesh cycle between a single color.
+
+There are a couple of ways to do this. I'll go over two: the first is to add a blue channel gradient to the fx map and add `AnimationMode1` to the ini:
+
+<p align="center"> 
+<img width="300" height="862" alt="AdvancedExample1_1" src="https://github.com/user-attachments/assets/b31b121c-b352-4413-a475-0b88acf4ed9f" />
+</p>
+
+This causes the hue to shift as glow reaches maximum for that region, creating a travelling rainbow effect:
+
+https://github.com/user-attachments/assets/c0bc913e-4666-4576-ade3-786bc2b2e4a6
+
+An alternate way is to bake the rainbow color into the glowmap itself and use `$\rabbitfx\h` to cycle the colors instead of `time1`. In this case, we assign colors based on "height" on the model - a point that is high up is purple while one near the bottom is red. A simple way to do this is with python's `colorsys` library, specifically `colorsys.hsv_to_rgb(hue, 1.0, 1.0)` - you treat the value at each point as a hue shift, and generate a texture:
+
+Example python script:
+
+```
+from PIL import Image
+import colorsys
+
+def alpha_to_rainbow_color(red):
+    """Convert red channel (0-255) to an HSV rainbow color (RGB)."""
+    hue = red / 255.0  # hue from 0 to 1
+    r, g, b = colorsys.hsv_to_rgb(hue, 1.0, 1.0)  # full saturation and value
+    return int(r * 255), int(g * 255), int(b * 255)
+
+def convert_white_transparent_to_rainbow(input_path):
+    output_path = input_path.replace("Gradient", "Rainbow")
+    img = Image.open(input_path).convert('RGBA')
+    pixels = img.load()
+
+    for y in range(img.height):
+        for x in range(img.width):
+            r, g, b, a = pixels[x, y]
+            if a > 0:
+                new_r, new_g, new_b = alpha_to_rainbow_color(r)
+                pixels[x, y] = (new_r, new_g, new_b, 255)  # make it fully opaque
+
+    img.save(output_path)
+    print(f"Saved rainbow image to {output_path}")
+
+convert_white_transparent_to_rainbow('IrisGradient.png')
+```
+
+Example output:
+
+<p align="center"> 
+<img width="300" alt="AdvancedExample1_2" src="https://github.com/user-attachments/assets/78ff158b-4613-4075-990d-37bf75710594" />
+</p>
+
+Result:
+
+https://github.com/user-attachments/assets/d028c460-9f11-491c-8072-b63c222cb16b
+
+The final code is:
+
+```
+[CommandListAdvanced1]
+Resource\RabbitFX\Diffuse = ref ResourceIrisBodyDiffuse
+Resource\RabbitFX\LightMap = ref ResourceIrisBodyLightMap
+Resource\RabbitFX\SpecularMap = ref ResourceIrisBodySpecularMap
+
+Resource\RabbitFX\Glowmap = ref ResourceIrisGlowMap2
+Resource\RabbitFX\FXMap   = ref ResourceAdvancedExample1_1
+
+$\rabbitfx\h = -360*((time/4)%1)
+$\RabbitFX\Brightness = 3.0
+$\RabbitFX\Radius1 = 0.1
+$\RabbitFX\Cutout1 = 0
+$\RabbitFX\AnimationMode1 = 1
+
+run = CommandList\RabbitFX\SetTextures
+run = CommandList\RabbitFX\Run
+drawindexed = 19104, 3828, 0
+run = CommandList\RabbitFX\Cleanup
 
 
-X) Rotating halo
+[CommandListAdvanced1Dress]
+Resource\RabbitFX\Diffuse = ref ResourceIrisBodyDiffuse
+Resource\RabbitFX\LightMap = ref ResourceIrisBodyLightMap
+Resource\RabbitFX\SpecularMap = ref ResourceIrisBodySpecularMap
+
+Resource\RabbitFX\Glowmap = ref ResourceIrisGlowMap2
+Resource\RabbitFX\FXMap   = ref ResourceAdvancedExample1_1
+
+$\rabbitfx\h = -360*((time/4)%1)
+$\RabbitFX\Brightness = 3.0
+$\RabbitFX\Radius1 = 0.3
+$\RabbitFX\Cutout1 = 0
+$\RabbitFX\AnimationMode1 = 1
+
+run = CommandList\RabbitFX\SetTextures
+run = CommandList\RabbitFX\Run
+drawindexed = 2844, 0, 0
+run = CommandList\RabbitFX\Cleanup
+```
+
+Note how we managed to create an animated effect without using `Time1` at all by using hue shifting to mimic the movement instead.
+
+
+### 2) Rotating halo
 
 A combination of the rotating emoji and DVD logo examples to create a halo above the character
 
 [VIDEO]
 
 
-X) Rotating magic circle
+### 3) Rotating magic circle
 
 A more advanced rotation example showing how to rotate on a flat plane.
 
@@ -1214,9 +1341,21 @@ A more advanced rotation example showing how to rotate on a flat plane.
 The answer is math. Until recently, we have been representing the locations on the texture using cartesian coordinates
 
 
-X) Analog Clock
+Also, I just want to say that if you are still here and reading this tutorial I really appreciate it. I suspect that less than a dozen people will ever read this line (just like several of my other in-depth tutorials on effects lol), so I'm happy that at least someone cares enough to get this far.
+
+
+
+
+### 4) Analog Clock
 
 An alternate application of the rotating circle example above
+
+
+### 5) Animation Atlas
+
+In this example, we illustrate how to use this library to create longer sequences of animation.
+
+[VIDEO]
 
 
 X) Matrix-style numbers
@@ -1232,17 +1371,9 @@ A more advanced version of the lightning cloud effect
 
 X) Radial lightning/lines
 
-
-
-
-
-
-
 X) Shorekeeper-style effect (or paimon cape)
 
-X) Animation atlas
-
-X) Flappy Bird
+XX) Flappy Bird
 
 
 ## Addendum
