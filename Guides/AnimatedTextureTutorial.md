@@ -1323,14 +1323,96 @@ run = CommandList\RabbitFX\Cleanup
 Note how we managed to create an animated effect without using `Time1` at all by using hue shifting to mimic the movement instead.
 
 
-### 2) Rotating halo
+### 2) Rotating Halo
 
 A combination of the rotating emoji and DVD logo examples to create a halo above the character
 
-[VIDEO]
+https://github.com/user-attachments/assets/67ec15ff-3dac-4ec0-bf08-f13f6621fd07
+
+For this, we will use a cylindrical object that is connected to Iris's head vertex groups. You can either use a torus or a cylinder - it depends on the shape you want (I used a cylinder for simplicity and because I didn't want it to curve towards the top/bottom):
+
+<p align="center"> 
+<img width="400" alt="AdvancedExample2_1" src="https://github.com/user-attachments/assets/61a64bb5-3acf-4130-ba30-c285a2f4a5db" />
+</p>
+
+Next, we rotate it by scrolling in the X direction the same way we did for the emoji:
+
+`$\RabbitFX\movex1 = -(time/15)%1`
+
+https://github.com/user-attachments/assets/6f481dd4-ec08-43e4-b79b-39f0ffb6a034
+
+That is part 1 complete. Next, we want it to bob up and down slightly. We can re-use the code from the DVD logo section to make it move up and down slightly:
+
+```
+if 0.3*((time/5)%1) - 0.1 > 0.05
+	$\RabbitFX\movey1 = 0.3*(1 - (time/5)%1) - 0.1
+else
+	$\RabbitFX\movey1 = 0.3*((time/5)%1) - 0.1
+endif
+```
+
+https://github.com/user-attachments/assets/ec2459c0-7f86-4819-a394-fa2bd7338e6d
+
+ASIDE:
+
+I was going to use this section to explain the difference between linear (ramp) motion and parabolic motion, but the vertical movement of the halo is subtle enough that it would be hard to tell the difference and I don't want to redo the UV maps on it. Basically, it's just that the halo/object spends the same amount of time in each position, when sometimes it might look nicer if it spent longer at the edges; to do this, you can use a `sin` or `cos` function on time instead to get a smoother motion:
+
+You can also emulate this effect by having it "stall" at the top and bottom for a bit, which might be simpler to code since 3dmigoto ini don't come with `sin` and `cos` functions so you will have to approximate them by using something like a taylor series.
+
+The final step is to add a few more glow effects - let's have the center lines slowly hue shift. We separate them out on to another glowmap, and draw the halo in two parts (another example of layering effects):
+
+<p align="center"> 
+<img width="350" alt="AdvancedExample2_2" src="https://github.com/user-attachments/assets/3eb3e994-f081-4057-b80e-471eb25bbeee" />
+</p>
+
+Note that a few of the colors in the center are showing up as white - this is because of the purple aura from the surroundings overlapping with the color it emits. This can be reduced either by decreasing glow, or adjusting the colors used so they don't overlap.
+
+The final code is:
+
+```
+Resource\RabbitFX\Diffuse = ref ResourceBlack
+Resource\RabbitFX\Glowmap = ref ResourceHalo
+Resource\RabbitFX\FXMap   = ref ResourceAdvancedExample2_2
+
+$\RabbitFX\Brightness = 3.5
+$\RabbitFX\Cutout1 = -1
+
+$\RabbitFX\movex1 = -(time/15)%1
+if 0.3*((time/5)%1) - 0.1 > 0.05
+	$\RabbitFX\movey1 = 0.3*(1 - (time/5)%1) - 0.1
+else
+	$\RabbitFX\movey1 = 0.3*((time/5)%1) - 0.1
+endif
+
+run = CommandList\RabbitFX\SetTextures
+run = CommandList\RabbitFX\Run
+drawindexed = 372, 0, 0
+
+Resource\RabbitFX\Diffuse = ref ResourceBlack
+Resource\RabbitFX\Glowmap = ref ResourceHalo
+Resource\RabbitFX\FXMap   = ref ResourceAdvancedExample2_3
+
+$\RabbitFX\Brightness = 2.0
+$\rabbitfx\h = 360*((time/4)%1)
+$\RabbitFX\Cutout1 = -1
+
+$\RabbitFX\movex1 = -(time/15)%1
+if 0.3*((time/5)%1) - 0.1 > 0.05
+	$\RabbitFX\movey1 = 0.3*(1 - (time/5)%1) - 0.1
+else
+	$\RabbitFX\movey1 = 0.3*((time/5)%1) - 0.1
+endif
+
+run = CommandList\RabbitFX\SetTextures
+run = CommandList\RabbitFX\Run
+drawindexed = 372, 0, 0
+run = CommandList\RabbitFX\Cleanup
+```
 
 
-### 3) Rotating magic circle
+
+
+### 3) Rotating Magic Circle
 
 A more advanced rotation example showing how to rotate on a flat plane.
 
