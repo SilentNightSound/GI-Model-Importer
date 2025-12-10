@@ -59,7 +59,14 @@ High-level overview of all the commands. Each of these will be explained in more
 `$\RabbitFX\movex1`  
 `$\RabbitFX\movey1`  
 `$\RabbitFX\movex2`  
-`$\RabbitFX\movey2`  
+`$\RabbitFX\movey2` 
+
+; Expands/contracts UVs, and rotates them relative to the centerpoint
+; Radius default is 1; smaller decreases size, larger increases size. Angle ranges from 0 to 2pi in radians
+`$\RabbitFX\mover1`  
+`$\RabbitFX\moveangle1`  
+`$\RabbitFX\mover2`  
+`$\RabbitFX\moveangle2`  
 
 ; Sets textures and runs texfx  
 `run = CommandList\RabbitFX\SetTextures`  
@@ -1357,12 +1364,16 @@ ASIDE:
 
 I was going to use this section to explain the difference between linear (ramp) motion and parabolic motion, but the vertical movement of the halo is subtle enough that it would be hard to tell the difference and I don't want to redo the UV maps on it. Basically, it's just that the halo/object spends the same amount of time in each position, when sometimes it might look nicer if it spent longer at the edges; to do this, you can use a `sin` or `cos` function on time instead to get a smoother motion:
 
+<p align="center"> 
+<img width="350" alt="AdvancedExample2_2" src="https://github.com/user-attachments/assets/aef1ab4c-8e07-4adc-a422-519bd6605024" />
+</p>
+
 You can also emulate this effect by having it "stall" at the top and bottom for a bit, which might be simpler to code since 3dmigoto ini don't come with `sin` and `cos` functions so you will have to approximate them by using something like a taylor series.
 
 The final step is to add a few more glow effects - let's have the center lines slowly hue shift. We separate them out on to another glowmap, and draw the halo in two parts (another example of layering effects):
 
 <p align="center"> 
-<img width="350" alt="AdvancedExample2_2" src="https://github.com/user-attachments/assets/3eb3e994-f081-4057-b80e-471eb25bbeee" />
+<img width="350" alt="AdvancedExample2_3" src="https://github.com/user-attachments/assets/3eb3e994-f081-4057-b80e-471eb25bbeee" />
 </p>
 
 Note that a few of the colors in the center are showing up as white - this is because of the purple aura from the surroundings overlapping with the color it emits. This can be reduced either by decreasing glow, or adjusting the colors used so they don't overlap.
@@ -1416,17 +1427,67 @@ run = CommandList\RabbitFX\Cleanup
 
 A more advanced rotation example showing how to rotate on a flat plane.
 
-[VIDEO]
+https://github.com/user-attachments/assets/3b085b41-f993-4f77-af56-6235ef665636
 
 "We have already seen two examples of rotating objects before Silent, why is this one any different?". Well, the previous examples had something in common - the mesh they were displayed on was already curved (sphere, cylinder) and we scrolled along that curved surface to create the rotation. But what if we want to rotate something on a flat surface? As it turns out, this is actually more complicated than expected - we can move things easily in X and Y directions, but how do we move things along a circle?
 
-The answer is math. Until recently, we have been representing the locations on the texture using cartesian coordinates
+The answer is math. Until recently, we have been representing the locations and movements on the texture using cartesian coordinates (e.g. move this amount in the X direction, or move this amount in Y), but now we want to represent the movement of an object in polar coordinates instead (e.g. as a radius away from the center, and a certain angle relative to the X axis):
 
+<img width="500" alt="AdvancedExample3_1" src="https://github.com/user-attachments/assets/dddfe936-93e1-4758-9eb8-4154fc3f16dd" />
+
+We can specify `$\RabbitFX\mover1` and `$\RabbitFX\moveangle1` to control radius and angle respectively. Let's say we want to create a magic circle - we can use the r value to increase/decrease the size of the circle and the angle value to rotate it. Rotations are defined in radians (so between 0 and 2pi (6.28)), and the radius default is 1 (larger increases size, smaller decreases it).
+
+<img width="400" alt="AdvancedExample3_3" src="https://github.com/user-attachments/assets/ea812d79-458b-49ad-bbe6-bd3f63de8ccc" />
+
+```
+if (time/10)%0.2 + 0.9 > 1.0
+	$\RabbitFX\mover1 = 1.1-(time/10)%0.2
+else
+	$\RabbitFX\mover1 = (time/10)%0.2 + 0.9
+endif
+$\RabbitFX\moveangle1 = (time/2)%6.28
+```
+
+https://github.com/user-attachments/assets/0ae19f94-a7ed-4dcc-8832-ac655c6d7b8f
 
 Also, I just want to say that if you are still here and reading this tutorial I really appreciate it. I suspect that less than a dozen people will ever read this line (just like several of my other in-depth tutorials on effects lol), so I'm happy that at least someone cares enough to get this far.
 
+For rotation, note that wrapping will be turned off - if you shift the object in the x or y direction off-screen (or if it rotates off-screen), it won't appear on the other side. This is for a few reasons, the main one being that implementing proper wrapping for rotation is just really painful and I don't feel like doing it.
 
+The last part is just placing the plane/circle at the character's feet - there are still some issues like the plane not remaining aligned with the ground (it follows whatever you weighted it to), but fixing those issues are beyond the scope of this tutorial.
 
+The final code is:
+
+```
+Resource\RabbitFX\Diffuse = ref ResourceIrisBodyDiffuse
+Resource\RabbitFX\LightMap = ref ResourceIrisBodyLightMap
+Resource\RabbitFX\SpecularMap = ref ResourceIrisBodySpecularMap
+run = CommandList\RabbitFX\SetTextures
+run = CommandList\RabbitFX\Run
+drawindexed = 19104, 3828, 0
+
+Resource\RabbitFX\Diffuse = ref ResourceBlack
+Resource\RabbitFX\Glowmap = ref ResourceMagicCircle
+Resource\RabbitFX\FXMap   = ref ResourceAdvancedExample3
+
+$\RabbitFX\Brightness = 10.0
+$\RabbitFX\Time1 = (time/8)%1
+$\RabbitFX\Radius1 = 0.50
+
+if (time/10)%0.2 + 0.9 > 1.0
+	$\RabbitFX\mover1 = 1.1-(time/10)%0.2
+else
+	$\RabbitFX\mover1 = (time/10)%0.2 + 0.9
+endif
+$\RabbitFX\moveangle1 = (time/2)%6.28
+
+$\RabbitFX\AnimationMode1 = 1
+
+run = CommandList\RabbitFX\SetTextures
+run = CommandList\RabbitFX\Run
+drawindexed = 6, 22938, 0
+run =  CommandList\RabbitFX\Cleanup
+```
 
 ### 4) Analog Clock
 
