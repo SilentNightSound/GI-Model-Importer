@@ -68,6 +68,12 @@ High-level overview of all the commands. Each of these will be explained in more
 `$\RabbitFX\mover2`  
 `$\RabbitFX\moveangle2`  
 
+; Stella Sora only
+; Set to 1 to remove object shadow and background shadow
+; I added this at the very end, so examples don't use it - it removes the shadowy background you see in a lot of the examples, along with the shadow on the ground
+`$\RabbitFX\removeshadow`
+`$\RabbitFX\removebackgroundshadow`
+
 ; Sets textures and runs texfx  
 `run = CommandList\RabbitFX\SetTextures`  
 `run = CommandList\RabbitFX\Run`  
@@ -1491,7 +1497,12 @@ run =  CommandList\RabbitFX\Cleanup
 
 ### 4) Analog Clock
 
-An alternate application of the rotating circle example above
+An alternate application of the rotating circle example above, combined with the clock example from intermediate examples. We are going to create an analog clock that "ticks" each second and slowly counts out minutes:
+
+[VIDEO]
+
+
+First, let's do the seconds hand. It has a cycle of 60 seconds
 
 
 ### 5) Animation Atlas
