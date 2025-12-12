@@ -1439,11 +1439,15 @@ https://github.com/user-attachments/assets/3b085b41-f993-4f77-af56-6235ef665636
 
 The answer is math. Until recently, we have been representing the locations and movements on the texture using cartesian coordinates (e.g. move this amount in the X direction, or move this amount in Y), but now we want to represent the movement of an object in polar coordinates instead (e.g. as a radius away from the center, and a certain angle relative to the X axis):
 
+<p align="center"> 
 <img width="500" alt="AdvancedExample3_1" src="https://github.com/user-attachments/assets/dddfe936-93e1-4758-9eb8-4154fc3f16dd" />
+</p>
 
-We can specify `$\RabbitFX\mover1` and `$\RabbitFX\moveangle1` to control radius and angle respectively. Let's say we want to create a magic circle - we can use the r value to increase/decrease the size of the circle and the angle value to rotate it. Rotations are defined in radians (so between 0 and 2pi (6.28)), and the radius default is 1 (larger increases size, smaller decreases it).
+We can specify `$\RabbitFX\mover1` and `$\RabbitFX\moveangle1` to control radius and angle respectively. Let's say we want to create a magic circle - we can use the r value to increase/decrease the size of the circle and the angle value to rotate it. Rotations are defined in radians (so between 0 and 2pi (6.28) - if you have degrees, you can multiply by pi/180 to convert), and the radius default is 1 (larger increases size, smaller decreases it).
 
+<p align="center"> 
 <img width="400" alt="AdvancedExample3_3" src="https://github.com/user-attachments/assets/ea812d79-458b-49ad-bbe6-bd3f63de8ccc" />
+</p>
 
 ```
 if (time/10)%0.2 + 0.9 > 1.0
@@ -1499,24 +1503,423 @@ run =  CommandList\RabbitFX\Cleanup
 
 An alternate application of the rotating circle example above, combined with the clock example from intermediate examples. We are going to create an analog clock that "ticks" each second and slowly counts out minutes:
 
-[VIDEO]
+https://github.com/user-attachments/assets/27fd7a78-676c-492a-8acd-0fd11e803318
 
+First, let's do the seconds hand. It has a cycle of 60 seconds, but we need to slightly adjust the formula we were using. A full rotation in radians is 2pi (6.28) - that means, if we use `time` directly it will take 6.28 seconds to complete a rotation (or 6.28 s / 1 cycle). We want a rotation to take 60 seconds instead so we multiply by `6.28/60 = 0.104` (we want 1/60th of a rotation to be 6.28 seconds). So the equation is 
 
-First, let's do the seconds hand. It has a cycle of 60 seconds
+`$\RabbitFX\moveangle1 = (time* 0.104)%6.28`
+
+This will work, but it creates a smooth motion of the clock - we want the clock to "tick" each second instead. We can do this via chopping `time` into 60 discrete intervals instead of having it continuous. We can do that using `//` which does integer division: `(time*X)//X`, where X is the step size. For example, if X is 0.5 the this will go 0.5, 1.0, 1.5, 2.0 instead of smoothly counting from 0.5 to 2.0. We can then use this value in place of `time` to creat the ticking motion:
+
+```
+local $interval = (time*0.104)//0.104
+$\RabbitFX\moveangle1 = -($interval*0.104)%6.28
+```
+
+This will rotate the hand by `1/60th` of the clock every second.
+
+For the minute hand, we use smooth motion but the period is different - it does a full rotation in 3600 seconds so the value is `6.28/3600 = *0.00174`:
+
+`$\RabbitFX\moveangle2 = -(time*0.00174)%6.28`
+
+The fx texture is (each had is on a spearate glowmap, and has no special effects applied):
+
+<p align="center"> 
+<img width="350" alt="AdvancedExample4_1" src="https://github.com/user-attachments/assets/4fb64719-96d5-445c-b971-95f31e1dc2a0" />
+</p>
+
+And the final code is:
+
+```
+Resource\RabbitFX\Diffuse = ref ResourceBlack
+Resource\RabbitFX\Glowmap = ref ResourceClock
+Resource\RabbitFX\FXMap = ref ResourceAdvancedExample4_1
+
+$\RabbitFX\Brightness = 1.0
+
+run = CommandList\RabbitFX\SetTextures
+run = CommandList\RabbitFX\Run
+drawindexed = 6, 22932, 0
+
+Resource\RabbitFX\Diffuse = ref ResourceBlack
+Resource\RabbitFX\Glowmap = ref ResourceSecondHand
+Resource\RabbitFX\Glowmap2 = ref ResourceMinuteHand
+Resource\RabbitFX\FXMap   = ref ResourceAdvancedExample4_2
+
+$\RabbitFX\Brightness = 1.0
+$\RabbitFX\Cutout1 = -1
+
+local $interval = (time*0.104)//0.104
+$\RabbitFX\moveangle1 = -($interval*0.104)%6.28
+$\RabbitFX\moveangle2 = -(time*0.00174)%6.28
+
+run = CommandList\RabbitFX\SetTextures
+run = CommandList\RabbitFX\Run
+drawindexed = 6, 22932, 0
+run =  CommandList\RabbitFX\Cleanup
+```
 
 
 ### 5) Animation Atlas
 
 In this example, we illustrate how to use this library to create longer sequences of animation.
 
-[VIDEO]
+https://github.com/user-attachments/assets/16456057-504c-4e21-80d3-b2843f114806
+
+(Yes, it has the entire animation . I just cut it at 10 seconds to keep the file size small enough to upload here lol)
+
+With this library, we have another way to implement simple frame-by-frame videos compared to the older method of loading each frame individually - we can line up the frames in a large atlas, and scroll across it:
+
+<p align="center"> 
+<img width="500" alt="AdvancedExample5_1" src="https://github.com/user-attachments/assets/bd52e066-def1-48fe-bc09-e7bced0615b1" />
+</p>
+
+This has the benefit of having a much smaller number of files and code to deal with - this animation has over 3000 frames in total, meaning that to animate the frames we would need around 12000 lines of code (around 6k in definitions for each of the frames, and around 6k for the if/else statements that loaded them all). But by putting them into a series of 10 x 10 atlases, we can reduce the number of textures required to 30, the number of lines of code to ~100, and the total size to around 10 mb.
+
+There are different ways to create the atlas - I believe photoshop has a plugin for it, or you could write a script to split up an mp4 or gif. I did the later and included the script in the tutorial zip files.
+
+Once the atlas has been created, we need to find a way to display a specific frame. First, we need to shrink what is displayed to only a single square instead of the entire 10x10 grid. We can do that via:
+
+`$\RabbitFX\mover1 = 10`
+
+(Why is r 10 and not 0.1? Well, our goal is to display just a single square so we are actually massively increasing the size of the texture so only a single square is visible).
+
+<p align="center"> 
+<img width="350" alt="AdvancedExample5_2" src="https://github.com/user-attachments/assets/88c559da-dc9a-4ca9-9097-ec6bc05bde24" />
+</p>
+
+This sort of works, but you can see that we are actually between frames - our center point isn't aligned properly with the start/end points of the images. Since our current location is 0.5, 0.5 and a single image has a width and height of of 0.1 (1/10th of the image), we can subtract `-0.45` from our X and Y positions to reach the first frame (puts us at `(0.05, 0.05)` and we can see between `(0,0)` and `(0.1,0.1)`):
+
+<p align="center"> 
+<img width="350" alt="AdvancedExample5_3" src="https://github.com/user-attachments/assets/8a2f58ae-c07f-4396-9c7c-b66e86da98c8" />
+</p>
+
+Now, to move frames we can "jump" by 0.1 in each direction. We already saw in the previous clock example how to make discrete movements - we want to scroll horizontally at whatever framerate we set, and vertically at 1/10th that speed:
+
+```
+local $framerate = 15
+local $intervalX = ((time*$framerate)//1)%$atlaswidth
+local $intervalY = ((time*$framerate/10)//1)%$atlasheight
+$\RabbitFX\movex1 = -0.45 + 0.1*$intervalX
+$\RabbitFX\movey1 = -0.45 + 0.1*$intervalY
+```
+
+Here, $framerate defines how many frames we want to see per second. `15` means 15 fps. Note that this is *independent* of the fps the game is running at - this animation will always run at 15 fps regardless if the game itself is running at 30, 60 or 120 fps. The `$atlaswidth` and `$atlasheight` are both 10. This will result in:
+
+https://github.com/user-attachments/assets/8d722ac8-47b1-41d3-afaa-63a5f31337a9
+
+So we now have a single atlas correct. The next step is to implement multiple ones for the full animation (since putting 3k frames on a single texture is very inefficient). The concept is very similar to what we have done so far - we want to move to the next atlas after `$atlaswidth*$atlasheight` frames pass at whatever framerate we are using, only allowing integer values and looping when we reach the max atlas count: 
+
+`local $atlasnumber = ((time*$framerate/($atlaswidth*$atlasheight))//1)%$atlascount `
+
+This will start at 0, then after (width*height)/fps time passes (in this case 100 frames /15 s -> 6.5 seconds) it will increase to 1. Then after another 6.5 seconds, it will increase to 2, until it reaches `$atlascount` (which is 30 in this case) and the animation loops back to 0.
+
+The final step is to load the correct atlas depending on the value of `$atlasnumber`. Unfortunately, since we lack loops or string manipulation, the only way to do it is to just list it out in a big if/else statement:
+
+```
+if $atlasnumber == 0
+	Resource\RabbitFX\Glowmap = ref ResourceAtlas0
+elif $atlasnumber == 1
+	Resource\RabbitFX\Glowmap = ref ResourceAtlas1
+elif $atlasnumber == 2
+	Resource\RabbitFX\Glowmap = ref ResourceAtlas2
+...
+endif
+```
+
+The final code is (I trimmed the atlas set, it goes to 30):
+
+```
+local $framerate = 15
+local $atlaswidth = 10
+local $atlasheight = 10
+local $atlascount = 30
+
+Resource\RabbitFX\Diffuse = ref ResourceBlack
+
+local $atlasnumber = ((time*$framerate/($atlaswidth*$atlasheight))//1)%$atlascount 
+
+if $atlasnumber == 0
+	Resource\RabbitFX\Glowmap = ref ResourceAtlas0
+elif $atlasnumber == 1
+	Resource\RabbitFX\Glowmap = ref ResourceAtlas1
+elif $atlasnumber == 2
+	Resource\RabbitFX\Glowmap = ref ResourceAtlas2
+elif $atlasnumber == 3
+	Resource\RabbitFX\Glowmap = ref ResourceAtlas3
+elif $atlasnumber == 4
+	Resource\RabbitFX\Glowmap = ref ResourceAtlas4
+; ... trimmed, continue this until 30
+endif
+
+Resource\RabbitFX\FXMap = ref ResourceBlack
+$\RabbitFX\Brightness = 1.0
+
+local $intervalX = ((time*$framerate)//1)%$atlaswidth
+local $intervalY = ((time*$framerate/10)//1)%$atlasheight
+$\RabbitFX\movex1 = -0.45 + 0.1*$intervalX
+$\RabbitFX\movey1 = -0.45 + 0.1*$intervalY
+
+$\RabbitFX\mover1 = 10.2
+
+$\RabbitFX\removeshadow = 1
+$\RabbitFX\removebackgroundshadow = 1
+run = CommandList\RabbitFX\SetTextures
+run = CommandList\RabbitFX\Run
+drawindexed = 6, 22932, 0
+```
 
 
-X) Matrix-style numbers
+### 6) Paimon Cape
+
+Now we start to get to the really cool looking effects. We are going to be emulating paimon's cape effect from Genshin:
+
+https://github.com/user-attachments/assets/80dfa4f2-a23b-4c93-8098-afd9f3945343
+
+This effect has multiple layers, and is the first time we are going to see more advanced blending techniques. We will not be able to fully replicate the effect since we don't have access to the camera's location to do parallax, but we can approximate the effect.
+
+Now, to briefly explain how paimon's cape effect works. It has 5 layers: the background color (a gradient from dark to light blue), a cloud effect, a series of constellations, stars (two sets that move indepdenently) and a color palette that is applied over the clouds and stars.
+
+<p align="center"> 
+<img width="1000" alt="AdvancedExample6_1" src="https://github.com/user-attachments/assets/0e884bc4-704c-4546-a3f5-f24f719f0967" />
+</p>
+
+We will implement them one-by-one. First is the easiest, the background:
+
+```
+Resource\RabbitFX\Diffuse = ref ResourceBlack
+Resource\RabbitFX\Glowmap = ref ResourcePaimonCapeBackground
+Resource\RabbitFX\FXMap   = ref ResourceAdvancedExample6_1
+
+$\RabbitFX\Brightness = 1.0
+
+run = CommandList\RabbitFX\SetTextures
+run = CommandList\RabbitFX\Run
+drawindexed = 6, 22932, 0
+run = CommandList\RabbitFX\Cleanup
+```
+
+<p align="center"> 
+<img width="350" alt="AdvancedExample6_2" src="https://github.com/user-attachments/assets/9b7ff683-b326-4f95-8b6b-a927dbbb5cf1" />
+</p>
+
+Not much to say here. If you've reached this point, this shouldn't be complicated. The FX map is just a red square, since we want it to be always visible.
+
+Next, we add the clouds. We add a slight horizontal movement to shift them back and forth, and have a radius of 1.3 to avoid issues with edges:
+
+```
+Resource\RabbitFX\Diffuse = ref ResourceBlack
+Resource\RabbitFX\Glowmap = ref ResourcePaimonCapeClouds
+Resource\RabbitFX\FXMap   = ref ResourceAdvancedExample6_1
+
+$\RabbitFX\Brightness = 1.0
+
+if 0.2*((time/20)%1) - 0.1 > 0
+	$\RabbitFX\movex1 = 0.2*(1 - (time/20)%1) - 0.1
+else
+	$\RabbitFX\movex1 = 0.2*((time/20)%1) - 0.1
+endif
+
+$\RabbitFX\mover1 = 1.3
+
+run = CommandList\RabbitFX\SetTextures
+run = CommandList\RabbitFX\Run
+run = CustomShaderBlendClouds
+run = CommandList\RabbitFX\Cleanup
+
+[CustomShaderBlendClouds]
+blend = ADD BLEND_FACTOR INV_BLEND_FACTOR
+blend_factor[0] = .1
+blend_factor[1] = .1
+blend_factor[2] = .1
+blend_factor[3] = 1
+drawindexed = 6, 22932, 0
+```
+
+https://github.com/user-attachments/assets/4660ee57-de10-43b2-b6fe-0e3c5952192a
+
+Most of this should be familiar, with one exception - instead of directly overlapping the clouds, I'm using a custom shader to `blend` them together with the background sky. The `0.1` represents the amount of blending performed - at any given point, `0.9` of the color comes from the sky and `0.1` from the clouds (we use a very light blend so the clouds are only slightly visible, since they aren't the focus of the effect).
+
+Next, the constellations. We split this into two since we want to have different glow/blend for different parts:
+
+<p align="center"> 
+<img width="350" alt="AdvancedExample6_3" src="https://github.com/user-attachments/assets/a0ccbd74-0bd2-4716-8bab-42afc34c9086" />
+<img width="350" alt="AdvancedExample6_4" src="https://github.com/user-attachments/assets/9d40ddb8-9ff0-4ac2-ae9d-131eb8e686e0" />
+</p>
+
+```
+Resource\RabbitFX\Diffuse = ref ResourceBlack
+Resource\RabbitFX\Glowmap = ref ResourcePaimonCapeConstellations
+Resource\RabbitFX\FXMap   = ref ResourceAdvancedExample6_2
+
+$\RabbitFX\Brightness = 3.0
+
+run = CommandList\RabbitFX\SetTextures
+run = CommandList\RabbitFX\Run
+run = CustomShaderBlendConstellation
+run = CommandList\RabbitFX\Cleanup
+
+Resource\RabbitFX\Diffuse = ref ResourceBlack
+Resource\RabbitFX\Glowmap = ref ResourcePaimonCapeConstellations
+Resource\RabbitFX\FXMap   = ref ResourceAdvancedExample6_3
+
+run = CommandList\RabbitFX\SetTextures
+run = CommandList\RabbitFX\Run
+run = CustomShaderBlendConstellation2
+run = CommandList\RabbitFX\Cleanup
+
+[CustomShaderBlendConstellation]
+blend = ADD BLEND_FACTOR INV_BLEND_FACTOR
+blend_factor[0] = .75
+blend_factor[1] = .75
+blend_factor[2] = .75
+blend_factor[3] = 1
+drawindexed = 6, 22932, 0
+
+[CustomShaderBlendConstellation2]
+blend = ADD BLEND_FACTOR INV_BLEND_FACTOR
+blend_factor[0] = .3
+blend_factor[1] = .3
+blend_factor[2] = .3
+blend_factor[3] = 1
+drawindexed = 6, 22932, 0
+```
+
+Note that I blend the glowing parts more strongly than the lines that connect them, to closer mimic how paimon's cape works.
+
+<p align="center"> 
+<img width="400" alt="AdvancedExample6_5" src="https://github.com/user-attachments/assets/155e48f5-92d9-4750-933c-a92f836d68b9" />
+</p>
+
+
+Next, let's add the stars. We split it into two again like before, and give each different movement:
+
+<p align="center"> 
+<img width="512" height="512" alt="AdvancedExample6_6" src="https://github.com/user-attachments/assets/b5c5619a-1616-4790-a896-469cb0626d6e" />
+<img width="512" height="512" alt="AdvancedExample6_7" src="https://github.com/user-attachments/assets/3c4d0acb-6e43-40b5-977e-bdf92d1eaae3" />
+</p>
+
+This time, we want the motion to be smooth and not do a hard rebound like we saw on the DVD logo example. We can do this by using a sin/cos wave instead of linear movement. Unfortunately, 3dmigoto doesn't have a function for `sin` or `cos`, so we need to approximate it (this approximation comes from SinsOfSeven's 3dmigoto math library https://github.com/SinsOfSeven/3dmigoto_math_lib):
+
+```
+[Constants]
+global $in
+global $out
+
+[CommandListCos]
+local $pi = 3.14159265
+if $in == inf || $in == -inf || $in == NaN || $in == null
+    $out = NaN
+else
+    local $x = ($in+$pi/2)%$pi-$pi/2
+    local $xx = $x*$x
+    local $f0 = -($xx/2)
+    local $f1 = (($xx*$xx)/24)
+    local $f2 = -(($xx*$xx*$xx)/720)
+    local $f3 = (($xx*$xx*$xx*$xx)/40320)
+    local $f4 = -(($xx*$xx*$xx*$xx*$xx)/3628800)
+    $out = -((($in+$pi/2)/$pi)%2//1*2-1) * (1+$f0+$f1+$f2+$f3+$f4)
+endif
+$in = 0
+```
+
+We can pass in a value `x` in radians, and get the corresponding value of `sin(x)`. The math on how to create outputs is very similar to the rotation examples we've seen before - if we want to create a back-and-forth movement with a cycle of 10 seconds that goes between -0.1 and 0.1, the code is:
+
+```
+$\RabbitFX\Brightness = 2.0
+$in = time*(6.28/10)
+run = CommandListCos
+$\RabbitFX\movex1 = 0.1*$out
+```
+
+`6.28/10` means performing a full rotation (`2pi`) every 10 seconds, and we scale the output (which is normally in the range `[-1,1]`) to `[-0.1,0.1]` by multiplying by `0.1`.
+
+So the code is:
+
+```
+Resource\RabbitFX\Diffuse = ref ResourceBlack
+Resource\RabbitFX\Glowmap = ref ResourcePaimonCapeStars
+Resource\RabbitFX\FXMap   = ref ResourceAdvancedExample6_4
+
+$\RabbitFX\Brightness = 2.0
+$in = time*(6.28/10)
+run = CommandListCos
+$\RabbitFX\movex1 = 0.1*$out
+
+$in = time*(6.28/6)
+run = CommandListCos
+$\RabbitFX\movey1 = 0.07*$out
+
+$in = time*(6.28/30)
+run = CommandListCos
+$\RabbitFX\mover1 = 1 + 0.1*$out
+
+run = CommandList\RabbitFX\SetTextures
+run = CommandList\RabbitFX\Run
+run = CustomShaderBlendStars
+run = CommandList\RabbitFX\Cleanup
+
+
+Resource\RabbitFX\Diffuse = ref ResourceBlack
+Resource\RabbitFX\Glowmap = ref ResourcePaimonCapeStars
+Resource\RabbitFX\FXMap   = ref ResourceAdvancedExample6_5
+
+$in = time*(6.28/10)
+run = CommandListCos
+$\RabbitFX\movex1 = 0.1*$out
+
+$in = time*(6.28/5)
+run = CommandListCos
+$\RabbitFX\movey1 = 0.07*$out
+
+$in = time*(6.28/35)
+run = CommandListCos
+$\RabbitFX\mover1 = 1 + 0.1*$out
+
+run = CommandList\RabbitFX\SetTextures
+run = CommandList\RabbitFX\Run
+run = CustomShaderBlendStars
+run = CommandList\RabbitFX\Cleanup
+
+[CustomShaderBlendStars]
+blend = ADD BLEND_FACTOR INV_BLEND_FACTOR
+blend_factor[0] = .75
+blend_factor[1] = .75
+blend_factor[2] = .75
+blend_factor[3] = 1
+drawindexed = 6, 22932, 0
+```
+
+https://github.com/user-attachments/assets/dff85be0-a9cd-4a88-ae83-46641d9a3b16
+
+We are almost at the full effect. The last part is applying the color palette. The simplest way in this case is to just apply it directly to the textures:
+
+<p align="center"> 
+<img width="512" height="512" alt="AdvancedExample6_9" src="https://github.com/user-attachments/assets/8b54a240-7ab7-4708-9c10-512de4ec1468" />
+<img width="512" height="512" alt="AdvancedExample6_8" src="https://github.com/user-attachments/assets/19bf78b4-7b11-4a5d-9c6b-5f6c48df563f" />
+</p>
+
+And the effect is complete!
+
+https://github.com/user-attachments/assets/c82e2663-d56f-444a-8371-c90b068770f2
+
+The code is quite long in this case (and I've already shown the entire thing as we've gone along), so I'll refrain from posting it this time - you can look in the example ini to see it.
+
+The final step would be applying this effect to clothing, but getting this functional already took me like 8 hours and I'm tired lol. Putting it on clothing is left as an excercise for the reader.
+
+
+### 7) Matrix-style numbers
 
 A combination of the movement and clock examples from intermediate examples to create a matrix-style falling effect
 
+[VIDEO]
 
+
+### 8) Tetris
+
+For the final example, let's implement tetris! You heard me
+
+[VIDEO]
 
 X) River of stars/sky
 
