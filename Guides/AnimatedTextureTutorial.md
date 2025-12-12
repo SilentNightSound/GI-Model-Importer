@@ -274,7 +274,7 @@ For the fourth example, we will slightly modify the third example to show how we
 
 https://github.com/user-attachments/assets/b56577fc-c121-4110-8866-4dea51df9e31
 
-For this example, we change the FX map and give it a blue channel of `63` (`0.25`). The blue channel controls how much hue shift is applied when it is active - `0.25` means that it applies a maxmimum shift of `25%` or 90 degrees.
+For this example, we change the FX map and give it a blue channel of `63` (`0.25`). The blue channel controls how much hue shift is applied when it is active - `0.25` means that it applies a maximum shift of `25%` or 90 degrees.
 
 <p align="center">
 <img width="250" alt="BasicExample4_1" src="https://github.com/user-attachments/assets/8cdc0a84-531b-4342-bed0-8251a91c7791" />
@@ -315,7 +315,7 @@ If your goal is to continuously shift the colors to make a rainbow effect howeve
 
 ### 5) Second Dot
 
-Next, we demonstrate how we can use use two glow maps simultaneously. We will add a second dot that is flashing twice as fast as the first one.
+Next, we demonstrate how we can use two glow maps simultaneously. We will add a second dot that is flashing twice as fast as the first one.
 
 https://github.com/user-attachments/assets/10157072-53d7-4994-9879-6a322e45be0c
 
@@ -338,7 +338,7 @@ We also need to update the fx map - the green channel controls Glowmap2 (and fun
 <img width="250" alt="BasicExample5" src="https://github.com/user-attachments/assets/29860a1d-7f15-4d5e-937e-28be7b8fbab7" />
 </p>
 
-The reason we need to use a second glowmap here is becase we want the two dots to flash at different speeds. If they were the same speed, we could just add the dot to the first glowmap. Note that the library is currently limited to a max of two independent glowmaps - while adding a third dot that blinks with a different speed to the first two isn't impossible, it's not as simple since there is no Glowmap3 and would require some very creative coding. I recommend trying to limit any animations to at most two independent glowmaps/speeds.
+The reason we need to use a second glowmap here is because we want the two dots to flash at different speeds. If they were the same speed, we could just add the dot to the first glowmap. Note that the library is currently limited to a max of two independent glowmaps - while adding a third dot that blinks with a different speed to the first two isn't impossible, it's not as simple since there is no Glowmap3 and would require some very creative coding. I recommend trying to limit any animations to at most two independent glowmaps/speeds.
 
 In situations where the effects from glowmap1 and glowmap2 overlap, glowmap2 will take priority. For cutout, think of the textures being layered like glowmap2 > glowmap1 > diffuse - if cutout2 is set, when glowmap2 is inactive you will essentially be able to see through it to the layer "below". So if glowmap1 is active or has cutout1 not set, you will see glowmap1 below. If glowmap1 is inactive and has cutout1 set, you will either see the original diffuse texture (if alpha > 0 on glowmap1) or the mesh will be cut out and not visible (alpha = 0).
 
@@ -478,7 +478,7 @@ This will cause the dot to move to the right, taking 5 seconds to return to wher
 
 This will cause the dot to slowly move down, taking 20 seconds to complete a full cycle.
 
-It's possible to use this in tandom with the previous effects and a second glowmap to create fairly complex movement - we will explore some more advanced applications in the intermediate and advanced sections
+It's possible to use this in tandem with the previous effects and a second glowmap to create fairly complex movement - we will explore some more advanced applications in the intermediate and advanced sections
 
 The final code is:
 
@@ -864,7 +864,7 @@ elif $digit >= 0.9 && $digit < 1.0
 endif
 ```
 
-Which will load the each digit in sequence for 1 second:
+Which will load each digit in sequence for 1 second:
 
 https://github.com/user-attachments/assets/50c86381-06db-44fe-b573-ad9b48ec110b
 
@@ -1112,7 +1112,7 @@ So we can make it glow using the same concepts we have been using so far:
 <img width="300" height="1012" alt="IntermediateExample8_3" src="https://github.com/user-attachments/assets/9ea6c3d2-c7d1-4f60-86f2-ed079df5bc14" />
 </p>
 
-The second concept is a little tricker. Say we want the glow to travel from top-to-bottom of the model. Before, we could just directly color the texture with a gradient, but now the location on the UV map no longer corresponds to the "height" on the character model. For example, you can see that the pattern for Iris's boots is actually above the pattern for her stockings:
+The second concept is a little trickier. Say we want the glow to travel from top-to-bottom of the model. Before, we could just directly color the texture with a gradient, but now the location on the UV map no longer corresponds to the "height" on the character model. For example, you can see that the pattern for Iris's boots is actually above the pattern for her stockings:
 
 <p align="center"> 
 <img width="300" alt="IntermediateExample8_4" src="https://github.com/user-attachments/assets/1f710de3-f6d3-40cb-8b39-d061a0c2ef01" />
@@ -1509,7 +1509,7 @@ First, let's do the seconds hand. It has a cycle of 60 seconds, but we need to s
 
 `$\RabbitFX\moveangle1 = (time* 0.104)%6.28`
 
-This will work, but it creates a smooth motion of the clock - we want the clock to "tick" each second instead. We can do this via chopping `time` into 60 discrete intervals instead of having it continuous. We can do that using `//` which does integer division: `(time*X)//X`, where X is the step size. For example, if X is 0.5 the this will go 0.5, 1.0, 1.5, 2.0 instead of smoothly counting from 0.5 to 2.0. We can then use this value in place of `time` to creat the ticking motion:
+This will work, but it creates a smooth motion of the clock - we want the clock to "tick" each second instead. We can do this via chopping `time` into 60 discrete intervals instead of having it continuous. We can do that using `//` which does integer division: `(time*X)//X`, where X is the step size. For example, if X is 0.5 the this will go 0.5, 1.0, 1.5, 2.0 instead of smoothly counting from 0.5 to 2.0. We can then use this value in place of `time` to create the ticking motion:
 
 ```
 local $interval = (time*0.104)//0.104
@@ -1522,7 +1522,7 @@ For the minute hand, we use smooth motion but the period is different - it does 
 
 `$\RabbitFX\moveangle2 = -(time*0.00174)%6.28`
 
-The fx texture is (each had is on a spearate glowmap, and has no special effects applied):
+The fx texture is (each had is on a seperate glowmap, and has no special effects applied):
 
 <p align="center"> 
 <img width="350" alt="AdvancedExample4_1" src="https://github.com/user-attachments/assets/4fb64719-96d5-445c-b971-95f31e1dc2a0" />
@@ -1566,7 +1566,7 @@ In this example, we illustrate how to use this library to create longer sequence
 
 https://github.com/user-attachments/assets/16456057-504c-4e21-80d3-b2843f114806
 
-(Yes, it has the entire animation . I just cut it at 10 seconds to keep the file size small enough to upload here lol)
+(Yes, it has the entire animation. I just cut it at 10 seconds to keep the file size small enough to upload here lol)
 
 With this library, we have another way to implement simple frame-by-frame videos compared to the older method of loading each frame individually - we can line up the frames in a large atlas, and scroll across it:
 
@@ -1678,7 +1678,7 @@ https://github.com/user-attachments/assets/80dfa4f2-a23b-4c93-8098-afd9f3945343
 
 This effect has multiple layers, and is the first time we are going to see more advanced blending techniques. We will not be able to fully replicate the effect since we don't have access to the camera's location to do parallax, but we can approximate the effect.
 
-Now, to briefly explain how paimon's cape effect works. It has 5 layers: the background color (a gradient from dark to light blue), a cloud effect, a series of constellations, stars (two sets that move indepdenently) and a color palette that is applied over the clouds and stars.
+Now, to briefly explain how paimon's cape effect works. It has 5 layers: the background color (a gradient from dark to light blue), a cloud effect, a series of constellations, stars (two sets that move independently) and a color palette that is applied over the clouds and stars.
 
 <p align="center"> 
 <img width="1000" alt="AdvancedExample6_1" src="https://github.com/user-attachments/assets/0e884bc4-704c-4546-a3f5-f24f719f0967" />
