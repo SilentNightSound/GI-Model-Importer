@@ -1909,7 +1909,7 @@ The code is quite long in this case (and I've already shown the entire thing as 
 The final step would be applying this effect to clothing, but getting this functional already took me like 8 hours and I'm tired lol. Putting it on clothing is left as an excercise for the reader.
 
 
-### 7) Matrix-style numbers
+### 7) Matrix Digital Rain
 
 A combination of multiple effects we have seen so far to create a matrix-style movie effect.
 
