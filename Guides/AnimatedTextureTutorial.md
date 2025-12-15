@@ -2,12 +2,25 @@
 
 Hello everyone. Recently, I wrote a library to add animated texture/glow support (SilentFX) to games supported by 3dmigoto. It currently only works for Stella Sora (extending the RabbitFX library by CaveRabbit), with no current plans to extend to other games at this time.
 
-See download section for example code. You can use left and right arrow keys when the mod is visible to move through examples covered in this guide, and up and down to move through the sections (Basic/Intermediate/Advanced)
+With this library, you can do things like:
+
+- Texture controlled brightness
+- Glow thresholding
+- Localized hue shifting
+- Linear uv movement (+wrapping)
+- Radial uv movement (radius/angle)
+- Glow layering
+- Automatic glow/hue ramping
+- Texture masking
+
+And more! This guide will go over how each of these works via 8 basic examples (intended to explain the basics of how to use the commands), 8 intermediate examples (showing some practical applications to create effects) and 8 advanced examples (more complicated, layered effects that show what the library is capable of)
+
+See the attached example zip the code for all 24 examples. You can use left and right arrow keys when the mod is visible to move through examples covered in this guide, and up and down to move through the sections (Basic/Intermediate/Advanced); the example currently active will be displayed on the bottom left corner.
 
 
 ## Overview of textures and commands 
 
-High-level overview of all the commands. Each of these will be explained in more detail in the tutorial section. See addendum for additional notes on texture colorspaces
+High-level TLDR of all the commands. Each of these will be explained in more detail in the tutorial section. See addendum for additional notes on texture colorspaces
 
 ; Control texture for animations. Red channel controls Glowmap1, Green controls Glowmap2  
 ; For Glowmaps, `0.0` is always inactive, and `1.0` is always active  
@@ -2143,7 +2156,7 @@ The final code is in the example ini - it's quite long, so will refrain from pos
 
 For the final example, let's implement tetris! You heard me.
 
-[VIDEO]
+WIP
 
 
 
