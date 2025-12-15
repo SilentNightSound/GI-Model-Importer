@@ -44,11 +44,12 @@ High-level overview of all the commands. Each of these will be explained in more
 
 ; Default behaviour when animation is inactive. Setting `0` has the texture continue to appear, setting `1` makes it vanish  
 ; Setting `-1` will make only the parts that correspond to an fx value of 0 vanish (ie parts that are always inactive)
+; Setting `2` is a special value, which causes glowmap1 to always cutout (intended use is to be used together with `cutout2 = 2` to use glowmap1 as a maskr; see Addendum for details)
 `$\RabbitFX\cutout1`  
 
 ; Same as above, but for glowmap2. Not required if not setting glowmap2  
-; If both glowmap1 and glowmap2 are active, these take priority. If not specified, they are all set to `0`  
-; `cuout2` behaves slightly differently than `cutout1`, including being able to set `2` to make only glowmap2 parts that overlap glowmap1 parts appear; see Addendum for details
+; If both glowmap1 and glowmap2 are active, these take priority. If not specified, they are all set to `0` 
+; Setting `2` makes only glowmap2 parts that overlap glowmap1 parts appear; see Addendum for details
 `$\RabbitFX\Time2`  
 `$\RabbitFX\Radius2`  
 `$\RabbitFX\AnimationMode2`  
@@ -1910,27 +1911,241 @@ The final step would be applying this effect to clothing, but getting this funct
 
 ### 7) Matrix-style numbers
 
-A combination of the movement and clock examples from intermediate examples to create a matrix-style falling effect
+A combination of multiple effects we have seen so far to create a matrix-style movie effect.
 
-[VIDEO]
+https://github.com/user-attachments/assets/209cc8dd-5a5e-4c56-94ff-330721a14fc1
+
+There are many ways we can implement this sort of effect - the simplest is to have a string of letters/characters and just scroll the UV over them. But I want to show something a bit fancier - I want to demonstrate how we can make the symbols constantly flip between different values as they drop.
+
+This isn't as easy as it sounds (if it sounds easy to you lol). While we can use thresholds to make glow flip between on/off states, a single portion of the glowmap can have at most 3 regions (off/on/off). Even with glowmap 2, that increases to at most ~5 so we are going to have to layer multiple calls on top of each other.
+
+The simplest way to do this will be to use a font atlas, and use randomization to select which portion of it to load at any given time. First, we need the font:
+
+<p align="center"> 
+<img width="400" alt="AdvancedExample7_1" src="https://github.com/user-attachments/assets/31caa577-3305-4fb2-86be-7754c44ecf33" />
+</p>
+
+Now, we need a way to "select" a specific character for any given draw. We could do this by just giving each letter its own image, but that would require us to create and load around 150 images. Instead, we can leverage some of the library's functions to create a function that can select a single character from the grid:
+
+<p align="center"> 
+<img width="400" alt="AdvancedExample7_2" src="https://github.com/user-attachments/assets/90d010a4-3c03-456c-9a4e-41fc319cc878" />
+</p>
+
+This has a gradient from 0 to 255 on the red channel going left to right, and a gradient of 0 to 255 on the green channel going up to down. So by using specific values for `time1`, `radius1`, `time2` and `radius`, it lets us select a specific point in a 2D grid. The `time` values represent the X and Y coordinates, and the `radius` represent the thickness of a single character.
+
+```
+local $atlaswidth = 14
+local $atlasheight = 14
+$\RabbitFX\time1 = $matrix_row/($atlaswidth)
+$\RabbitFX\radius1 = 1/(2*$atlaswidth)
+
+$\RabbitFX\time2 = $matrix_col/($atlasheight)
+$\RabbitFX\radius2 = 1/(2*$atlasheight)
+
+$\RabbitFX\cutout1 = 2
+$\RabbitFX\cutout2 = 2
+```
+
+This will display a single image corresponding to `$matrix_row` and `$matrix_col`. Setting both `cutout` to `2` uses glowmap1 as a mask for glowmap2 (this avoids drawing the whole glowmap1 column).
+
+Next, we can draw that symbol at any position we want via:
+
+```
+$\RabbitFX\movex1 = ($matrix_row-1)/($atlaswidth-1) - ($col - 1)/($atlaswidth-1)
+$\RabbitFX\movex2 = ($matrix_row-1)/($atlaswidth-1) - ($col - 1)/($atlaswidth-1)
+
+$\RabbitFX\movey1 = ($matrix_col-1)/($atlasheight-1) - ($row - 1)/($atlasheight-1)
+$\RabbitFX\movey2 = ($matrix_col-1)/($atlasheight-1) - ($row - 1)/($atlasheight-1)
+```
+
+This first moves the symbol to the point `(1,1)` by subtracting off its `matrix_col` and `matrix_col`, the moves it to a specific `row` and `col` that we want to draw it at.
+
+We now have the ability to select and draw arbitrary symbols, but we are a long way from the full effect. Next, let's focus on a single column and creating the "dropping" effect.
+
+The first thing we need is the ability to store if each row on the column is active, and what intensity/how visible the symbol is (from 0 being not active to 4 being the most active). While we could simply create 13 variables, one for each row, that will require us to have over 150 variables in total for the entire grid and is a bit painful.
+
+We can instead use some basic bit-packing to store multiple values in a single number:
+
+```
+[CommandListGetIntensity]
+$intensity = ($target_col // (10)**($row-1)) % 10
+
+[CommandListSetIntensity]
+$target_col = $target_col - $intensity * (10**($row-1)) + $new_intensity * (10**($row-1))
+```
+
+This lets us use a number such as `00432` to store the the state of each row - 2 represents the value of the first row, 3 of the second, 4 of the third, and both the fourth and fifth are 0.
+
+Unfortunately, this still isn't enough - 3dmigoto uses 32 bit floats to store numbers, which means that it can only support up to around 10 digits or so (and in practice, we will start running into problems around ~8 digits due to float precision). So we need to store it across two values:
+
+```
+[CommandListGetIntensity]
+if $row < 8
+	$intensity = ($target_col // (10)**($row-1)) % 10
+elif $row < 14
+	$intensity = ($target_col_2 // (10)**($row-8)) % 10
+endif
+
+
+[CommandListSetIntensity]
+if $row < 8
+	$target_col = $target_col - $intensity * (10**($row-1)) + $new_intensity * (10**($row-1))
+elif $row < 14
+	$target_col_2 = $target_col_2 - $intensity * (10**($row-8)) + $new_intensity * (10**($row-8))
+endif
+```
+
+This is functionally the same thing, except we now use two sets of numbers to store all 13 rows.
+
+We now have the ability to store and retrieve the state of any row - the next step is to update the state. There are two different types of state we are interested in; the first is what symbols are being displayed and the second is the location of the symbols.
+
+For the symbols, we use the randomization function from the Sins' math library mentioned before:
+
+```
+[CommandListRandom]
+local $m = 65537
+local $a = 75
+local $c = 74
+local $first_call
+if $seed < 0
+	$seed = time
+endif
+$seed = ($seed * $a + $c) % $m
+$out = $seed
+```
+
+Calling this before any draw will let us randomize what character is displayed. Furthermore, as long as we use the same seed each frame we will get the same set of characters - thus, starting from a different seed will let us generate a new set to display.
+
+Randomly selecting a char:
+
+```
+run = CommandListRandom
+$matrix_row = ($out)%13 + 1
+run = CommandListRandom
+$matrix_col = ($out)%10 + 1
+```
+
+Updating the seed every `$symbol_update_interval`:
+
+```
+if time - $last_symbol_update > $symbol_update_interval
+	$last_symbol_update = time
+	$stored_seed = $out
+endif
+$seed = $stored_seed
+
+```
+
+This handles randomly swapping characters, but not the movement downwards. For that, we can do the following:
+
+```
+if time - $last_location_update > $location_update_interval
+	$last_location_update = time
+	run = CommandListUpdateGrid
+endif
+
+[CommandListUpdateGrid]
+$target_col = $col1_1
+$target_col_2 = $col1_2
+run = CommandListUpdateColumn
+$col1_1 = $target_col
+$col1_2 = $target_col_2
+
+$target_col = $col2_1
+$target_col_2 = $col2_2
+run = CommandListUpdateColumn
+$col2_1 = $target_col
+$col2_2 = $target_col_2
+
+; continue for all 13 cols
+
+[CommandListUpdateColumn]
+$row = 13
+run = CommandListUpdateSymbol
+$row = 12
+run = CommandListUpdateSymbol
+; continue for all 13 rows
+
+[CommandListUpdateSymbol]
+run = CommandListGetIntensity
+if $intensity > 0
+	$new_intensity = $intensity - 1
+	run = CommandListSetIntensity
+endif
+if $intensity == 4
+	$intensity = 0
+	$new_intensity = 4
+	$row = $row + 1
+	run = CommandListSetIntensity
+	$row = $row - 1
+endif
+```
+
+While this is a big chunk, all it is saying is "every `location_update_interval` go through each row and column. If the intensity at any point is greater than 0, subtract 1. If it is 4, make the one below 4 as well". The only thing to note is that we travel from bottom-to-top so we don't have to handle conflicts as the strings of symbols travel downwards.
+
+This is most of the logic handled - all we have left is the fade out effect and the start condition. For the fade, we can use the blending technique we covered last time and use the intensity to blend different amounts:
+
+```
+run = CommandListGetIntensity
+if $intensity == 1
+	run = CustomShaderBlendSymbol1
+elif $intensity == 2
+	run = CustomShaderBlendSymbol2
+elif $intensity == 3
+	run = CustomShaderBlendSymbol3
+elif $intensity == 4
+	drawindexed = 6, 22932, 0
+endif
+
+[CustomShaderBlendSymbol1]
+blend = ADD BLEND_FACTOR INV_BLEND_FACTOR
+blend_factor[0] = 0.1
+blend_factor[1] = 0.1
+blend_factor[2] = 0.1
+blend_factor[3] = 1
+drawindexed = 6, 22932, 0
+
+[CustomShaderBlendSymbol2]
+blend = ADD BLEND_FACTOR INV_BLEND_FACTOR
+blend_factor[0] = 0.3
+blend_factor[1] = 0.3
+blend_factor[2] = 0.3
+blend_factor[3] = 1
+drawindexed = 6, 22932, 0
+
+[CustomShaderBlendSymbol3]
+blend = ADD BLEND_FACTOR INV_BLEND_FACTOR
+blend_factor[0] = 0.6
+blend_factor[1] = 0.6
+blend_factor[2] = 0.6
+blend_factor[3] = 1
+drawindexed = 6, 22932, 0
+```
+
+The final part is the start condition. For each column, every tme we update locations we generate a random value and if it is within a certain range we set `4` at the top of that column:
+
+```
+run = CommandListRandomLoc
+if $OutSymbolLoc%100 < 7
+	$row = 1
+	$intensity = 0
+	$new_intensity = 4
+	run = CommandListSetIntensity
+endif
+```
+
+In this case I chose 7 for a 7% chance for any column to have the rain begin (chosen by trying different values - 5% was a bit too infrequent, and 10% triggered too often). Note that we have to use a different seed/randomize here so it doesn't interfere with the one for randomizing symbols.
+
+The final code is in the example ini - it's quite long, so will refrain from posting it here to avoid bloating the tutorial.
 
 
 ### 8) Tetris
 
-For the final example, let's implement tetris! You heard me
+For the final example, let's implement tetris! You heard me.
 
 [VIDEO]
 
-X) River of stars/sky
 
-A more advanced version of the lightning cloud effect
-
-
-X) Radial lightning/lines
-
-X) Shorekeeper-style effect (or paimon cape)
-
-XX) Flappy Bird
 
 
 ## Addendum
@@ -1995,6 +2210,10 @@ Glowmap alpha > 0, FXmap alpha > 0, FXmap red channel > 0:
 
 Glowmap alpha > 0, FXmap alpha > 0, FXmap red channel == 1:
 	Uses glowmap color and will always glow (no animation)
+
+Special:
+	cutout = 2 : Mesh always invisible, regardless of fxmap values (glowmap1 intended to be used as a mask for glowmap2)
+
 ```
 
 The inverse table is:
@@ -2017,6 +2236,7 @@ Glowmap is visible when:
 Texture glows when:
 	Glowmap alpha > 0, FXmap alpha > 0, FXmap red channel > 0,  section is active
 	Glowmap alpha > 0, FXmap alpha > 0, FXmap red channel == 1, at all times
+
 ```
 
 TLDR: If FX map alpha is 0, the mesh will always be invisible regardless of other values. If glowmap1 alpha is 0, you will either see the original diffuse or it will be invisible depending on `cutout1`. If both fxmap and glowmap have alpha > 0, then it will either display glowmap1 or be invisible depending on the value of `cutout` and the FX map red channel.
