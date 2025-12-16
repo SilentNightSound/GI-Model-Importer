@@ -57,12 +57,12 @@ High-level TLDR of all the commands. Each of these will be explained in more det
 
 ; Default behaviour when animation is inactive. Setting `0` has the texture continue to appear, setting `1` makes it vanish  
 ; Setting `-1` will make only the parts that correspond to an fx value of 0 vanish (ie parts that are always inactive)
-; Setting `2` is a special value, which causes glowmap1 to always cutout (intended use is to be used together with `cutout2 = 2` to use glowmap1 as a maskr; see Addendum for details)
+; Setting `2` is a special value, which causes glowmap1 to always cutout (intended use is to be used together with `cutout2 = 2` to use glowmap1 as a maskr; see Addendum for details)  
 `$\RabbitFX\cutout1`  
 
 ; Same as above, but for glowmap2. Not required if not setting glowmap2  
 ; If both glowmap1 and glowmap2 are active, these take priority. If not specified, they are all set to `0` 
-; Setting `2` makes only glowmap2 parts that overlap glowmap1 parts appear; see Addendum for details
+; Setting `2` makes only glowmap2 parts that overlap glowmap1 parts appear; see Addendum for details  
 `$\RabbitFX\Time2`  
 `$\RabbitFX\Radius2`  
 `$\RabbitFX\AnimationMode2`  
