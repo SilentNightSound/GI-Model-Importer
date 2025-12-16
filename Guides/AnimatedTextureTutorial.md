@@ -76,7 +76,7 @@ High-level TLDR of all the commands. Each of these will be explained in more det
 `$\RabbitFX\movey2` 
 
 ; Expands/contracts UVs, and rotates them relative to the centerpoint
-; Radius default is 1; smaller decreases size, larger increases size. Angle ranges from 0 to 2pi in radians
+; Radius default is 1; smaller decreases size, larger increases size. Angle ranges from 0 to 2pi in radians  
 `$\RabbitFX\mover1`  
 `$\RabbitFX\moveangle1`  
 `$\RabbitFX\mover2`  
@@ -84,7 +84,7 @@ High-level TLDR of all the commands. Each of these will be explained in more det
 
 ; Stella Sora only
 ; Set to 1 to remove object shadow and background shadow
-; I added this at the very end, so examples don't use it - it removes the shadowy background you see in a lot of the examples, along with the shadow on the ground
+; I added this at the very end, so examples don't use it - it removes the shadowy background you see in a lot of the examples, along with the shadow on the ground  
 `$\RabbitFX\removeshadow`
 `$\RabbitFX\removebackgroundshadow`
 
@@ -93,7 +93,7 @@ High-level TLDR of all the commands. Each of these will be explained in more det
 `run = CommandList\RabbitFX\Run`  
 
 ; Resets rabbitfx to default after, use after you are done to ensure next calls are clean  
-; Should go after any `drawindexed` calls
+; Should go after any `drawindexed` calls  
 `run =  CommandList\RabbitFX\Cleanup`
 
 Simple reference example of setting the above commands:
