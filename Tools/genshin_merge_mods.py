@@ -171,20 +171,28 @@ drawindexed = auto
             command_data.setdefault((all_mod_data[i]["name"],0),[]).append(all_mod_data[i])
         # Resources
         elif "filename" in all_mod_data[i] or "type" in all_mod_data[i]:
-
+            
             resources += f"[{all_mod_data[i]['header']}{all_mod_data[i]['name']}.{all_mod_data[i]['ini_group']}]\n"
             for command in all_mod_data[i]:
                 if command in ["header", "name", "location", "ini_group"]:
                     continue
                 if command == "filename":
-                    with open(f"{all_mod_data[i]['location']}\\{all_mod_data[i][command]}", "rb") as f:
-                        sha1 = hashlib.sha1(f.read()).hexdigest()
-                    if sha1 in seen_hashes and args.compress:
-                        resources += f"{command} = {seen_hashes[sha1]}\n"
-                        os.remove(f"{all_mod_data[i]['location']}\\{all_mod_data[i][command]}")
+                    # File might not exists because of Skin Variant lacking this element
+                    # Maybe a design decision of the mod maker (example: no Kuki Mask)
+                    filePath = f"{all_mod_data[i]['location']}\\{all_mod_data[i][command]}"
+                    if os.path.exists(filePath):
+                        with open(filePath, "rb") as f:
+                            sha1 = hashlib.sha1(f.read()).hexdigest()
+                        if sha1 in seen_hashes and args.compress:
+                            resources += f"{command} = {seen_hashes[sha1]}\n"
+                            os.remove(filePath)
+                        else:
+                            seen_hashes[sha1] = filePath
+                            resources += f"{command} = {filePath}\n"
                     else:
-                        seen_hashes[sha1] = f"{all_mod_data[i]['location']}\\{all_mod_data[i][command]}"
-                        resources += f"{command} = {all_mod_data[i]['location']}\\{all_mod_data[i][command]}\n"
+                        # Maybe you can skip this Resource, but in any case I'm afraid it can break anything
+                        # So I keep it in the final .ini
+                        resources += f"{command} = {filePath}\n"
                 else:
                     resources += f"{command} = {all_mod_data[i][command]}\n"
             resources += "\n"
@@ -313,9 +321,14 @@ def enable_ini(path):
     for root, dir, files in os.walk(path):
         for file in files:
             if os.path.splitext(file)[1] == ".ini" and ("disabled" in root.lower() or "disabled" in file.lower()):
-                print(f"\tRe-enabling {os.path.join(root, file)}")
-                new_path = re.compile("disabled", re.IGNORECASE).sub("", os.path.join(root, file))
-                os.rename(os.path.join(root, file), new_path)
+                path = os.path.join(root, file)
+                print(f"\tRe-enabling {path}")
+                new_path = re.compile("disabled", re.IGNORECASE).sub("", path)
+                # If enabled ini already exists -> Replace
+                if (os.path.exists(new_path)):
+                    os.replace(path, new_path)
+                else: # Rename if not
+                    os.rename(path, new_path)
 
 
 # Gets the user's preferred order to merge mod files
