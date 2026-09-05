@@ -1323,7 +1323,7 @@ def export_3dmigoto(operator, context, vb_path, ib_path, fmt_path):
     write_fmt_file(open(fmt_path, 'w'), vb, ib)
 
 
-def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fmt_path, use_foldername, ignore_hidden, only_selected, no_ramps, delete_intermediate, credit, Outline_Properties):
+def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fmt_path, use_foldername, ignore_hidden, only_selected, no_ramps, delete_intermediate, credit, write_export_indices, duplicate_ib_files, Outline_Properties):
     scene = bpy.context.scene
 
     # Quick sanity check
@@ -1351,12 +1351,15 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
 
         extended_classifications = [[f"{base_classifications[-1]}{i}" for i in range(2, 10)] for base_classifications in all_base_classifications]
 
+    #  Data about each the indices of each mesh for mods that toggle parts by editing the ib files
+    export_index_data = {}
+
     for k in range(len(all_base_classifications)):
         base_classifications = all_base_classifications[k]
         current_name = f"{object_name}{component_names[k]}"
 
         # Doing it this way has the benefit of sorting the objects into the correct ordering by default
-        relevant_objects = ["" for i in range(len(base_classifications) + 8)]
+        relevant_objects = [[] for i in range(len(base_classifications) + 8)]
         # Surprisingly annoying to extend this to n objects thanks to the choice of using Extra2, Extra3, etc.
         # Iterate through scene objects, looking for ones that match the specified character name and object type
 
@@ -1374,34 +1377,100 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
                 if f"{current_name}{c}".lower() in obj.name.lower():
                     # Even though we have found an object, since the final classification can be extended need to check
                     found_extended = False
-                    for j,d in enumerate(extended_classifications):
+                    for j,d in enumerate(extended_classifications[k]):
                         if f"{current_name}{d}".lower() in obj.name.lower():
                             location = j + len(base_classifications)
-                            if relevant_objects[location] != "":
-                                raise Fatal(f"Too many matches for {current_name}{d}".lower())
-                            else:
-                                relevant_objects[location] = obj
-                                found_extended = True
-                                break
-                    if not found_extended:
-                        if relevant_objects[i] != "":
-                            raise Fatal(f"Too many matches for {current_name}{c}".lower())
-                        else:
-                            relevant_objects[i] = obj
+                            relevant_objects[location].append(obj)
+                            found_extended = True
                             break
+                    if not found_extended:
+                        relevant_objects[i].append(obj)
+                        break
 
-        # Delete empty spots
-        relevant_objects = [x for x in relevant_objects if x]
+        # One object for each base classification, while relevant_objects is a list of objects per base classification
+        relevant_object_merged_duplicates = ["" for i in range(len(relevant_objects))]
         print(relevant_objects)
 
-        for i, obj in enumerate(relevant_objects):
+        # Prepare a duplicate of each object so we can modify it and merge them into one object per classification
+        for i, objects in enumerate(relevant_objects):
             if i < len(base_classifications):
                 classification = base_classifications[i]
             else:
-                classification = extended_classifications[i-len(base_classifications)]
+                classification = extended_classifications[k][i - len(base_classifications)]
+            if not objects:
+                continue
 
-            if obj is None:
-                raise Fatal('No object selected')
+            for obj in objects:
+                # Select and duplicate object
+                bpy.ops.object.select_all(action='DESELECT')
+                obj.select_set(True)
+                bpy.ops.object.duplicate()
+                duplicate = bpy.context.selected_objects[0]
+
+                # Apply all shape keys
+                if duplicate.type == "MESH" and hasattr(duplicate.data, "shape_keys"):
+                    duplicate.shape_key_add(name='CombinedKeys', from_mix=True)
+                    for shapeKey in duplicate.data.shape_keys.key_blocks:
+                        duplicate.shape_key_remove(shapeKey)
+
+                # Apply all modifiers
+                for modifier in duplicate.modifiers:
+                    bpy.context.view_layer.objects.active = duplicate
+                    if modifier.show_viewport:
+                        bpy.ops.object.modifier_apply(modifier=modifier.name)
+
+                # Remove non-numeric vertex groups, this prevents issues with normalizing weights
+                groups_to_remove = [group for group in duplicate.vertex_groups if not group.name.isnumeric()]
+                for group in groups_to_remove:
+                    duplicate.vertex_groups.remove(group)
+
+                # Triangulate mesh
+                context.view_layer.objects.active = duplicate
+                bpy.ops.object.mode_set(mode='EDIT')
+                bpy.ops.mesh.select_all(action='SELECT')
+                bpy.ops.mesh.quads_convert_to_tris()
+                bpy.ops.object.mode_set(mode='OBJECT')
+
+                # Ugly code to basically find the part of the name after the classification, removes _ if used as a separator
+                classification_index = obj.name.lower().find(classification.lower())
+                dash_index = obj.name.find('-')
+                if dash_index == -1:
+                    dash_index = len(obj.name)
+                if obj.name.find('_') == classification_index + len(classification):
+                    classification_index += 1
+                part_name = obj.name[classification_index + len(classification):dash_index]
+
+                # Save vertices in this mesh for export indices file
+                starting_face = 0 if relevant_object_merged_duplicates[i] == "" else len(relevant_object_merged_duplicates[i].data.polygons)
+                starting_vert = (0 if relevant_object_merged_duplicates[i] == "" else len(relevant_object_merged_duplicates[i].data.vertices))
+                export_index_data[obj.name[:dash_index]] = {
+                    "current_name": current_name,
+                    "classification": classification,
+                    "part": part_name,
+                    "face_start": starting_face,
+                    "face_end": starting_face + len(duplicate.data.polygons),
+                    "vert_start": starting_vert,
+                    "vert_end": starting_vert + len(duplicate.data.vertices),
+                }
+
+                # Merge this mesh into existing mesh for this classification
+                if relevant_object_merged_duplicates[i] == "":
+                    relevant_object_merged_duplicates[i] = duplicate
+                else:
+                    bpy.ops.object.select_all(action='DESELECT')
+                    context.view_layer.objects.active = relevant_object_merged_duplicates[i]
+                    relevant_object_merged_duplicates[i].select_set(True)
+                    duplicate.select_set(True)
+                    bpy.ops.object.join()
+
+        for i, obj in enumerate(relevant_object_merged_duplicates):
+            if i < len(base_classifications):
+                classification = base_classifications[i]
+            else:
+                classification = extended_classifications[k][i-len(base_classifications)]
+
+            if obj == "":
+                continue
 
             vb_path  = os.path.join(os.path.dirname(vb_path), current_name + classification + ".vb")
             ib_path  = os.path.join(os.path.dirname(ib_path), current_name + classification + ".ib")
@@ -1416,7 +1485,6 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
                 mesh = obj.evaluated_get(context.evaluated_depsgraph_get()).to_mesh()
             else: # 2.79
                 mesh = obj.to_mesh(context.scene, True, 'PREVIEW', calc_tessface=False)
-            mesh_triangulate(mesh)
 
             try:
                 if obj['3DMigoto:IBFormat'] == "DXGI_FORMAT_R16_UINT":
@@ -1693,15 +1761,35 @@ def export_3dmigoto_genshin(operator, context, object_name, vb_path, ib_path, fm
                 # Write format reference file
                 write_fmt_file(open(fmt_path, 'w'), vb, ib)
 
-    generate_mod_folder(os.path.dirname(vb_path), object_name, no_ramps, delete_intermediate, credit)
+        # Delete temporary duplicate meshes made during export
+        bpy.ops.object.select_all(action='DESELECT')
+        for duplicate in relevant_object_merged_duplicates:
+            if duplicate == "":
+                continue
+            duplicate.select_set(True)
+        bpy.ops.object.delete()
+
+    with open(os.path.join(os.path.dirname(vb_path), f"{object_name}ExportIndices.json"), "w") as f:
+        json.dump(export_index_data, f, ensure_ascii=False, indent=4)
+
+    generate_mod_folder(os.path.dirname(vb_path), object_name, no_ramps, delete_intermediate, credit, write_export_indices, duplicate_ib_files)
 
 
-def generate_mod_folder(path, character_name, no_ramps, delete_intermediate, credit):
+def generate_mod_folder(path, character_name, no_ramps, delete_intermediate, credit, write_export_indices, duplicate_ib_files):
 
     parent_folder = os.path.join(path, "../")
 
     char_hash = load_hashes(path, character_name, "hash.json")
     create_mod_folder(parent_folder, character_name)
+
+    if write_export_indices:
+        # Copy export indices to mod folder so it can be used to edit mods
+        os.replace(os.path.join(path, f"{character_name}ExportIndices.json"), os.path.join(parent_folder, f"{character_name}Mod", f"{character_name}ExportIndices.json"))
+
+    if duplicate_ib_files:
+        # Make folder to contain unmodified ib files for mods that edit ib to toggle parts
+        if not os.path.isdir(os.path.join(parent_folder, f"{character_name}Mod", f"BaseFiles")):
+            os.mkdir(os.path.join(parent_folder, f"{character_name}Mod", f"BaseFiles"))
 
     # Previous version had all these hardcoded at the end; now, we dynamically assemble the ini file as we add components
     vb_override_ini = ""
@@ -1774,6 +1862,9 @@ def generate_mod_folder(path, character_name, no_ramps, delete_intermediate, cre
 
                 with open(os.path.join(parent_folder, f"{character_name}Mod", f"{current_name}{current_object}.ib"), "wb") as f:
                     f.write(ib)
+                if duplicate_ib_files:
+                    with open(os.path.join(parent_folder, f"{character_name}Mod", "BaseFiles", f"{current_name}{current_object}.ib"), "wb") as f:
+                        f.write(ib)
                 if ib:
                     ib_override_ini += f"[TextureOverride{current_name}{current_object}]\nhash = {component['ib']}\nmatch_first_index = {component['object_indexes'][i]}\nib = Resource{current_name}{current_object}IB\n"
                 else:
@@ -2370,6 +2461,18 @@ class Export3DMigotoGenshin(bpy.types.Operator, ExportHelper):
         default=0.001,
         soft_min=0,
     )
+
+    write_export_indices : BoolProperty(
+        name="Write Export Indices File",
+        description="Writes a file containing vertex and face indices of each mesh before being merged",
+        default=False,
+    )
+
+    duplicate_ib_files : BoolProperty(
+        name="Duplicate Index Buffer Files",
+        description="Copies index buffer files to a folder called Base_Files which is helpful for mods that modify index buffer files",
+        default=False,
+    )
     
     def draw(self, context):
         layout = self.layout
@@ -2381,6 +2484,8 @@ class Export3DMigotoGenshin(bpy.types.Operator, ExportHelper):
         col.prop(self, 'no_ramps')
         col.prop(self, 'delete_intermediate')
         col.prop(self, 'credit')
+        col.prop(self, 'write_export_indices')
+        col.prop(self, 'duplicate_ib_files')
         layout.separator()
         
         col = layout.column(align=True)
@@ -2406,7 +2511,7 @@ class Export3DMigotoGenshin(bpy.types.Operator, ExportHelper):
 
             # FIXME: ExportHelper will check for overwriting vb_path, but not ib_path
             Outline_Properties = (self.outline_optimization, self.toggle_rounding_outline, self.decimal_rounding_outline, self.angle_weighted, self.overlapping_faces, self.detect_edges, self.calculate_all_faces, self.nearest_edge_distance)
-            export_3dmigoto_genshin(self, context, object_name, vb_path, ib_path, fmt_path, self.use_foldername, self.ignore_hidden, self.only_selected, self.no_ramps, self.delete_intermediate, self.credit, Outline_Properties)
+            export_3dmigoto_genshin(self, context, object_name, vb_path, ib_path, fmt_path, self.use_foldername, self.ignore_hidden, self.only_selected, self.no_ramps, self.delete_intermediate, self.credit, self.write_export_indices, self.duplicate_ib_files, Outline_Properties)
         except Fatal as e:
             self.report({'ERROR'}, str(e))
         return {'FINISHED'}
