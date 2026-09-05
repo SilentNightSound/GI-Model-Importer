@@ -72,7 +72,8 @@ Now, on to the most commonly seen issues. You can get more details on what is go
 
 ![image](https://user-images.githubusercontent.com/107697535/181121492-9d1e4bdd-7cb0-46ee-bceb-8621e92577fd.png)
 
-- ### This one is due to the model you are using having more than 64k vertices. Either remove parts, or use decimate
+- ### This one is due to the model you are using having more than 400k vertices. Either remove parts, clean up mesh , and so on.
+(Outdated image shows error at above 64K vertices)
 
 ![image](https://user-images.githubusercontent.com/107697535/181123500-2afc4794-e982-4d95-8a42-c4e914341d30.png)
 
