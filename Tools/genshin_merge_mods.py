@@ -289,7 +289,10 @@ mov o1\.xyz, r0\.xyzx\\n
     if not args.store:
         print("Cleanup and disabling ini")
         for file in ini_files:
-            os.rename(file, os.path.join(os.path.dirname(file), "DISABLED") + os.path.basename(file))
+            f_basename =  os.path.basename(file)
+            if f_basename.lower() == "desktop.ini":
+                continue
+            os.rename(file, os.path.join(os.path.dirname(file), "DISABLED") + f_basename)
 
 
     print("All operations completed")
@@ -302,7 +305,7 @@ def collect_ini(path, ignore):
         if "disabled" in root.lower():
             continue
         for file in files:
-            if "disabled" in file.lower() or ignore.lower() in file.lower():
+            if "disabled" in file.lower() or ignore.lower() in file.lower() or file.endswith("desktop.ini"):
                 continue
             if os.path.splitext(file)[1] == ".ini":
                 ini_files.append(os.path.join(root, file))
@@ -312,6 +315,8 @@ def collect_ini(path, ignore):
 def enable_ini(path):
     for root, dir, files in os.walk(path):
         for file in files:
+            if file.lower().endswith("desktop.ini"):
+                continue
             if os.path.splitext(file)[1] == ".ini" and ("disabled" in root.lower() or "disabled" in file.lower()):
                 print(f"\tRe-enabling {os.path.join(root, file)}")
                 new_path = re.compile("disabled", re.IGNORECASE).sub("", os.path.join(root, file))
