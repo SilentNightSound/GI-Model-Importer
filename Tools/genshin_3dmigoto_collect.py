@@ -92,15 +92,17 @@ def main():
         else:
             # Re-arranging collection order. By collecting texcoord first, we can use its length to figure out which of the
             #   position/blend vbs are correct (or if there even is a corresponding pointlist)
-            # Some characters have one texcoord, others have two, varies from character to character
-            # Order is COLOR (R8G8B8A8_UNORM), TEXCOORD (R32G32_FLOAT), *TEXCOORD1 (R32G32_FLOAT) if it exists
-            # Sizes are 4, 8, *8 for a total of either 12 or 20
+            # Order is COLOR (R8G8B8A8_UNORM), followed by 2D TEXCOORD streams (R32G32_FLOAT).
+            # Strides 12, 20 and 28 contain one, two and three texture coordinates respectively.
+            # In stride-28 captures, TEXCOORD3 may alias TEXCOORD2 and must not be collected twice.
             print(f"\nCollecting texcoord data from {texcoord_vbs[i]}")
             texcoord_stride = get_stride(os.path.join(frame_dump_folder, texcoord_vbs[i]))
 
             texcoord_filter = ["COLOR:", "TEXCOORD:"]
             if texcoord_stride == "20":
                 texcoord_filter.append("TEXCOORD1:")
+            elif texcoord_stride == "28":
+                texcoord_filter.extend(["TEXCOORD1:", "TEXCOORD2:"])
             texcoord_filter = tuple(texcoord_filter)
 
             texcoord, texcoord_format = collect_buffer_data(frame_dump_folder, texcoord_vbs[i], texcoord_filter)
