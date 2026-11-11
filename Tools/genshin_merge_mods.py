@@ -23,7 +23,7 @@ import hashlib
 
 def main():
     parser = argparse.ArgumentParser(description="Generates a merged mod from several mod folders")
-    parser.add_argument("-r", "--root", type=str,  default=".",  help="Location to use to create mod")
+    parser.add_argument("-r", "--root", type=str, default=None, help="Location to use to create mod (defaults to this script's folder)")
     parser.add_argument("-s", "--store", action="store_true", help="Use to keep the original .ini files enabled after completion")
     parser.add_argument("-e", "--enable", action="store_true", help="Re-enable disabled .ini files")
     parser.add_argument("-n", "--name", type=str,  default="merged.ini", help="Name of final .ini file")
@@ -33,6 +33,10 @@ def main():
     parser.add_argument("-ref", "--reflection", action="store_true", help="Applies reflection fix for 3.0+ characters")
 
     args = parser.parse_args()
+
+    if args.root is None:
+        os.chdir(os.path.dirname(os.path.abspath(__file__)))
+        args.root = "."
 
     print("\nGenshin Mod Merger/Toggle Creator Script\n")
 
